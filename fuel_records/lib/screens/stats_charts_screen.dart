@@ -62,7 +62,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: primaryColor.withOpacity(0.35),
+                    color: primaryColor.withValues(alpha: 0.35),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
@@ -77,7 +77,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
                       Text(
                         'LIFETIME FUEL METRICS',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
@@ -86,7 +86,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -118,7 +118,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
                           Text(
                             'Average ${vehicle.unitDistance}/${vehicle.unitVolume}',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.85),
+                              color: Colors.white.withValues(alpha: 0.85),
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
@@ -140,7 +140,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
                             Text(
                               'Consumption',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.75),
+                                color: Colors.white.withValues(alpha: 0.75),
                                 fontSize: 12,
                               ),
                             ),
@@ -192,10 +192,10 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E1E28) : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 10,
                   ),
                 ],
@@ -305,7 +305,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11)),
+        Text(title, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11)),
         const SizedBox(height: 2),
         Text(value, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
       ],
@@ -324,10 +324,10 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.withOpacity(0.18)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 6,
           ),
         ],
@@ -392,7 +392,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
           show: true,
           drawVerticalLine: false,
           getDrawingHorizontalLine: (value) => FlLine(
-            color: Colors.grey.withOpacity(0.15),
+            color: Colors.grey.withValues(alpha: 0.15),
             strokeWidth: 1,
           ),
         ),
@@ -404,7 +404,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
               showTitles: true,
               reservedSize: 24,
               getTitlesWidget: (value, meta) {
-                final int idx = value.toInt();
+                 final int idx = value.toInt();
                 if (idx < 0 || idx >= recordsAsc.length) return const SizedBox.shrink();
                 final r = recordsAsc[idx];
                 return Padding(
@@ -441,7 +441,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
             dotData: const FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              color: primaryColor.withOpacity(0.15),
+              color: primaryColor.withValues(alpha: 0.15),
             ),
           ),
         ],

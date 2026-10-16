@@ -41,7 +41,7 @@ class VehicleArtwork extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.65),
+                  color: Colors.black.withValues(alpha: 0.65),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.white24, width: 0.8),
                 ),
@@ -78,7 +78,7 @@ class VehiclePainter extends CustomPainter {
 
     // Ground shadow
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.18)
+      ..color = Colors.black.withValues(alpha: 0.18)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
     canvas.drawOval(
       Rect.fromCenter(
@@ -173,7 +173,7 @@ class VehiclePainter extends CustomPainter {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        bodyColor.withOpacity(0.95),
+        bodyColor.withValues(alpha: 0.95),
         bodyColor,
         Color.lerp(bodyColor, Colors.black, 0.35)!,
       ],
@@ -199,7 +199,7 @@ class VehiclePainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [const Color(0xFF90CAF9).withOpacity(0.9), const Color(0xFF1565C0).withOpacity(0.75)],
+        colors: [const Color(0xFF90CAF9).withValues(alpha: 0.9), const Color(0xFF1565C0).withValues(alpha: 0.75)],
       ).createShader(Rect.fromLTWH(w * 0.2, h * 0.25, w * 0.7, h * 0.25));
     canvas.drawPath(glassPath, glassPaint);
 
@@ -238,7 +238,7 @@ class VehiclePainter extends CustomPainter {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        bodyColor.withOpacity(0.95),
+        bodyColor.withValues(alpha: 0.95),
         bodyColor,
         Color.lerp(bodyColor, Colors.black, 0.3)!,
       ],
@@ -300,7 +300,7 @@ class VehiclePainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [bodyColor.withOpacity(0.95), bodyColor, Color.lerp(bodyColor, Colors.black, 0.3)!],
+        colors: [bodyColor.withValues(alpha: 0.95), bodyColor, Color.lerp(bodyColor, Colors.black, 0.3)!],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawPath(bodyPath, bodyPaint);
 
@@ -361,7 +361,7 @@ class VehiclePainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [bodyColor.withOpacity(0.95), bodyColor, Color.lerp(bodyColor, Colors.black, 0.35)!],
+        colors: [bodyColor.withValues(alpha: 0.95), bodyColor, Color.lerp(bodyColor, Colors.black, 0.35)!],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawPath(bodyPath, bodyPaint);
 
@@ -426,7 +426,7 @@ class VehiclePainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [bodyColor.withOpacity(0.95), bodyColor, Color.lerp(bodyColor, Colors.black, 0.3)!],
+        colors: [bodyColor.withValues(alpha: 0.95), bodyColor, Color.lerp(bodyColor, Colors.black, 0.3)!],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawPath(bodyPath, bodyPaint);
 
@@ -476,7 +476,7 @@ class VehiclePainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [bodyColor.withOpacity(0.95), bodyColor, Color.lerp(bodyColor, Colors.black, 0.3)!],
+        colors: [bodyColor.withValues(alpha: 0.95), bodyColor, Color.lerp(bodyColor, Colors.black, 0.3)!],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawPath(bodyPath, bodyPaint);
 

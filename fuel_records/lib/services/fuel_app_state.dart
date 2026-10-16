@@ -45,9 +45,12 @@ class FuelAppState extends ChangeNotifier {
 
   bool _isLoading = true;
   String _appDataFolderPath = '';
+  final Directory? customStorageDir;
 
-  FuelAppState() {
-    loadFromStorage();
+  FuelAppState({this.customStorageDir, bool autoLoad = true}) {
+    if (autoLoad) {
+      loadFromStorage();
+    }
   }
 
   // Getters
@@ -201,13 +204,31 @@ class FuelAppState extends ChangeNotifier {
 
   /// Initializes app folder on disk
   Future<Directory> _getAppDirectory() async {
-    final docsDir = await getApplicationDocumentsDirectory();
-    final appDir = Directory('${docsDir.path}/FuelMetricsData');
-    if (!await appDir.exists()) {
-      await appDir.create(recursive: true);
+    final customDir = customStorageDir;
+    if (customDir != null) {
+      if (!customDir.existsSync()) {
+        customDir.createSync(recursive: true);
+      }
+      _appDataFolderPath = customDir.path;
+      return customDir;
     }
-    _appDataFolderPath = appDir.path;
-    return appDir;
+
+    try {
+      final docsDir = await getApplicationDocumentsDirectory();
+      final appDir = Directory('${docsDir.path}/FuelMetricsData');
+      if (!appDir.existsSync()) {
+        appDir.createSync(recursive: true);
+      }
+      _appDataFolderPath = appDir.path;
+      return appDir;
+    } catch (_) {
+      final testDir = Directory('${Directory.systemTemp.path}/FuelMetricsData');
+      if (!testDir.existsSync()) {
+        testDir.createSync(recursive: true);
+      }
+      _appDataFolderPath = testDir.path;
+      return testDir;
+    }
   }
 
   /// Appends to private audit log file
@@ -216,7 +237,7 @@ class FuelAppState extends ChangeNotifier {
       final dir = await _getAppDirectory();
       final logFile = File('${dir.path}/audit_logs.txt');
       final timestamp = DateTime.now().toIso8601String();
-      await logFile.writeAsString('[$timestamp] $action\n', mode: FileMode.append);
+      logFile.writeAsStringSync('[$timestamp] $action\n', mode: FileMode.append);
     } catch (_) {}
   }
 
@@ -246,8 +267,8 @@ class FuelAppState extends ChangeNotifier {
 
       // 1. Load Vehicles
       final vehiclesFile = File('${dir.path}/vehicles.json');
-      if (await vehiclesFile.exists()) {
-        final content = await vehiclesFile.readAsString();
+      if (vehiclesFile.existsSync()) {
+        final content = vehiclesFile.readAsStringSync();
         if (content.isNotEmpty) {
           final List decoded = jsonDecode(content) as List;
           _vehicles = decoded.map((item) => Vehicle.fromJson(item as Map<String, dynamic>)).toList();
@@ -263,8 +284,8 @@ class FuelAppState extends ChangeNotifier {
 
       // 2. Load Encrypted Records (protected against external editing)
       final recordsEncFile = File('${dir.path}/records.enc');
-      if (await recordsEncFile.exists()) {
-        final encContent = await recordsEncFile.readAsString();
+      if (recordsEncFile.existsSync()) {
+        final encContent = recordsEncFile.readAsStringSync();
         if (encContent.isNotEmpty) {
           try {
             final plainJson = _decryptData(encContent);
@@ -290,8 +311,8 @@ class FuelAppState extends ChangeNotifier {
 
       // 3. Load Services
       final servicesFile = File('${dir.path}/services.json');
-      if (await servicesFile.exists()) {
-        final content = await servicesFile.readAsString();
+      if (servicesFile.existsSync()) {
+        final content = servicesFile.readAsStringSync();
         if (content.isNotEmpty) {
           final List decoded = jsonDecode(content) as List;
           _services = decoded.map((item) => ServiceRecord.fromJson(item as Map<String, dynamic>)).toList();

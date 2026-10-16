@@ -220,9 +220,9 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.12),
+                    color: primaryColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: primaryColor.withOpacity(0.3)),
+                    border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -246,7 +246,7 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                             Text(
                               '${widget.vehicle.brand} • ${widget.vehicle.owner}',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.65),
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                               ),
                             ),
                           ],
@@ -281,12 +281,12 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          primaryColor.withOpacity(0.2),
+                          primaryColor.withValues(alpha: 0.2),
                           isDark ? const Color(0xFF232533) : Colors.blueGrey.shade50,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: primaryColor.withOpacity(0.4)),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.4)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,7 +507,7 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                    border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                   ),
                   child: SwitchListTile(
                     contentPadding: EdgeInsets.zero,
@@ -618,9 +618,9 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.35)),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

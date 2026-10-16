@@ -142,7 +142,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -168,7 +168,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.4),
+                    color: Colors.grey.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -180,7 +180,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: _selectedColor.withOpacity(0.15),
+                      color: _selectedColor.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.directions_car, color: _selectedColor),
@@ -199,7 +199,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
                         Text(
                           'Configure car details and vehicle type image',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -220,7 +220,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      _selectedColor.withOpacity(0.18),
+                      _selectedColor.withValues(alpha: 0.18),
                       isDark ? const Color(0xFF1E1E28) : Colors.grey.shade100,
                     ],
                     begin: Alignment.topLeft,
@@ -228,7 +228,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: _selectedColor.withOpacity(0.35),
+                    color: _selectedColor.withValues(alpha: 0.35),
                     width: 1.5,
                   ),
                 ),
@@ -313,7 +313,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? _selectedColor.withOpacity(0.14)
+                              ? _selectedColor.withValues(alpha: 0.14)
                               : (isDark ? Colors.grey.shade900 : Colors.grey.shade200),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
@@ -382,7 +382,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
                         boxShadow: [
                           if (isSelected)
                             BoxShadow(
-                              color: color.withOpacity(0.6),
+                              color: color.withValues(alpha: 0.6),
                               blurRadius: 8,
                               spreadRadius: 1,
                             ),

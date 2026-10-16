@@ -72,7 +72,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
             const Text('Fuel Records History', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Text(
               '${vehicle.name} • ${allRecords.length} entries',
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
             ),
           ],
         ),
@@ -200,7 +200,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
       elevation: 1.5,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Colors.grey.withOpacity(isDark ? 0.2 : 0.1)),
+        side: BorderSide(color: Colors.grey.withValues(alpha: isDark ? 0.2 : 0.1)),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -223,7 +223,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface.withOpacity(0.75),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                         ),
                       ),
                     ],
@@ -287,7 +287,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const Spacer(),
@@ -295,7 +295,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.12),
+                      color: primaryColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -316,9 +316,9 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.black.withOpacity(0.25) : Colors.grey.shade50,
+                  color: isDark ? Colors.black.withValues(alpha: 0.25) : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.grey.withOpacity(0.15)),
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
                 ),
                 child: Row(
                   children: [
@@ -333,7 +333,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                         color: Colors.blueAccent,
                       ),
                     ),
-                    Container(height: 32, width: 1, color: Colors.grey.withOpacity(0.3)),
+                    Container(height: 32, width: 1, color: Colors.grey.withValues(alpha: 0.3)),
                     // Fuel Efficiency
                     Expanded(
                       child: _buildMetricTile(
@@ -345,7 +345,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                         color: Colors.green,
                       ),
                     ),
-                    Container(height: 32, width: 1, color: Colors.grey.withOpacity(0.3)),
+                    Container(height: 32, width: 1, color: Colors.grey.withValues(alpha: 0.3)),
                     // Price Increase / Decrease
                     Expanded(
                       child: _buildMetricTile(
@@ -390,7 +390,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.15),
+                        color: Colors.grey.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -468,7 +468,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.4),
+                    color: Colors.grey.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

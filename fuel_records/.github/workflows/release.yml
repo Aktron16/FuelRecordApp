@@ -59,6 +59,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'gradle'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -235,7 +236,7 @@ jobs:
             - **`FuelMetrics-${{ steps.meta.outputs.tag }}-ios-Runner.app.zip`**: Packaged iOS Runner.app bundle for simulator / direct testing.
 
             ### ✨ Highlights in Version 1.0.0
-            - **Multi-Vehicle Garage**: 8 vehicle types with vector illustrations, purchase date & ownership tracking, and instant single-tap switching.
+            - **Multi-Vehicle Garage**: 8 vehicle types with custom vector illustrations, purchase date & ownership tracking, and instant single-tap switching.
             - **Fuel Logging & Editing**: Date-only picker, regional gas station chips, live calculation preview, and dedicated edit/change flows.
             - **Fuel Analytics**: Per-refuel distance traveled, fuel efficiency (km/L, L/100km, MPG), unit price, price delta %, and running cost per km/mi.
             - **Spreadsheet Table & Trend Charts**: Interactive Excel-style table; tap any column header to view interactive trend line charts with min/avg/max telemetry.
@@ -244,4 +245,3 @@ jobs:
             - **Local Privacy**: Encrypted data storage, private tamper-evident audit timestamps, and local logging.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

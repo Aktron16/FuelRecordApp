@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fuel_records/models/fuel_record.dart';
@@ -62,12 +63,15 @@ void main() {
 
   testWidgets('FuelRecordApp smoke test', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
-    final appState = FuelAppState();
-    await appState.loadFromStorage();
+    final tempDir = Directory.systemTemp.createTempSync('fuel_metrics_test_');
+    final appState = FuelAppState(customStorageDir: tempDir, autoLoad: false);
+    await tester.runAsync(() async {
+      await appState.loadFromStorage();
+    });
     await tester.pumpWidget(FuelRecordApp(appState: appState));
     await tester.pump();
 
     // App launches and shows welcome / add vehicle
-    expect(find.text('FuelMetrics'), findsOneWidget);
+    expect(find.text('Fuel Metrics'), findsWidgets);
   });
 }

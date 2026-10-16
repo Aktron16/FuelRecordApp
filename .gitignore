@@ -1,0 +1,45 @@
+# Root gitignore for FuelRecordApp
+
+# OS & Environment
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Flutter project build outputs & dependencies
+fuel_records/build/
+fuel_records/.dart_tool/
+fuel_records/.flutter-plugins
+fuel_records/.flutter-plugins-dependencies
+fuel_records/.packages
+fuel_records/.pub-cache/
+fuel_records/.pub/
+
+# Android build outputs & local configurations
+fuel_records/android/.gradle/
+fuel_records/android/local.properties
+fuel_records/android/app/debug/
+fuel_records/android/app/profile/
+fuel_records/android/app/release/
+*.apk
+*.aab
+*.keystore
+*.jks
+key.properties
+
+# iOS build outputs
+fuel_records/ios/Pods/
+fuel_records/ios/.symlinks/
+fuel_records/ios/Flutter/Generated.xcconfig
+fuel_records/ios/Flutter/flutter_export_environment.sh
+
+# Local data & logs
+FuelMetricsData/
+*.enc
+audit_logs.txt
+

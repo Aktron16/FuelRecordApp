@@ -1,0 +1,485 @@
+import 'package:flutter/material.dart';
+import '../services/fuel_app_state.dart';
+import '../services/country_data.dart';
+import '../widgets/app_logo.dart';
+
+class SettingsScreen extends StatefulWidget {
+  final FuelAppState appState;
+
+  const SettingsScreen({super.key, required this.appState});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  late String _selectedCountry;
+  late String _distanceUnit;
+  late String _volumeUnit;
+  late String _efficiencyUnit;
+  late String _currency;
+  late ThemeMode _themeMode;
+
+  final List<String> _popularCurrencies = const [
+    '\$', '€', '£', '₹', '¥', 'C\$', 'A\$', 'AED', 'R\$', 'Mex\$', 'R', 'kr', 'CHF', 'SAR', 'S\$'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCountry = widget.appState.selectedCountry;
+    _distanceUnit = widget.appState.defaultDistanceUnit;
+    _volumeUnit = widget.appState.defaultVolumeUnit;
+    _efficiencyUnit = widget.appState.defaultEfficiencyUnit;
+    _currency = widget.appState.defaultCurrency;
+    _themeMode = widget.appState.themeMode;
+  }
+
+  void _onCountryChanged(String? newCountry) {
+    if (newCountry == null) return;
+    final info = CountryRepository.getCountryByName(newCountry);
+    setState(() {
+      _selectedCountry = info.name;
+      _currency = info.currency;
+      _distanceUnit = info.defaultDistanceUnit;
+      _volumeUnit = info.defaultVolumeUnit;
+      _efficiencyUnit = info.defaultEfficiencyUnit;
+    });
+
+    widget.appState.setCountry(newCountry);
+  }
+
+  void _saveUnits() {
+    widget.appState.setDefaultUnits(
+      distanceUnit: _distanceUnit,
+      volumeUnit: _volumeUnit,
+      efficiencyUnit: _efficiencyUnit,
+      currency: _currency,
+    );
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Settings saved. Default currency and units updated everywhere.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final countryInfo = CountryRepository.getCountryByName(_selectedCountry);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        children: [
+          // App Header Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+            ),
+            child: Row(
+              children: [
+                const FuelManLogo(size: 48),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Fuel Metrics',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.3),
+                      ),
+                      Text(
+                        'Version 1 • Private Offline Record Tracker',
+                        style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.65)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 1. Theme Mode (Light / Dark)
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.palette_outlined, color: Colors.purple),
+                      ),
+                      const SizedBox(width: 12),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Appearance & Theme', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          Text('Select Light or Dark mode', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  DropdownButtonFormField<ThemeMode>(
+                    value: _themeMode,
+                    decoration: InputDecoration(
+                      labelText: 'Theme Mode',
+                      prefixIcon: Icon(
+                        _themeMode == ThemeMode.dark
+                            ? Icons.dark_mode
+                            : (_themeMode == ThemeMode.light ? Icons.light_mode : Icons.brightness_auto),
+                        color: Colors.purple,
+                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      filled: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: ThemeMode.system,
+                        child: Text('System Default (Follow Device)'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.light,
+                        child: Text('Light Mode'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.dark,
+                        child: Text('Dark Mode'),
+                      ),
+                    ],
+                    onChanged: (mode) {
+                      if (mode != null) {
+                        setState(() => _themeMode = mode);
+                        widget.appState.setThemeMode(mode);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 2. Country Lived In
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(Icons.public, color: theme.colorScheme.primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Country Lived In', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text('Sets currency and popular gas station brands', style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  DropdownButtonFormField<String>(
+                    value: _selectedCountry,
+                    decoration: InputDecoration(
+                      labelText: 'Select Country',
+                      prefixIcon: const Icon(Icons.location_on_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      filled: true,
+                    ),
+                    items: CountryRepository.countries.map((c) {
+                      return DropdownMenuItem(
+                        value: c.name,
+                        child: Text('${c.name} (${c.currency})'),
+                      );
+                    }).toList(),
+                    onChanged: _onCountryChanged,
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  Text(
+                    'Common Gas Stations in $_selectedCountry:',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: countryInfo.popularStations.map((st) {
+                      return Chip(
+                        padding: EdgeInsets.zero,
+                        labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        label: Text(st, style: const TextStyle(fontSize: 11)),
+                        backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 3. Centralized Units & Currency (All Dropdowns)
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.teal.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.tune, color: Colors.teal),
+                      ),
+                      const SizedBox(width: 12),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Centralized Units & Currency', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          Text('Used across all vehicles, records, and metrics', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Distance Unit Dropdown
+                  DropdownButtonFormField<String>(
+                    value: _distanceUnit,
+                    decoration: InputDecoration(
+                      labelText: 'Distance Unit',
+                      prefixIcon: const Icon(Icons.route_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      filled: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'km', child: Text('Kilometers (km)')),
+                      DropdownMenuItem(value: 'mi', child: Text('Miles (mi)')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() => _distanceUnit = val);
+                        _saveUnits();
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Volume Unit Dropdown
+                  DropdownButtonFormField<String>(
+                    value: _volumeUnit,
+                    decoration: InputDecoration(
+                      labelText: 'Fuel Volume Unit',
+                      prefixIcon: const Icon(Icons.local_gas_station_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      filled: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'L', child: Text('Litres (L)')),
+                      DropdownMenuItem(value: 'gal', child: Text('Gallons (gal)')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() => _volumeUnit = val);
+                        _saveUnits();
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Fuel Efficiency Unit Dropdown
+                  DropdownButtonFormField<String>(
+                    value: _efficiencyUnit,
+                    decoration: InputDecoration(
+                      labelText: 'Default Fuel Efficiency',
+                      prefixIcon: const Icon(Icons.eco_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                      filled: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'km/L', child: Text('Kilometers per Litre (km/L)')),
+                      DropdownMenuItem(value: 'L/100km', child: Text('Litres per 100 Kilometers (L/100km)')),
+                      DropdownMenuItem(value: 'MPG', child: Text('Miles per Gallon (MPG)')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() => _efficiencyUnit = val);
+                        _saveUnits();
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Currency Symbol Dropdown & Custom Input
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _popularCurrencies.contains(_currency) ? _currency : _popularCurrencies.first,
+                          decoration: InputDecoration(
+                            labelText: 'Default Currency Symbol',
+                            prefixIcon: const Icon(Icons.attach_money),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                            filled: true,
+                          ),
+                          items: _popularCurrencies.map((c) {
+                            return DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontWeight: FontWeight.bold)));
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() => _currency = val);
+                              _saveUnits();
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 80,
+                        child: TextFormField(
+                          initialValue: _currency,
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            labelText: 'Custom',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                            filled: true,
+                          ),
+                          onChanged: (val) {
+                            if (val.trim().isNotEmpty) {
+                              setState(() => _currency = val.trim());
+                              _saveUnits();
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 4. Data Management
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Data Management', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            widget.appState.loadSampleData();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Sample demo data loaded')),
+                            );
+                          },
+                          icon: const Icon(Icons.cloud_download_outlined, size: 18),
+                          label: const Text('Load Demo Data'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                        onPressed: () => _confirmClearData(context),
+                        icon: const Icon(Icons.delete_forever, size: 18),
+                        label: const Text('Clear All'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Version Footer
+          Center(
+            child: Text(
+              'Fuel Metrics • Version 1.0.0',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  void _confirmClearData(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Clear All Data?'),
+        content: const Text('This will erase all vehicles, records, and service logs. Are you sure?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              widget.appState.clearAllData();
+            },
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -66,6 +66,41 @@ void main() {
       expect(r.totalPrice, 55.00);
       expect(r.isFullTank, isFalse);
     });
+
+    test('Parses distance and kms synonyms for odometer, petrol, diesel, gas for fuel', () {
+      const text1 = 'distance 48000 kms, petrol 40.5, paid \$65 at Shell';
+      final r1 = UnstructuredTextParser.parse(text1).first;
+      expect(r1.odometer, 48000);
+      expect(r1.fuelAmount, 40.5);
+      expect(r1.totalPrice, 65.0);
+      expect(r1.gasStation, 'Shell');
+
+      const text2 = 'dist: 72500, diesel: 42, cost: 60 at Total';
+      final r2 = UnstructuredTextParser.parse(text2).first;
+      expect(r2.odometer, 72500);
+      expect(r2.fuelAmount, 42.0);
+      expect(r2.totalPrice, 60.0);
+      expect(r2.fuelType, 'Diesel');
+      expect(r2.gasStation, 'Total');
+
+      const text3 = '85000 distance, gas: 14 gal, spent \$52';
+      final r3 = UnstructuredTextParser.parse(text3).first;
+      expect(r3.odometer, 85000);
+      expect(r3.fuelAmount, 14.0);
+      expect(r3.totalPrice, 52.0);
+    });
+
+    test('Does not force numbers into columns when keywords or units are missing', () {
+      const text = 'At Shell on 15-Oct-26, paid \$50, bought 2 coffees and snack 15';
+      final results = UnstructuredTextParser.parse(text);
+
+      expect(results.length, 1);
+      final r = results.first;
+      expect(r.gasStation, 'Shell');
+      expect(r.totalPrice, 50.0);
+      expect(r.odometer, isNull, reason: 'Odometer should not be forced without keyword or unit');
+      expect(r.fuelAmount, isNull, reason: 'Fuel amount should not be forced without keyword or unit');
+    });
   });
 }
 

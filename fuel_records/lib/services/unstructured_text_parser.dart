@@ -139,15 +139,18 @@ class UnstructuredTextParser {
       segment = _cleanWhitespace(segment);
     }
 
-    // 4. Detect Fuel Grade / Type
-    final gradeResult = _extractFuelGrade(segment);
+    // 4. Detect Fuel Grade / Type from raw segment
+    final gradeResult = _extractFuelGrade(rawSegment);
     if (gradeResult != null) {
       fuelType = gradeResult.grade;
-      segment = segment.replaceFirst(gradeResult.matchedText, ' ');
-      segment = _cleanWhitespace(segment);
+      // Only remove from segment if not followed immediately by digits (e.g. preserve "diesel: 45")
+      if (!RegExp(r'\b(?:diesel|gasoil)[\s:=#]+\d', caseSensitive: false).hasMatch(segment)) {
+        segment = segment.replaceFirst(gradeResult.matchedText, ' ');
+        segment = _cleanWhitespace(segment);
+      }
     }
 
-    // 5. Detect Odometer (explicit keywords or unit indicators)
+    // 5. Detect Odometer (explicit keywords: distance, dist, kms, km, odo, reading, or distance units)
     final odoResult = _extractOdometer(segment);
     if (odoResult != null) {
       odometer = odoResult.value;
@@ -155,7 +158,7 @@ class UnstructuredTextParser {
       segment = _cleanWhitespace(segment);
     }
 
-    // 6. Detect Fuel Volume (litres / gallons / volume words)
+    // 6. Detect Fuel Volume (explicit keywords: petrol, diesel, gas, fuel, volume, qty, litres, gallons)
     final volResult = _extractVolume(segment);
     if (volResult != null) {
       fuelAmount = volResult.value;
@@ -171,17 +174,9 @@ class UnstructuredTextParser {
       segment = _cleanWhitespace(segment);
     }
 
-    // 8. Fallback: Parse remaining unassigned numbers for missing metrics
-    final remainingNumbers = _extractRemainingNumbers(segment);
-    for (final numVal in remainingNumbers) {
-      if (odometer == null && numVal >= 1000) {
-        odometer = numVal;
-      } else if (fuelAmount == null && numVal > 0 && numVal <= 300) {
-        fuelAmount = numVal;
-      } else if (totalPrice == null && numVal > 0) {
-        totalPrice = numVal;
-      }
-    }
+    // 8. Strict Keyword Enforcement:
+    // If a column keyword or unit was not present in the text, do NOT force unverified numbers
+    // into odometer, fuel quantity, or price. Remaining unassigned text is kept as notes.
 
     // Remaining residual text becomes notes if any meaningful words remain
     final cleanedNotes = _cleanRemainingNotes(segment);
@@ -337,9 +332,10 @@ class UnstructuredTextParser {
   }
 
   static _NumericExtraction? _extractOdometer(String text) {
-    // Keyword followed by number: odo: 54000, odometer 120500, reading = 45200, clock: 20000
+    // 1. Keyword followed by number:
+    // distance: 54000, dist 54000, kms: 54000, km 54000, odo: 54000, odometer 120500, reading = 45200, etc.
     final keywordRegex = RegExp(
-      r'\b(?:odometer|odo|reading|mileage|milage|dash|meter|clock)[\s:=#]+([\d,.]+)',
+      r'\b(?:distance|dist|kilometres?|kilometers?|kms?|miles?|mileage|milage|odometer|odo|reading|readings|dash|meter|clock|clocked|counter|travelled|traveled)[\s:=#]+([\d,.]+)',
       caseSensitive: false,
     );
     final kwMatch = keywordRegex.firstMatch(text);
@@ -350,9 +346,10 @@ class UnstructuredTextParser {
       }
     }
 
-    // Number followed by km or miles: 54000 km, 120500km, 45000 miles, 30000 mi
+    // 2. Number followed by distance/odometer unit or keyword:
+    // 54000 km, 54000 kms, 120500km, 45000 miles, 30000 mi, 54000 distance, 54000 dist
     final unitRegex = RegExp(
-      r'\b([\d,.]+)\s*(?:kms?|kilometers?|miles?|mi)\b',
+      r'\b([\d,.]+)\s*(?:kms?|kilometers?|kilometres?|miles?|mi|distance|dist)\b',
       caseSensitive: false,
     );
     final unitMatch = unitRegex.firstMatch(text);
@@ -363,12 +360,15 @@ class UnstructuredTextParser {
       }
     }
 
-    // At symbol with high number: @ 54000 or at 54000
-    final atRegex = RegExp(r'(?:at|@)\s*([\d,.]+)\s*(?:km|mi)?\b', caseSensitive: false);
+    // 3. Preposition with explicit unit: @ 54000 km, at 54000 kms, @ 54000 miles, at 54000 mi
+    final atRegex = RegExp(
+      r'(?:at|@)\s*([\d,.]+)\s*(?:kms?|kilometers?|kilometres?|miles?|mi|distance|dist|odo)\b',
+      caseSensitive: false,
+    );
     final atMatch = atRegex.firstMatch(text);
     if (atMatch != null) {
       final val = _parseNumber(atMatch.group(1)!);
-      if (val != null && val >= 1000) {
+      if (val != null) {
         return _NumericExtraction(val, atMatch.group(0)!);
       }
     }
@@ -377,9 +377,10 @@ class UnstructuredTextParser {
   }
 
   static _NumericExtraction? _extractVolume(String text) {
-    // Keyword followed by volume: filled 45.2L, pumped: 12 gal, qty: 50
+    // 1. Keyword followed by volume:
+    // petrol: 45.2, petrol 45, diesel: 40, diesel 40L, gas: 12 gal, gas 12, fuel: 50, filled: 45L, pumped 12, volume 50, qty 35, etc.
     final keywordRegex = RegExp(
-      r'\b(?:volume|vol|qty|quantity|filled|pumped|fuel|gas|petrol|litres?|liters?|gallons?)[\s:=#]+([\d,.]+)\s*(?:l|ltrs?|liters?|litres?|gal|gals?|gallons?)?',
+      r'\b(?:petrol|diesel|gas(?!\s+station)|fuel|quantity|qty|volume|vol|filled|pumped|dispensed|refuel|refueled|put\s+in|added|poured|litres?|liters?|ltrs?|gallons?)[\s:=#]+([\d,.]+)\s*(?:l|ltrs?|liters?|litres?|lt\b|gal|gals?|gallons?|petrol|diesel|gas)?',
       caseSensitive: false,
     );
     final kwMatch = keywordRegex.firstMatch(text);
@@ -390,15 +391,16 @@ class UnstructuredTextParser {
       }
     }
 
-    // Number followed by volume units: 45.5 L, 12.4gal, 50ltr, 60 liters
+    // 2. Number followed by volume units or fuel synonyms:
+    // 45.5 L, 45.5L, 12.4gal, 50ltr, 60 liters, 45.2 petrol, 40 diesel, 12 gas
     final unitRegex = RegExp(
-      r'\b([\d,.]+)\s*(?:liters?|litres?|ltrs?|lt\b|l\b|gallons?|gals?\b)',
+      r'\b([\d,.]+)\s*(?:liters?|litres?|ltrs?|lt\b|l\b|gallons?|gals?\b|petrol|diesel|gas(?!\s+station))\b',
       caseSensitive: false,
     );
     final unitMatch = unitRegex.firstMatch(text);
     if (unitMatch != null) {
       final val = _parseNumber(unitMatch.group(1)!);
-      if (val != null) {
+      if (val != null && val <= 500) {
         return _NumericExtraction(val, unitMatch.group(0)!);
       }
     }
@@ -407,9 +409,9 @@ class UnstructuredTextParser {
   }
 
   static _NumericExtraction? _extractPrice(String text) {
-    // Currency symbol followed by number: $75.50, €60.00, £50, ₹3500, AED 150
+    // 1. Currency symbol followed by number: $75.50, €60.00, £50, ₹3500, AED 150
     final currRegex = RegExp(
-      r'(?:[\$€£₹¥]|c\$|a\$|aed|rs\.?|inr|usd|cad|aud|gbp|eur|sar)\s*([\d,.]+)',
+      r'(?:[\$€£₹¥]|c\$|a\$|aed|rs\.?|inr|usd|cad|aud|gbp|eur|sar|qar|kwd|omr|bhd)\s*([\d,.]+)',
       caseSensitive: false,
     );
     final currMatch = currRegex.firstMatch(text);
@@ -420,9 +422,9 @@ class UnstructuredTextParser {
       }
     }
 
-    // Number followed by currency code: 75.50 USD, 60 EUR, 150 AED
+    // 2. Number followed by currency code/symbol: 75.50 USD, 60 EUR, 150 AED
     final suffixCurrRegex = RegExp(
-      r'\b([\d,.]+)\s*(?:[\$€£₹¥]|aed|rs\.?|inr|usd|cad|aud|gbp|eur|sar)\b',
+      r'\b([\d,.]+)\s*(?:[\$€£₹¥]|aed|rs\.?|inr|usd|cad|aud|gbp|eur|sar|qar|kwd|omr|bhd)\b',
       caseSensitive: false,
     );
     final suffixMatch = suffixCurrRegex.firstMatch(text);
@@ -433,9 +435,9 @@ class UnstructuredTextParser {
       }
     }
 
-    // Price / Cost keywords: paid 75.50, cost: 60, total = 80, for $75
+    // 3. Price / Cost keywords: paid 75.50, cost: 60, total = 80, for $75, price: 50
     final kwRegex = RegExp(
-      r'\b(?:total|price|cost|paid|spent|amount|amt|bill|charge|sum|fee|for)[\s:=]+(?:[\$€£₹¥]\s*)?([\d,.]+)',
+      r'\b(?:total|price|cost|paid|spent|amount|amt|bill|charge|sum|fee|expense|pay|for)[\s:=]+(?:[\$€£₹¥]\s*)?([\d,.]+)',
       caseSensitive: false,
     );
     final kwMatch = kwRegex.firstMatch(text);
@@ -447,16 +449,6 @@ class UnstructuredTextParser {
     }
 
     return null;
-  }
-
-  static List<double> _extractRemainingNumbers(String text) {
-    final List<double> numbers = [];
-    final matches = RegExp(r'\b\d+(?:[.,]\d+)?\b').allMatches(text);
-    for (final m in matches) {
-      final v = _parseNumber(m.group(0)!);
-      if (v != null) numbers.add(v);
-    }
-    return numbers;
   }
 
   static double? _parseNumber(String raw) {

@@ -4,6 +4,8 @@ import '../models/fuel_record.dart';
 import '../models/record_calculation.dart';
 import '../widgets/vehicle_artwork.dart';
 import '../utils/app_date_format.dart';
+import '../services/fuel_app_state.dart';
+import 'text_import_screen.dart';
 
 class AddEditRecordScreen extends StatefulWidget {
   final Vehicle vehicle;
@@ -13,6 +15,7 @@ class AddEditRecordScreen extends StatefulWidget {
   final Function(String)? onDelete;
 
   final List<String>? popularStations;
+  final FuelAppState? appState;
 
   const AddEditRecordScreen({
     super.key,
@@ -22,6 +25,7 @@ class AddEditRecordScreen extends StatefulWidget {
     required this.onSave,
     this.onDelete,
     this.popularStations,
+    this.appState,
   });
 
   @override
@@ -186,6 +190,25 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          if (!isEditing && widget.appState != null)
+            IconButton(
+              icon: const Icon(Icons.auto_awesome, color: Color(0xFF16A34A)),
+              tooltip: 'Import Data from Text',
+              onPressed: () async {
+                final nav = Navigator.of(context);
+                final imported = await nav.push<bool>(
+                  MaterialPageRoute(
+                    builder: (ctx) => TextImportScreen(
+                      vehicle: widget.vehicle,
+                      appState: widget.appState!,
+                    ),
+                  ),
+                );
+                if (imported == true) {
+                  nav.pop();
+                }
+              },
+            ),
           if (isEditing && widget.onDelete != null)
             IconButton(
               icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -255,6 +278,38 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                     ],
                   ),
                 ),
+
+                // Import Data from Text Button (for creating new records)
+                if (!isEditing && widget.appState != null) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF16A34A),
+                      side: const BorderSide(color: Color(0xFF16A34A), width: 1.4),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    icon: const Icon(Icons.auto_awesome, size: 18),
+                    label: const Text(
+                      'Import Data from Text',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    onPressed: () async {
+                      final nav = Navigator.of(context);
+                      final imported = await nav.push<bool>(
+                        MaterialPageRoute(
+                          builder: (ctx) => TextImportScreen(
+                            vehicle: widget.vehicle,
+                            appState: widget.appState!,
+                          ),
+                        ),
+                      );
+                      if (imported == true) {
+                        nav.pop();
+                      }
+                    },
+                  ),
+                ],
 
                 const SizedBox(height: 18),
 

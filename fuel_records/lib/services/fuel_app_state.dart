@@ -513,6 +513,17 @@ class FuelAppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> addRecordsBatch(List<FuelRecord> newRecords) async {
+    if (newRecords.isEmpty) return;
+    for (final rec in newRecords) {
+      final recordWithAudit = rec.copyWith();
+      _records.add(recordWithAudit);
+    }
+    await saveToStorage();
+    await _logAuditAction('Imported batch of ${newRecords.length} fuel records from unstructured text');
+    notifyListeners();
+  }
+
   Future<void> updateRecord(FuelRecord updated) async {
     final idx = _records.indexWhere((r) => r.id == updated.id);
     if (idx != -1) {

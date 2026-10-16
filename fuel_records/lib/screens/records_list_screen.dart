@@ -7,6 +7,7 @@ import '../models/record_calculation.dart';
 import '../services/fuel_app_state.dart';
 import '../utils/app_date_format.dart';
 import 'add_edit_record_screen.dart';
+import 'text_import_screen.dart';
 
 class RecordsListScreen extends StatefulWidget {
   final FuelAppState appState;
@@ -105,6 +106,20 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
               }
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.auto_awesome, color: Color(0xFF16A34A)),
+            tooltip: 'Import Data from Text',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (ctx) => TextImportScreen(
+                    vehicle: vehicle,
+                    appState: widget.appState,
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -122,6 +137,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                 vehicle: vehicle,
                 previousRecord: lastRecord,
                 popularStations: widget.appState.currentCountryInfo.popularStations,
+                appState: widget.appState,
                 onSave: (newRec) => widget.appState.addRecord(newRec),
               ),
             ),
@@ -171,10 +187,33 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                         const SizedBox(height: 6),
                         Text(
                           _searchQuery.isEmpty
-                              ? 'Tap "+ Add Record" below to create your first entry!'
+                              ? 'Tap "+ Add Record" below or import your notes directly!'
                               : 'Try adjusting your search keywords.',
                           style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
                         ),
+                        if (_searchQuery.isEmpty) ...[
+                          const SizedBox(height: 16),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF16A34A),
+                              side: const BorderSide(color: Color(0xFF16A34A), width: 1.4),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            icon: const Icon(Icons.auto_awesome, size: 18),
+                            label: const Text('Import Data from Text', style: TextStyle(fontWeight: FontWeight.bold)),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (ctx) => TextImportScreen(
+                                    vehicle: vehicle,
+                                    appState: widget.appState,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ],
                     ),
                   )
@@ -263,6 +302,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
                                 recordToEdit: record,
                                 previousRecord: prev,
                                 popularStations: widget.appState.currentCountryInfo.popularStations,
+                                appState: widget.appState,
                                 onSave: (updated) => widget.appState.updateRecord(updated),
                                 onDelete: (id) => widget.appState.deleteRecord(id),
                               ),

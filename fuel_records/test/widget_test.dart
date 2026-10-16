@@ -1,11 +1,15 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 import 'package:fuel_records/models/vehicle.dart';
 import 'package:fuel_records/models/fuel_record.dart';
 import 'package:fuel_records/models/record_calculation.dart';
 import 'package:fuel_records/models/vehicle_stats.dart';
 import 'package:fuel_records/services/fuel_app_state.dart';
+import 'package:fuel_records/services/unstructured_text_parser.dart';
+import 'package:fuel_records/screens/text_import_screen.dart';
+import 'package:fuel_records/screens/text_import_review_screen.dart';
 import 'package:fuel_records/utils/app_date_format.dart';
 import 'package:fuel_records/main.dart';
 
@@ -173,6 +177,101 @@ void main() {
       expect(appState.vehicles.first.name, 'Cruiser');
       expect(appState.allRecords.length, 1);
       expect(appState.allRecords.first.odometer, 50000);
+
+      tempDir.deleteSync(recursive: true);
+    });
+
+    testWidgets('TextImportScreen displays description, examples, and triggers parsing', (tester) async {
+      final v = Vehicle(id: 'v_text', name: 'Tester', type: VehicleType.sedan, brand: 'Honda', owner: 'Sam', fuelType: 'Regular (87)');
+      final appState = FuelAppState(customStorageDir: Directory.systemTemp, autoLoad: false);
+
+      await tester.pumpWidget(MaterialApp(
+        home: TextImportScreen(vehicle: v, appState: appState),
+      ));
+      await tester.pumpAndSettle();
+
+      // Verify description card
+      expect(find.text('What does this feature do?'), findsOneWidget);
+      expect(find.textContaining('This smart parser takes raw, unstructured text'), findsOneWidget);
+
+      // Verify template example chips
+      expect(find.text('SMS / Receipt Note'), findsOneWidget);
+      expect(find.text('Gallons / US Style'), findsOneWidget);
+
+      // Tap an example chip
+      await tester.tap(find.text('SMS / Receipt Note'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Shell'), findsWidgets);
+    });
+
+    testWidgets('TextImportReviewScreen displays red Cancel and green Accept buttons with editable grid', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final v = Vehicle(id: 'v_grid', name: 'GridCar', type: VehicleType.compact, brand: 'Toyota', owner: 'Alex', fuelType: 'Regular (87)');
+      final tempDir = Directory.systemTemp.createTempSync('fuel_grid_test_');
+      final appState = FuelAppState(customStorageDir: tempDir, autoLoad: false);
+
+      final draft = ParsedRecordDraft(
+        dateTime: DateTime(2026, 10, 16),
+        odometer: 44000,
+        fuelAmount: 38.5,
+        totalPrice: 65.0,
+        gasStation: 'Shell',
+        fuelType: 'Regular (87)',
+        isFullTank: true,
+      );
+
+      await tester.pumpWidget(MaterialApp(
+        home: TextImportReviewScreen(
+          vehicle: v,
+          appState: appState,
+          parsedDrafts: [draft],
+        ),
+      ));
+      await tester.pump();
+
+      // Verify Red Cancel and Green Accept buttons exist at top
+      final cancelFinder = find.widgetWithText(FilledButton, 'Cancel');
+      final acceptFinder = find.widgetWithText(FilledButton, 'Accept');
+      expect(cancelFinder, findsOneWidget);
+      expect(acceptFinder, findsOneWidget);
+
+      final cancelBtn = tester.widget<FilledButton>(cancelFinder);
+      expect(cancelBtn.style?.backgroundColor?.resolve({}), const Color(0xFFDC2626)); // Red
+
+      final acceptBtn = tester.widget<FilledButton>(acceptFinder);
+      expect(acceptBtn.style?.backgroundColor?.resolve({}), const Color(0xFF16A34A)); // Green
+
+      // Verify grid data row
+      expect(find.text('44000.0'), findsOneWidget);
+      expect(find.text('38.50'), findsOneWidget);
+      expect(find.text('65.00'), findsOneWidget);
+      expect(find.text('Shell'), findsOneWidget);
+
+      tempDir.deleteSync(recursive: true);
+    });
+
+    test('addRecordsBatch commits multiple parsed records to storage', () async {
+      SharedPreferences.setMockInitialValues({});
+      final tempDir = Directory.systemTemp.createTempSync('fuel_batch_test_');
+      final appState = FuelAppState(customStorageDir: tempDir, autoLoad: false);
+
+      final recs = [
+        FuelRecord(
+          id: 'b1',
+          vehicleId: 'v1',
+          dateTime: DateTime(2026, 10, 16),
+          odometer: 44000,
+          fuelAmount: 38.5,
+          totalPrice: 65.0,
+          gasStation: 'Shell',
+        ),
+      ];
+
+      await appState.addRecordsBatch(recs);
+      expect(appState.allRecords.length, 1);
+      expect(appState.allRecords.first.odometer, 44000);
+      expect(appState.allRecords.first.fuelAmount, 38.5);
 
       tempDir.deleteSync(recursive: true);
     });

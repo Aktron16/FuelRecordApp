@@ -1,0 +1,247 @@
+name: Release Fuel Metrics
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the release (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      is_draft:
+        description: 'Publish as draft?'
+        type: boolean
+        required: false
+        default: false
+      is_prerelease:
+        description: 'Publish as pre-release?'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    name: Build Android (APK & AAB)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine Project Directory & Tag
+        id: prep
+        run: |
+          if [ -f "fuel_records/pubspec.yaml" ]; then
+            echo "app_dir=fuel_records" >> $GITHUB_OUTPUT
+          elif [ -f "pubspec.yaml" ]; then
+            echo "app_dir=." >> $GITHUB_OUTPUT
+          else
+            echo "Error: pubspec.yaml not found!"
+            exit 1
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Building for Tag: $TAG"
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        working-directory: ${{ steps.prep.outputs.app_dir }}
+        run: flutter pub get
+
+      - name: Run Code Analysis & Unit Tests
+        working-directory: ${{ steps.prep.outputs.app_dir }}
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Build Android Release APK
+        working-directory: ${{ steps.prep.outputs.app_dir }}
+        run: flutter build apk --release
+
+      - name: Build Android Release App Bundle (AAB)
+        working-directory: ${{ steps.prep.outputs.app_dir }}
+        run: flutter build appbundle --release
+
+      - name: Package & Rename Android Artifacts
+        id: package
+        run: |
+          APP_DIR="${{ steps.prep.outputs.app_dir }}"
+          TAG="${{ steps.prep.outputs.tag }}"
+          mkdir -p dist/android
+
+          APK_SRC="$APP_DIR/build/app/outputs/flutter-apk/app-release.apk"
+          AAB_SRC="$APP_DIR/build/app/outputs/bundle/release/app-release.aab"
+
+          if [ -f "$APK_SRC" ]; then
+            cp "$APK_SRC" "dist/android/FuelMetrics-${TAG}-android.apk"
+            echo "Created FuelMetrics-${TAG}-android.apk"
+          fi
+
+          if [ -f "$AAB_SRC" ]; then
+            cp "$AAB_SRC" "dist/android/FuelMetrics-${TAG}-android.aab"
+            echo "Created FuelMetrics-${TAG}-android.aab"
+          fi
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-artifacts
+          path: dist/android/*
+          retention-days: 7
+
+  build-ios:
+    name: Build iOS (IPA & Runner Bundle)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Determine Project Directory & Tag
+        id: prep
+        run: |
+          if [ -f "fuel_records/pubspec.yaml" ]; then
+            echo "app_dir=fuel_records" >> $GITHUB_OUTPUT
+          elif [ -f "pubspec.yaml" ]; then
+            echo "app_dir=." >> $GITHUB_OUTPUT
+          else
+            echo "Error: pubspec.yaml not found!"
+            exit 1
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Building for Tag: $TAG"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        working-directory: ${{ steps.prep.outputs.app_dir }}
+        run: flutter pub get
+
+      - name: Build iOS Application (No Code-Sign)
+        working-directory: ${{ steps.prep.outputs.app_dir }}
+        run: flutter build ios --release --no-codesign
+
+      - name: Package iOS IPA & Runner Archive
+        run: |
+          APP_DIR="${{ steps.prep.outputs.app_dir }}"
+          TAG="${{ steps.prep.outputs.tag }}"
+          mkdir -p dist/ios
+          mkdir -p Payload
+
+          APP_BUNDLE="$APP_DIR/build/ios/iphoneos/Runner.app"
+
+          if [ -d "$APP_BUNDLE" ]; then
+            cp -r "$APP_BUNDLE" Payload/
+            zip -r -9 "dist/ios/FuelMetrics-${TAG}-ios-unsigned.ipa" Payload
+            zip -r -9 "dist/ios/FuelMetrics-${TAG}-ios-Runner.app.zip" "$APP_BUNDLE"
+            echo "Successfully packaged iOS release binaries."
+          else
+            echo "Error: Runner.app not found at $APP_BUNDLE"
+            exit 1
+          fi
+
+      - name: Upload iOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release-artifacts
+          path: dist/ios/*
+          retention-days: 7
+
+  create-release:
+    name: Publish GitHub Release
+    needs: [build-android, build-ios]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Determine Release Tag & Title
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "title=Fuel Metrics ${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Download Android Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release-artifacts
+          path: release-assets
+
+      - name: Download iOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-release-artifacts
+          path: release-assets
+
+      - name: List Release Assets
+        run: |
+          echo "Release Assets ready for publication:"
+          ls -la release-assets/
+
+      - name: Create GitHub Release & Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.title }}
+          draft: ${{ github.event.inputs.is_draft || false }}
+          prerelease: ${{ github.event.inputs.is_prerelease || false }}
+          files: release-assets/*
+          generate_release_notes: true
+          body: |
+            ## 🚗 Fuel Metrics Release ${{ steps.meta.outputs.tag }}
+
+            Welcome to **Fuel Metrics**! This release contains pre-compiled binaries for **Android** and **iOS**.
+
+            ### 📦 Release Assets
+            - **`FuelMetrics-${{ steps.meta.outputs.tag }}-android.apk`**: Standalone Android APK ready for direct sideloading and installation on any Android phone (API 21+).
+            - **`FuelMetrics-${{ steps.meta.outputs.tag }}-android.aab`**: Signed/release Android App Bundle for Google Play Console submission.
+            - **`FuelMetrics-${{ steps.meta.outputs.tag }}-ios-unsigned.ipa`**: Unsigned iOS application archive ready for sideloading via AltStore, Sideloadly, TrollStore, or re-signing with personal Apple ID.
+            - **`FuelMetrics-${{ steps.meta.outputs.tag }}-ios-Runner.app.zip`**: Packaged iOS Runner.app bundle for simulator / direct testing.
+
+            ### ✨ Highlights in Version 1.0.0
+            - **Multi-Vehicle Garage**: 8 vehicle types with vector illustrations, purchase date & ownership tracking, and instant single-tap switching.
+            - **Fuel Logging & Editing**: Date-only picker, regional gas station chips, live calculation preview, and dedicated edit/change flows.
+            - **Fuel Analytics**: Per-refuel distance traveled, fuel efficiency (km/L, L/100km, MPG), unit price, price delta %, and running cost per km/mi.
+            - **Spreadsheet Table & Trend Charts**: Interactive Excel-style table; tap any column header to view interactive trend line charts with min/avg/max telemetry.
+            - **6-Month Maintenance Tracking**: In-app alert banner displaying service deadlines without noisy push notifications.
+            - **Centralized Settings**: Automatic country & currency sync, unit dropdowns, and Dark/Light modes.
+            - **Local Privacy**: Encrypted data storage, private tamper-evident audit timestamps, and local logging.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

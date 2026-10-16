@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../models/vehicle.dart';
 import '../models/record_calculation.dart';
 import '../services/fuel_app_state.dart';
 import '../widgets/vehicle_artwork.dart';
+import '../utils/app_date_format.dart';
 import 'add_edit_vehicle_sheet.dart';
 import 'add_edit_record_screen.dart';
 import 'records_list_screen.dart';
@@ -41,11 +41,11 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          // Table / Excel View
+          // Table / Data Grid View
           if (vehicle != null)
             IconButton(
               icon: const Icon(Icons.table_chart_outlined),
-              tooltip: 'Excel / Table View',
+              tooltip: 'Data Grid View',
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (ctx) => RecordsTableScreen(appState: appState)),
@@ -56,7 +56,7 @@ class HomeScreen extends StatelessWidget {
           if (vehicle != null)
             IconButton(
               icon: const Icon(Icons.car_repair_outlined),
-              tooltip: '6-Month Servicing',
+              tooltip: 'Servicing',
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (ctx) => ServicesScreen(appState: appState)),
@@ -306,7 +306,7 @@ class HomeScreen extends StatelessWidget {
                                   Icon(Icons.shopping_bag_outlined, size: 12, color: Colors.grey.shade600),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'Bought: ${DateFormat('yyyy-MM-dd').format(vehicle.dateBought!)} (${vehicle.ownershipDuration})',
+                                    'Bought: ${AppDateUtils.format(vehicle.dateBought!)} (${vehicle.ownershipDuration})',
                                     style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
                                   ),
                                 ],
@@ -448,7 +448,7 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 14),
 
-            // Quick Shortcut Row: Table / Excel View & Servicing Log
+            // Quick Shortcut Row: Data Grid View & Servicing Log
             Row(
               children: [
                 Expanded(
@@ -458,7 +458,7 @@ class HomeScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     icon: const Icon(Icons.table_chart, size: 16, color: Colors.green),
-                    label: const Text('Excel Table View', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    label: const Text('Data Grid View', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (ctx) => RecordsTableScreen(appState: appState)),
@@ -474,7 +474,7 @@ class HomeScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     icon: const Icon(Icons.build_circle_outlined, size: 16, color: Colors.orange),
-                    label: const Text('6-Mo. Servicing', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    label: const Text('Servicing', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (ctx) => ServicesScreen(appState: appState)),
@@ -564,22 +564,27 @@ class HomeScreen extends StatelessWidget {
                 // 3. Fuel Efficiency for this Refuel (with on-the-fly unit switcher!)
                 _buildEfficiencyInteractiveTile(context, vehicle, latestCalc, stats),
 
-                // 4. Days since last fueled
-                _buildDashboardMetricTile(
-                  context,
-                  title: 'Days Since Last Refuel',
-                  value: latestCalc?.daysSincePrevious != null
-                      ? '${latestCalc!.daysSincePrevious!.toStringAsFixed(1)} Days'
-                      : (recordsAsc.isNotEmpty ? 'Latest' : '--'),
-                  subtitle: latestRecord != null
-                      ? DateFormat('MMM d, yyyy').format(latestRecord.dateTime)
-                      : 'Time interval',
-                  icon: Icons.hourglass_top_outlined,
-                  iconColor: Colors.amber.shade800,
-                  badgeText: stats.averageDaysBetweenFills != null
-                      ? 'Avg: ${stats.averageDaysBetweenFills!.toStringAsFixed(1)}d'
-                      : null,
-                ),
+                // 4. Days since last fueled: DateTime.now() - latestRecord.dateTime
+                () {
+                  final daysSinceLastEntry = latestRecord != null
+                      ? DateTime.now().difference(latestRecord.dateTime).inHours / 24.0
+                      : null;
+                  return _buildDashboardMetricTile(
+                    context,
+                    title: 'Days Since Last Refuel',
+                    value: daysSinceLastEntry != null
+                        ? '${daysSinceLastEntry.toStringAsFixed(1)} Days'
+                        : '--',
+                    subtitle: latestRecord != null
+                        ? 'Last: ${AppDateUtils.format(latestRecord.dateTime)}'
+                        : 'Time interval',
+                    icon: Icons.hourglass_top_outlined,
+                    iconColor: Colors.amber.shade800,
+                    badgeText: stats.averageDaysBetweenFills != null
+                        ? 'Avg: ${stats.averageDaysBetweenFills!.toStringAsFixed(1)}d'
+                        : null,
+                  );
+                }(),
 
                 // 5. Price per litre
                 _buildDashboardMetricTile(
@@ -685,7 +690,7 @@ class HomeScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                DateFormat('MMM d, yyyy').format(rec.dateTime),
+                                AppDateUtils.format(rec.dateTime),
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                               ),
                               const SizedBox(height: 2),

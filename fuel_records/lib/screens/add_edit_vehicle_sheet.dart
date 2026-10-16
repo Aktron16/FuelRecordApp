@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../models/vehicle.dart';
 import '../widgets/vehicle_artwork.dart';
+import '../utils/app_date_format.dart';
 
 class AddEditVehicleSheet extends StatefulWidget {
   final Vehicle? vehicleToEdit;
@@ -59,7 +59,17 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
   late String _unitDistance;
   late String _unitVolume;
   late String _currency;
+  late String _selectedFuelType;
   DateTime? _dateBought;
+
+  final List<String> _fuelTypes = const [
+    'Regular (87)',
+    'Midgrade (89)',
+    'Premium (93)',
+    'Diesel',
+    'E85 / Flex Fuel',
+    'Electric / Other',
+  ];
 
   final List<Color> _availableColors = const [
     Color(0xFF1E88E5), // Blue
@@ -93,6 +103,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
     _unitDistance = v?.unitDistance ?? widget.defaultDistanceUnit;
     _unitVolume = v?.unitVolume ?? widget.defaultVolumeUnit;
     _currency = widget.defaultCurrency;
+    _selectedFuelType = v?.fuelType ?? 'Regular (87)';
     _dateBought = v?.dateBought;
   }
 
@@ -121,6 +132,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
       unitDistance: _unitDistance,
       unitVolume: _unitVolume,
       currency: _currency,
+      fuelType: _selectedFuelType,
       initialOdometer: initialOdo,
       dateBought: _dateBought,
       createdAt: widget.vehicleToEdit?.createdAt,
@@ -498,6 +510,23 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
 
               const SizedBox(height: 14),
 
+              // Fuel Grade / Type Selector
+              DropdownButtonFormField<String>(
+                value: _fuelTypes.contains(_selectedFuelType) ? _selectedFuelType : _fuelTypes.first,
+                decoration: InputDecoration(
+                  labelText: 'Fuel Grade / Type',
+                  prefixIcon: const Icon(Icons.local_gas_station),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  filled: true,
+                ),
+                items: _fuelTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedFuelType = val);
+                },
+              ),
+
+              const SizedBox(height: 14),
+
               // Date Bought (Purchase Date)
               InkWell(
                 onTap: () async {
@@ -527,7 +556,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
                         children: [
                           const Text('Date Bought / Purchased (Optional)', style: TextStyle(fontSize: 11, color: Colors.grey)),
                           Text(
-                            _dateBought != null ? DateFormat('yyyy-MM-dd (MMM d, yyyy)').format(_dateBought!) : 'Not specified',
+                            _dateBought != null ? AppDateUtils.format(_dateBought!) : 'Not specified',
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: _dateBought != null ? null : Colors.grey),
                           ),
                         ],

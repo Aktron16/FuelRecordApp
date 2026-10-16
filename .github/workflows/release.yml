@@ -238,13 +238,16 @@ jobs:
             - **`FuelMetrics-${{ steps.meta.outputs.tag }}-ios-unsigned.ipa`**: Unsigned iOS application archive ready for sideloading via AltStore, Sideloadly, TrollStore, or re-signing with personal Apple ID.
             - **`FuelMetrics-${{ steps.meta.outputs.tag }}-ios-Runner.app.zip`**: Packaged iOS Runner.app bundle for simulator / direct testing.
 
-            ### ✨ Highlights in Version 1.0.0
-            - **Multi-Vehicle Garage**: 8 vehicle types with custom vector illustrations, purchase date & ownership tracking, and instant single-tap switching.
-            - **Fuel Logging & Editing**: Date-only picker, regional gas station chips, live calculation preview, and dedicated edit/change flows.
-            - **Fuel Analytics**: Per-refuel distance traveled, fuel efficiency (km/L, L/100km, MPG), unit price, price delta %, and running cost per km/mi.
-            - **Spreadsheet Table & Trend Charts**: Interactive Excel-style table; tap any column header to view interactive trend line charts with min/avg/max telemetry.
-            - **6-Month Maintenance Tracking**: In-app alert banner displaying service deadlines without noisy push notifications.
-            - **Centralized Settings**: Automatic country & currency sync, unit dropdowns, and Dark/Light modes.
-            - **Local Privacy**: Encrypted data storage, private tamper-evident audit timestamps, and local logging.
+            ### ✨ Highlights in Version 1.0.1
+            - **App Icon & Branding**: New silhouette app launcher icon of a person refueling a sedan from behind for Android and iOS.
+            - **Data Grid View**: Renamed and upgraded metrics table view with elevated scroll padding to prevent navigation overlap.
+            - **Distance Travelled Alignment**: Shifted immediately adjacent to the Odometer column for intuitive tracking.
+            - **Color-Coded Efficiency & Consumption Deltas**: Real-time delta display against previous refuel (e.g., `16.00 km/L (+1.00)`), color-coded green for increase and orange for decrease.
+            - **Vehicle Fuel Grade / Type Configuration**: Fuel grade now managed centrally in Add / Edit Vehicle Details with full backward compatibility for existing records.
+            - **Real-Time Days Since Last Refuel**: Accurately computes time elapsed since the latest fill-up date (`DateTime.now() - Last Entry Date`).
+            - **Universal DD-MMM-YY Date Format**: Standardized `16-Oct-26` date display across all dashboard metrics, tables, pickers, and exports.
+            - **Standalone CSV File Exporter**: Direct one-click export to standalone CSV spreadsheet files on device storage with clipboard path & text sharing.
+            - **Servicing Quick Access**: Streamlined servicing log shortcut button and non-intrusive alert banner.
+            - **Full Data Integrity**: Backward-compatible schema ensuring stored encrypted records are never tampered with or corrupted during app updates.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

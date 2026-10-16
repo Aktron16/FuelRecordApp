@@ -8,6 +8,7 @@ import '../models/fuel_record.dart';
 import '../models/service_record.dart';
 import '../models/record_calculation.dart';
 import '../models/vehicle_stats.dart';
+import '../utils/app_date_format.dart';
 import 'country_data.dart';
 
 class FuelAppState extends ChangeNotifier {
@@ -670,29 +671,49 @@ class FuelAppState extends ChangeNotifier {
       ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
     final sb = StringBuffer();
-    sb.writeln('Date,Odometer (${v.unitDistance}),Fuel Amount (${v.unitVolume}),Total Price (${v.currency}),Price Per Unit,Distance Traveled,Fuel Efficiency (${v.unitDistance}/${v.unitVolume}),Days Since Last,Fuel Type,Station,Notes');
+    sb.writeln('Date,Odometer (${v.unitDistance}),Distance Travelled (${v.unitDistance}),Fuel Amount (${v.unitVolume}),Total Cost (${v.currency}),Price Per ${v.unitVolume},Fuel Efficiency (${v.unitDistance}/${v.unitVolume}),Consumption (L/100km),Days Since Last,Fuel Grade,Station,Full Tank,Notes');
 
     for (int i = 0; i < sorted.length; i++) {
       final curr = sorted[i];
       final prev = i > 0 ? sorted[i - 1] : null;
       final calc = RecordCalculation(current: curr, previous: prev);
 
-      final dateStr = curr.dateTime.toIso8601String().substring(0, 10);
+      final dateStr = AppDateUtils.format(curr.dateTime);
       final odo = curr.odometer.toStringAsFixed(1);
+      final dist = calc.distanceTraveled?.toStringAsFixed(1) ?? '';
       final fuel = curr.fuelAmount.toStringAsFixed(2);
       final price = curr.totalPrice.toStringAsFixed(2);
       final ppu = calc.pricePerUnit.toStringAsFixed(3);
-      final dist = calc.distanceTraveled?.toStringAsFixed(1) ?? '';
       final eff = calc.fuelEfficiency?.toStringAsFixed(2) ?? '';
+      final cons = calc.consumptionPer100Units?.toStringAsFixed(2) ?? '';
       final days = calc.daysSincePrevious?.toStringAsFixed(1) ?? '';
       final fuelType = '"${curr.fuelType.replaceAll('"', '""')}"';
       final station = '"${curr.gasStation.replaceAll('"', '""')}"';
+      final fullTank = curr.isFullTank ? 'Yes' : 'No';
       final notes = '"${curr.notes.replaceAll('"', '""')}"';
 
-      sb.writeln('$dateStr,$odo,$fuel,$price,$ppu,$dist,$eff,$days,$fuelType,$station,$notes');
+      sb.writeln('$dateStr,$odo,$dist,$fuel,$price,$ppu,$eff,$cons,$days,$fuelType,$station,$fullTank,$notes');
     }
 
     return sb.toString();
+  }
+
+  /// Exports vehicle records to a standalone .csv file in the app documents storage directory.
+  Future<File> exportVehicleRecordsToCsvFile(String vehicleId) async {
+    final csvContent = exportRecordsToCsv(vehicleId);
+    final dir = await _getAppDirectory();
+    final exportsDir = Directory('${dir.path}/Exports');
+    if (!exportsDir.existsSync()) {
+      exportsDir.createSync(recursive: true);
+    }
+    final vehicle = _vehicles.firstWhere((x) => x.id == vehicleId, orElse: () => activeVehicle!);
+    final sanitizedName = vehicle.name.replaceAll(RegExp(r'[^\w\s\.-]'), '_').trim().replaceAll(' ', '_');
+    final dateStr = AppDateUtils.format(DateTime.now()).replaceAll('-', '_');
+    final filePath = '${exportsDir.path}/FuelMetrics_${sanitizedName}_$dateStr.csv';
+    final file = File(filePath);
+    await file.writeAsString(csvContent);
+    await _logAuditAction('Exported CSV file for vehicle ${vehicle.name}: $filePath');
+    return file;
   }
 
   /// Clear all data

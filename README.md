@@ -1,4 +1,4 @@
-# Fuel Metrics (Version 1.0.0)
+# Fuel Metrics (Version 1.0.1)
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2.svg?logo=dart)](https://dart.dev)
@@ -6,24 +6,16 @@
 [![Material Design](https://img.shields.io/badge/UI-Material%203-7C4DFF.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-**Fuel Metrics** is a private, modern, cross-platform mobile application designed for Android and iOS to keep detailed, private records of vehicle fuel consumption, track running expenses, compute granular efficiency analytics, and monitor periodic 6-month vehicle maintenance—all stored locally with built-in encryption and tamper-evident audit tracking.
+**Fuel Metrics** is a private, modern, cross-platform mobile application designed for Android and iOS to keep detailed, private records of vehicle fuel consumption, track running expenses, compute granular efficiency analytics, and monitor periodic vehicle maintenance—all stored locally with built-in encryption and tamper-evident audit tracking.
 
 ---
 
 ## 🌟 Key Features
 
 ### 🚗 Multi-Vehicle Garage Management
-- **Detailed Vehicle Profiling:** Record vehicle name, brand, owner, vehicle type, purchase date (`Date Bought`), and initial odometer reading.
+- **Detailed Vehicle Profiling:** Record vehicle name, brand, owner, vehicle type, fuel grade/type (`Regular (87)`, `Premium (93)`, `Diesel`, etc.), purchase date (`Date Bought`), and initial odometer reading.
 - **Dynamic Ownership Tracking:** Automatically calculates and displays real-time ownership duration (years, months, and days) from the purchase date.
-- **Custom Vector Artwork:** Handcrafted, scalable vector illustrations for 8 vehicle types:
-  - SUV
-  - Sedan
-  - Compact / Hatchback
-  - Pickup Truck
-  - Coupe / Sports Car
-  - Van / Minivan
-  - Motorcycle
-  - Electric Vehicle (EV)
+- **Custom Vector Artwork:** Handcrafted, scalable vector illustrations for 8 vehicle types (SUV, Sedan, Compact, Truck, Coupe, Van, Motorcycle, EV).
 - **Single-Tap Navigation:** Switch between cars with a single tap from the garage screen or the quick-switch vehicle sheet, instantly bringing up that vehicle's dashboard.
 
 ---
@@ -42,21 +34,24 @@ For every refueling record, the app automatically calculates and displays:
 - **Fuel Efficiency:** Calculated for each refuel in **km/L**, **L/100km**, or **MPG**.
 - **Price Delta & Trend:** Price increase or decrease (nominal value and percentage) compared to the prior refuel.
 - **Price per Unit:** Cost per litre or gallon.
-- **Days Since Last Fueled:** Number of days elapsed between fuel stops.
+- **Days Since Last Fueled:** Precise time elapsed since the most recent fill-up date (`DateTime.now() - Last Entry Date`).
 - **Running Cost per Distance:** Cost per kilometre or mile driven.
 - **Combined Lifetime Statistics:** Overall dashboard displaying total distance driven, total fuel consumed, total money spent, lifetime average fuel economy, and total refuel visits.
 
 ---
 
-### 📈 Excel / Table View & Interactive Trend Charting
-- **Spreadsheet Table View:** View every accessible metric in a scrollable, structured table format.
+### 📈 Data Grid View & Interactive Trend Charting
+- **Data Grid View:** View every accessible metric in a scrollable, structured table format with elevated bottom padding to prevent navigation overlap.
+- **Distance Travelled Alignment:** Positioned immediately adjacent to the Odometer column for intuitive tracking.
+- **Color-Coded Efficiency & Consumption Deltas:** Displays the incremental change vs. prior refuel (e.g., `16.00 km/L (+1.00)`), color-coded **green for increases** and **orange for decreases**.
 - **One-Tap Trend Graphs:** Tap any column header (Distance, Odometer, Price, Fuel Amount, Fuel Efficiency, Cost/km) to view an interactive line chart powered by `fl_chart`.
 - **Chart Telemetry:** Interactive line graphs display minimum, maximum, and average values with smooth Bezier curves and timestamp-labeled axes.
-- **Instance-Based Unit Switching:** Temporarily toggle units (e.g., switch from `km/L` to `L/100km` or `MPG`) on any metric card during your session without permanently altering your settings. Defaults automatically revert upon app relaunch.
+- **CSV File Exporter:** One-tap export to standalone `.csv` files stored in `<app_documents>/FuelMetricsData/Exports/` with instant path and content clipboard copying.
+- **Standardized Date Formats:** Clean, universal `DD-Month(abbreviation)-YY` formatting (e.g. `16-Oct-26`) across all screens, tables, and exports.
 
 ---
 
-### 🔧 6-Month Vehicle Servicing Tracker
+### 🔧 Servicing Tracker
 - **Scheduled Maintenance Tracking:** Keeps a structured record of vehicle servicing events, oil changes, and inspection notes.
 - **Non-Intrusive In-App Alert Banner:** Alerts appear directly inside the app below vehicle details when a 6-month service is approaching (within 30 days) or overdue.
 - **Zero Push Notification Noise:** No background battery drain or spammy OS push notifications; alerts are visible exclusively when you open the app.
@@ -64,10 +59,10 @@ For every refueling record, the app automatically calculates and displays:
 ---
 
 ### ⚙️ Centralized Settings & Customization
-- **Country & Currency Synchronization:** Select your country of residence (USA, UK, Canada, Australia, India, Germany, France, UAE, Japan, Brazil, etc.) to automatically configure the appropriate currency symbol and regional gas station presets.
+- **Country & Currency Synchronization:** Select your country of residence to automatically configure the appropriate currency symbol and regional gas station presets.
 - **Simplified Dropdown Selectors:** Centralized dropdown selectors for Distance (`km`, `mi`), Volume (`L`, `gal`), and Efficiency (`km/L`, `L/100km`, `MPG`).
 - **Dark & Light Themes:** Toggle between dark mode and clean light mode with adaptive Material 3 color palettes.
-- **Custom Brand Identity:** Custom vector brand logo (`FuelManLogo`) featuring a man refueling a vehicle viewed from behind.
+- **App Icon & Logo:** Distinctive silhouette icon and vector artwork depicting a person filling a sedan from behind.
 
 ---
 

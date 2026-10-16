@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../models/vehicle.dart';
 import '../models/service_record.dart';
 import '../services/fuel_app_state.dart';
+import '../utils/app_date_format.dart';
 
 class ServicesScreen extends StatefulWidget {
   final FuelAppState appState;
@@ -165,7 +165,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final srv = services[index];
-                final dateStr = DateFormat('EEE, MMM d, yyyy').format(srv.serviceDate);
+                final dateStr = AppDateUtils.format(srv.serviceDate);
 
                 return Card(
                   elevation: 1,
@@ -429,7 +429,7 @@ class _AddEditServiceModalState extends State<_AddEditServiceModal> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text('Service Date (Date Only)', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                          Text(DateFormat('yyyy-MM-dd (EEEE, MMM d, yyyy)').format(_selectedDate),
+                          Text(AppDateUtils.format(_selectedDate),
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         ],
                       ),

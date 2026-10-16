@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import '../models/vehicle.dart';
 import '../models/fuel_record.dart';
 import '../models/record_calculation.dart';
 import '../services/fuel_app_state.dart';
+import '../utils/app_date_format.dart';
 import 'add_edit_record_screen.dart';
 
 class RecordsListScreen extends StatefulWidget {
@@ -90,9 +92,17 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
           IconButton(
             icon: const Icon(Icons.file_download_outlined),
             tooltip: 'Export CSV',
-            onPressed: () {
-              final csv = widget.appState.exportRecordsToCsv(vehicle.id);
-              _showExportDialog(context, 'CSV Export for ${vehicle.name}', csv);
+            onPressed: () async {
+              try {
+                final file = await widget.appState.exportVehicleRecordsToCsvFile(vehicle.id);
+                if (!context.mounted) return;
+                _showExportDialog(context, vehicle, file);
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to export CSV: $e')),
+                );
+              }
             },
           ),
         ],
@@ -194,7 +204,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
     bool isDark,
   ) {
     final theme = Theme.of(context);
-    final dateStr = DateFormat('EEE, MMM d, yyyy • hh:mm a').format(record.dateTime);
+    final dateStr = AppDateUtils.format(record.dateTime);
 
     return Card(
       elevation: 1.5,
@@ -488,7 +498,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
               ),
               const SizedBox(height: 16),
 
-              _detailRow('Date & Time', DateFormat('yyyy-MM-dd HH:mm').format(record.dateTime)),
+              _detailRow('Date', AppDateUtils.format(record.dateTime)),
               _detailRow('Odometer Reading', '${record.odometer.toStringAsFixed(1)} ${vehicle.unitDistance}'),
               _detailRow('Fuel Filled', '${record.fuelAmount.toStringAsFixed(2)} ${vehicle.unitVolume}'),
               _detailRow('Total Cost', '${vehicle.currency}${record.totalPrice.toStringAsFixed(2)}'),
@@ -567,24 +577,71 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
     );
   }
 
-  void _showExportDialog(BuildContext context, String title, String content) {
+  void _showExportDialog(BuildContext context, Vehicle vehicle, File file) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: SelectableText(
-              content,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+        title: Row(
+          children: const [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Text('CSV File Exported', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Your fuel records have been exported into a separate CSV spreadsheet file on your device:',
+              style: TextStyle(fontSize: 13),
             ),
-          ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.25)),
+              ),
+              child: SelectableText(
+                file.path,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 11, fontWeight: FontWeight.w600),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.copy, size: 14),
+                  label: const Text('Copy Path', style: TextStyle(fontSize: 12)),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: file.path));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('File path copied to clipboard!')),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.file_copy, size: 14),
+                  label: const Text('Copy CSV', style: TextStyle(fontSize: 12)),
+                  onPressed: () {
+                    final content = file.readAsStringSync();
+                    Clipboard.setData(ClipboardData(text: content));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('CSV content copied to clipboard!')),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Close'),
+            child: const Text('Done'),
           ),
         ],
       ),

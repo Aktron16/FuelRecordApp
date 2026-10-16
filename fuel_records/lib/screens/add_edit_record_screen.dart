@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../models/vehicle.dart';
 import '../models/fuel_record.dart';
 import '../models/record_calculation.dart';
 import '../widgets/vehicle_artwork.dart';
+import '../utils/app_date_format.dart';
 
 class AddEditRecordScreen extends StatefulWidget {
   final Vehicle vehicle;
@@ -39,19 +39,6 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
   late TextEditingController _notesController;
 
   late bool _isFullTank;
-  late String _selectedFuelType;
-
-  final List<String> _fuelTypes = const [
-    'Regular 87',
-    'Midgrade 89',
-    'Premium 91',
-    'Super 93+',
-    'Diesel',
-    'Bio-Diesel',
-    'E85 (Ethanol)',
-    'LPG / Autogas',
-    'CNG',
-  ];
 
   final List<String> _commonStations = const [
     'Shell', 'Chevron', 'Exxon', 'Mobil', 'BP',
@@ -77,7 +64,6 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
     _notesController = TextEditingController(text: rec?.notes ?? '');
 
     _isFullTank = rec?.isFullTank ?? true;
-    _selectedFuelType = rec?.fuelType ?? 'Regular 87';
 
     // Auto-prefill odometer with previous if available and new entry
     if (rec == null && widget.previousRecord != null) {
@@ -131,7 +117,7 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
       fuelAmount: fuel,
       totalPrice: price,
       isFullTank: _isFullTank,
-      fuelType: _selectedFuelType,
+      fuelType: widget.recordToEdit?.fuelType ?? widget.vehicle.fuelType,
       gasStation: _gasStationController.text.trim(),
       notes: _notesController.text.trim(),
     );
@@ -371,7 +357,7 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                DateFormat('EEE, MMM d, yyyy').format(_selectedDateTime),
+                                AppDateUtils.format(_selectedDateTime),
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                               ),
                             ],
@@ -517,23 +503,6 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                     activeColor: primaryColor,
                     onChanged: (val) => setState(() => _isFullTank = val),
                   ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Fuel Type Selector
-                DropdownButtonFormField<String>(
-                  value: _selectedFuelType,
-                  decoration: InputDecoration(
-                    labelText: 'Fuel Grade / Type',
-                    prefixIcon: const Icon(Icons.water_drop),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                    filled: true,
-                  ),
-                  items: _fuelTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                  onChanged: (val) {
-                    if (val != null) setState(() => _selectedFuelType = val);
-                  },
                 ),
 
                 const SizedBox(height: 16),

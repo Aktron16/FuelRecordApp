@@ -99,7 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.3),
                       ),
                       Text(
-                        'Version 1 • Private Offline Record Tracker',
+                        'Version 1.0.1 • Private Offline Record Tracker',
                         style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.65)),
                       ),
                     ],

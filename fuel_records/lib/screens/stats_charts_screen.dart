@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
 import '../models/vehicle.dart';
 import '../services/fuel_app_state.dart';
+import '../utils/app_date_format.dart';
 
 class StatsChartsScreen extends StatefulWidget {
   final FuelAppState appState;
@@ -410,7 +410,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    DateFormat('M/d').format(r.dateTime),
+                    AppDateUtils.formatShort(r.dateTime),
                     style: const TextStyle(fontSize: 10, color: Colors.grey),
                   ),
                 );

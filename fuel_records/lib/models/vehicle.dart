@@ -63,6 +63,7 @@ class Vehicle {
   final String unitDistance; // 'km' or 'mi'
   final String unitVolume; // 'L' or 'gal'
   final String currency; // '$', '€', '₹', '£', etc.
+  final String fuelType; // Default fuel grade/type for this vehicle
   final double? initialOdometer;
   final DateTime? dateBought; // Date vehicle was purchased
   final DateTime createdAt;
@@ -77,6 +78,7 @@ class Vehicle {
     this.unitDistance = 'km',
     this.unitVolume = 'L',
     this.currency = '\$',
+    this.fuelType = 'Regular (87)',
     this.initialOdometer,
     this.dateBought,
     DateTime? createdAt,
@@ -112,6 +114,7 @@ class Vehicle {
       'unitDistance': unitDistance,
       'unitVolume': unitVolume,
       'currency': currency,
+      'fuelType': fuelType,
       'initialOdometer': initialOdometer,
       'dateBought': dateBought?.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
@@ -137,6 +140,7 @@ class Vehicle {
       unitDistance: json['unitDistance'] as String? ?? 'km',
       unitVolume: json['unitVolume'] as String? ?? 'L',
       currency: json['currency'] as String? ?? '\$',
+      fuelType: json['fuelType'] as String? ?? 'Regular (87)',
       initialOdometer: (json['initialOdometer'] as num?)?.toDouble(),
       dateBought: json['dateBought'] != null
           ? DateTime.tryParse(json['dateBought'] as String)
@@ -156,6 +160,7 @@ class Vehicle {
     String? unitDistance,
     String? unitVolume,
     String? currency,
+    String? fuelType,
     double? initialOdometer,
     DateTime? dateBought,
   }) {
@@ -169,6 +174,7 @@ class Vehicle {
       unitDistance: unitDistance ?? this.unitDistance,
       unitVolume: unitVolume ?? this.unitVolume,
       currency: currency ?? this.currency,
+      fuelType: fuelType ?? this.fuelType,
       initialOdometer: initialOdometer ?? this.initialOdometer,
       dateBought: dateBought ?? this.dateBought,
       createdAt: createdAt,

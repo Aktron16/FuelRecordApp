@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
+import '../models/vehicle.dart';
 import '../models/record_calculation.dart';
 import '../services/fuel_app_state.dart';
+import '../utils/app_date_format.dart';
 
 class RecordsTableScreen extends StatefulWidget {
   final FuelAppState appState;
@@ -149,7 +152,7 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                             return Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
-                                DateFormat('M/d').format(dates[idx]),
+                                AppDateUtils.formatShort(dates[idx]),
                                 style: const TextStyle(fontSize: 9, color: Colors.grey),
                               ),
                             );
@@ -210,6 +213,44 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
     );
   }
 
+  /// Builds metric value with formatted and color-coded delta
+  /// Green if increased, orange if decreased
+  Widget _buildValueWithDelta({
+    required String valueStr,
+    required double? delta,
+    Color baseColor = Colors.green,
+  }) {
+    if (delta == null) {
+      return Text(
+        valueStr,
+        style: TextStyle(color: baseColor, fontWeight: FontWeight.bold),
+      );
+    }
+
+    final isIncrease = delta > 0.005;
+    final isDecrease = delta < -0.005;
+    final deltaSign = isIncrease ? '+' : '';
+    final deltaColor = isIncrease
+        ? Colors.green
+        : (isDecrease ? Colors.orange.shade800 : Colors.grey);
+
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(fontSize: 13, fontFamily: 'Roboto'),
+        children: [
+          TextSpan(
+            text: '$valueStr ',
+            style: TextStyle(color: baseColor, fontWeight: FontWeight.bold),
+          ),
+          TextSpan(
+            text: '($deltaSign${delta.toStringAsFixed(2)})',
+            style: TextStyle(color: deltaColor, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final vehicle = widget.appState.activeVehicle;
@@ -218,7 +259,7 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
 
     if (vehicle == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Excel Table View')),
+        appBar: AppBar(title: const Text('Data Grid View')),
         body: const Center(child: Text('No active vehicle')),
       );
     }
@@ -244,13 +285,17 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
     final consumptions = <double>[];
     final daysList = <double>[];
 
+    final isMi = vehicle.unitDistance == 'mi';
+    final effUnit = isMi ? 'MPG' : 'km/L';
+    final effMultiplier = isMi ? 2.35215 : 1.0;
+
     for (final c in calculations) {
       if (c.distanceTraveled != null) {
         distances.add(c.distanceTraveled!);
         distanceDates.add(c.current.dateTime);
       }
       if (c.fuelEfficiency != null) {
-        efficiencies.add(c.fuelEfficiency!);
+        efficiencies.add(c.fuelEfficiency! * effMultiplier);
         effDates.add(c.current.dateTime);
       }
       if (c.consumptionPer100Units != null) {
@@ -266,244 +311,245 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Excel / Table Metrics View', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+            const Text('Data Grid View', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
             Text('${vehicle.name} • Tap any column title to graph it!', style: const TextStyle(fontSize: 11, color: Colors.grey)),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.file_download_outlined),
-            tooltip: 'Export CSV',
-            onPressed: () {
-              final csv = widget.appState.exportRecordsToCsv(vehicle.id);
-              _showExportModal(context, 'Exported CSV Data', csv);
+            tooltip: 'Export CSV File',
+            onPressed: () async {
+              try {
+                final file = await widget.appState.exportVehicleRecordsToCsvFile(vehicle.id);
+                if (!context.mounted) return;
+                _showExportModal(context, vehicle, file);
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to export CSV: $e')),
+                );
+              }
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Unit quick toggle bar on the fly
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: isDark ? Colors.black26 : Colors.blue.withValues(alpha: 0.05),
-            child: Row(
-              children: [
-                const Icon(Icons.swap_horiz, size: 16, color: Colors.blueAccent),
-                const SizedBox(width: 8),
-                const Text('View Units (Instance Switch):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                const Spacer(),
-                SegmentedButton<String>(
-                  style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                  segments: const [
-                    ButtonSegment(value: 'km/L', label: Text('km/L', style: TextStyle(fontSize: 10))),
-                    ButtonSegment(value: 'L/100km', label: Text('L/100km', style: TextStyle(fontSize: 10))),
-                    ButtonSegment(value: 'MPG', label: Text('MPG', style: TextStyle(fontSize: 10))),
-                  ],
-                  selected: {widget.appState.activeEfficiencyUnit},
-                  onSelectionChanged: (set) => widget.appState.setTemporaryEfficiencyUnit(set.first),
-                ),
-              ],
-            ),
-          ),
-
-          // Scrollable Excel Data Table
-          Expanded(
-            child: records.isEmpty
-                ? const Center(child: Text('No fuel records to display in table.'))
-                : Scrollbar(
-                    controller: _horizontalController,
-                    thumbVisibility: true,
-                    child: SingleChildScrollView(
-                      controller: _horizontalController,
-                      scrollDirection: Axis.horizontal,
-                      child: Scrollbar(
-                        controller: _verticalController,
-                        thumbVisibility: true,
-                        child: SingleChildScrollView(
-                          controller: _verticalController,
-                          scrollDirection: Axis.vertical,
-                          child: DataTable(
-                            headingRowColor: WidgetStateProperty.all(
-                              isDark ? const Color(0xFF262838) : Colors.blueGrey.shade100,
-                            ),
-                            dataRowColor: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
-                              return null; // auto zebra
-                            }),
-                            columns: [
-                              _buildGraphableColumn(
-                                label: 'Date',
-                                tooltip: 'Date of fill-up',
-                                icon: Icons.calendar_today,
-                                onTap: null,
-                              ),
-                              _buildGraphableColumn(
-                                label: 'Odometer (${vehicle.unitDistance})',
-                                tooltip: 'Tap to graph odometer increase',
-                                icon: Icons.speed,
-                                onTap: () => _openColumnGraphModal(
-                                  context,
-                                  columnTitle: 'Odometer Reading',
-                                  unit: vehicle.unitDistance,
-                                  values: odometers,
-                                  dates: dates,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                              _buildGraphableColumn(
-                                label: 'Fuel (${vehicle.unitVolume})',
-                                tooltip: 'Tap to graph fuel filled',
-                                icon: Icons.local_gas_station,
-                                onTap: () => _openColumnGraphModal(
-                                  context,
-                                  columnTitle: 'Fuel Filled',
-                                  unit: vehicle.unitVolume,
-                                  values: fuelAmounts,
-                                  dates: dates,
-                                  color: Colors.teal,
-                                ),
-                              ),
-                              _buildGraphableColumn(
-                                label: 'Total Cost (${vehicle.currency})',
-                                tooltip: 'Tap to graph total spent',
-                                icon: Icons.attach_money,
-                                onTap: () => _openColumnGraphModal(
-                                  context,
-                                  columnTitle: 'Total Cost',
-                                  unit: vehicle.currency,
-                                  values: totalPrices,
-                                  dates: dates,
-                                  color: Colors.amber.shade800,
-                                ),
-                              ),
-                              _buildGraphableColumn(
-                                label: 'Price / ${vehicle.unitVolume}',
-                                tooltip: 'Tap to graph fuel price trend',
-                                icon: Icons.price_change,
-                                onTap: () => _openColumnGraphModal(
-                                  context,
-                                  columnTitle: 'Price per ${vehicle.unitVolume}',
-                                  unit: '${vehicle.currency}/${vehicle.unitVolume}',
-                                  values: pricesPerUnit,
-                                  dates: dates,
-                                  color: Colors.redAccent,
-                                ),
-                              ),
-                              _buildGraphableColumn(
-                                label: 'Distance Went (+${vehicle.unitDistance})',
-                                tooltip: 'Tap to graph trip distance',
-                                icon: Icons.route,
-                                onTap: () => _openColumnGraphModal(
-                                  context,
-                                  columnTitle: 'Distance Traveled Since Last',
-                                  unit: vehicle.unitDistance,
-                                  values: distances,
-                                  dates: distanceDates,
-                                  color: Colors.indigo,
-                                ),
-                              ),
-                              _buildGraphableColumn(
-                                label: 'Efficiency (${widget.appState.activeEfficiencyUnit})',
-                                tooltip: 'Tap to graph fuel efficiency',
-                                icon: Icons.auto_graph,
-                                onTap: () => _openColumnGraphModal(
-                                  context,
-                                  columnTitle: 'Fuel Efficiency for Refuel',
-                                  unit: widget.appState.activeEfficiencyUnit,
-                                  values: efficiencies,
-                                  dates: effDates,
-                                  color: Colors.green,
-                                ),
-                              ),
-                              _buildGraphableColumn(
-                                label: 'L/100km',
-                                tooltip: 'Tap to graph consumption',
-                                icon: Icons.eco,
-                                onTap: () => _openColumnGraphModal(
-                                  context,
-                                  columnTitle: 'Fuel Consumption',
-                                  unit: 'L/100km',
-                                  values: consumptions,
-                                  dates: effDates,
-                                  color: Colors.cyan,
-                                ),
-                              ),
-                              _buildGraphableColumn(
-                                label: 'Days Since Last',
-                                tooltip: 'Days elapsed between fill-ups',
-                                icon: Icons.hourglass_bottom,
-                                onTap: () => _openColumnGraphModal(
-                                  context,
-                                  columnTitle: 'Days Between Refuels',
-                                  unit: 'days',
-                                  values: daysList,
-                                  dates: effDates,
-                                  color: Colors.deepOrange,
-                                ),
-                              ),
-                              const DataColumn(label: Text('Gas Station')),
-                              const DataColumn(label: Text('Fuel Grade')),
-                              const DataColumn(label: Text('Full Tank')),
-                              const DataColumn(label: Text('Notes')),
-                            ],
-                            rows: List<DataRow>.generate(records.length, (index) {
-                              final rec = records[index];
-                              final calc = calculations[index];
-
-                              // Convert efficiency to active temporary unit if requested
-                              String effDisplay = 'N/A';
-                              if (calc.fuelEfficiency != null) {
-                                final effBaseKmPerL = calc.fuelEfficiency!;
-                                if (widget.appState.activeEfficiencyUnit == 'L/100km') {
-                                  effDisplay = calc.consumptionPer100Units != null
-                                      ? '${calc.consumptionPer100Units!.toStringAsFixed(2)} L/100km'
-                                      : 'N/A';
-                                } else if (widget.appState.activeEfficiencyUnit == 'MPG') {
-                                  final mpg = effBaseKmPerL * 2.35215;
-                                  effDisplay = '${mpg.toStringAsFixed(2)} MPG';
-                                } else {
-                                  effDisplay = '${effBaseKmPerL.toStringAsFixed(2)} km/L';
-                                }
-                              }
-
-                              return DataRow(
-                                color: WidgetStateProperty.resolveWith<Color?>((states) {
-                                  if (index.isEven) {
-                                    return isDark ? Colors.white.withValues(alpha: 0.02) : Colors.grey.withValues(alpha: 0.06);
-                                  }
-                                  return null;
-                                }),
-                                cells: [
-                                  DataCell(Text(DateFormat('yyyy-MM-dd').format(rec.dateTime), style: const TextStyle(fontWeight: FontWeight.bold))),
-                                  DataCell(Text(rec.odometer.toStringAsFixed(1))),
-                                  DataCell(Text(rec.fuelAmount.toStringAsFixed(2))),
-                                  DataCell(Text('${vehicle.currency}${rec.totalPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600))),
-                                  DataCell(Text('${vehicle.currency}${calc.pricePerUnit.toStringAsFixed(3)}')),
-                                  DataCell(Text(
-                                    calc.distanceTraveled != null ? '+${calc.distanceTraveled!.toStringAsFixed(1)}' : 'First Log',
-                                    style: TextStyle(
-                                      color: calc.distanceTraveled != null ? Colors.blueAccent : Colors.grey,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  )),
-                                  DataCell(Text(effDisplay, style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold))),
-                                  DataCell(Text(calc.consumptionPer100Units != null ? calc.consumptionPer100Units!.toStringAsFixed(2) : '-')),
-                                  DataCell(Text(calc.daysSincePrevious != null ? '${calc.daysSincePrevious!.toStringAsFixed(1)} d' : '-')),
-                                  DataCell(Text(rec.gasStation.isNotEmpty ? rec.gasStation : '-')),
-                                  DataCell(Text(rec.fuelType)),
-                                  DataCell(Icon(rec.isFullTank ? Icons.check_circle : Icons.radio_button_unchecked, size: 16, color: rec.isFullTank ? Colors.green : Colors.grey)),
-                                  DataCell(Text(rec.notes.isNotEmpty ? rec.notes : '-')),
-                                ],
-                              );
-                            }),
+      body: records.isEmpty
+          ? const Center(child: Text('No fuel records to display in grid.'))
+          : Scrollbar(
+              controller: _horizontalController,
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                controller: _horizontalController,
+                scrollDirection: Axis.horizontal,
+                child: Scrollbar(
+                  controller: _verticalController,
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    controller: _verticalController,
+                    scrollDirection: Axis.vertical,
+                    // Elevates the bottom-most entry when fully scrolled so buttons/bars don't impede view
+                    padding: const EdgeInsets.only(bottom: 120),
+                    child: DataTable(
+                      headingRowColor: WidgetStateProperty.all(
+                        isDark ? const Color(0xFF262838) : Colors.blueGrey.shade100,
+                      ),
+                      dataRowColor: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
+                        return null; // auto zebra
+                      }),
+                      columns: [
+                        _buildGraphableColumn(
+                          label: 'Date',
+                          tooltip: 'Date of fill-up',
+                          icon: Icons.calendar_today,
+                          onTap: null,
+                        ),
+                        _buildGraphableColumn(
+                          label: 'Odometer (${vehicle.unitDistance})',
+                          tooltip: 'Tap to graph odometer increase',
+                          icon: Icons.speed,
+                          onTap: () => _openColumnGraphModal(
+                            context,
+                            columnTitle: 'Odometer Reading',
+                            unit: vehicle.unitDistance,
+                            values: odometers,
+                            dates: dates,
+                            color: Colors.blue,
                           ),
                         ),
-                      ),
+                        // Distance Travelled shifted to the right of Odometer
+                        _buildGraphableColumn(
+                          label: 'Distance Travelled (${vehicle.unitDistance})',
+                          tooltip: 'Tap to graph trip distance',
+                          icon: Icons.route,
+                          onTap: () => _openColumnGraphModal(
+                            context,
+                            columnTitle: 'Distance Travelled',
+                            unit: vehicle.unitDistance,
+                            values: distances,
+                            dates: distanceDates,
+                            color: Colors.indigo,
+                          ),
+                        ),
+                        _buildGraphableColumn(
+                          label: 'Fuel (${vehicle.unitVolume})',
+                          tooltip: 'Tap to graph fuel filled',
+                          icon: Icons.local_gas_station,
+                          onTap: () => _openColumnGraphModal(
+                            context,
+                            columnTitle: 'Fuel Filled',
+                            unit: vehicle.unitVolume,
+                            values: fuelAmounts,
+                            dates: dates,
+                            color: Colors.teal,
+                          ),
+                        ),
+                        _buildGraphableColumn(
+                          label: 'Total Cost (${vehicle.currency})',
+                          tooltip: 'Tap to graph total spent',
+                          icon: Icons.attach_money,
+                          onTap: () => _openColumnGraphModal(
+                            context,
+                            columnTitle: 'Total Cost',
+                            unit: vehicle.currency,
+                            values: totalPrices,
+                            dates: dates,
+                            color: Colors.amber.shade800,
+                          ),
+                        ),
+                        _buildGraphableColumn(
+                          label: 'Price / ${vehicle.unitVolume}',
+                          tooltip: 'Tap to graph fuel price trend',
+                          icon: Icons.price_change,
+                          onTap: () => _openColumnGraphModal(
+                            context,
+                            columnTitle: 'Price per ${vehicle.unitVolume}',
+                            unit: '${vehicle.currency}/${vehicle.unitVolume}',
+                            values: pricesPerUnit,
+                            dates: dates,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                        _buildGraphableColumn(
+                          label: 'Efficiency ($effUnit)',
+                          tooltip: 'Tap to graph fuel efficiency',
+                          icon: Icons.auto_graph,
+                          onTap: () => _openColumnGraphModal(
+                            context,
+                            columnTitle: 'Fuel Efficiency for Refuel',
+                            unit: effUnit,
+                            values: efficiencies,
+                            dates: effDates,
+                            color: Colors.green,
+                          ),
+                        ),
+                        _buildGraphableColumn(
+                          label: 'Consumption (L/100km)',
+                          tooltip: 'Tap to graph consumption',
+                          icon: Icons.eco,
+                          onTap: () => _openColumnGraphModal(
+                            context,
+                            columnTitle: 'Fuel Consumption',
+                            unit: 'L/100km',
+                            values: consumptions,
+                            dates: effDates,
+                            color: Colors.cyan,
+                          ),
+                        ),
+                        _buildGraphableColumn(
+                          label: 'Days Since Last',
+                          tooltip: 'Days elapsed between fill-ups',
+                          icon: Icons.hourglass_bottom,
+                          onTap: () => _openColumnGraphModal(
+                            context,
+                            columnTitle: 'Days Between Refuels',
+                            unit: 'days',
+                            values: daysList,
+                            dates: effDates,
+                            color: Colors.deepOrange,
+                          ),
+                        ),
+                        const DataColumn(label: Text('Gas Station')),
+                        const DataColumn(label: Text('Fuel Grade')),
+                        const DataColumn(label: Text('Full Tank')),
+                        const DataColumn(label: Text('Notes')),
+                      ],
+                      rows: List<DataRow>.generate(records.length, (index) {
+                        final rec = records[index];
+                        final calc = calculations[index];
+
+                        // Efficiency calculation & delta
+                        final currentEff = calc.fuelEfficiency != null
+                            ? calc.fuelEfficiency! * effMultiplier
+                            : null;
+                        final prevEff = (index > 0 && calculations[index - 1].fuelEfficiency != null)
+                            ? calculations[index - 1].fuelEfficiency! * effMultiplier
+                            : null;
+                        final effDelta = (currentEff != null && prevEff != null)
+                            ? (currentEff - prevEff)
+                            : null;
+
+                        // Consumption calculation & delta
+                        final currentCons = calc.consumptionPer100Units;
+                        final prevCons = index > 0 ? calculations[index - 1].consumptionPer100Units : null;
+                        final consDelta = (currentCons != null && prevCons != null)
+                            ? (currentCons - prevCons)
+                            : null;
+
+                        return DataRow(
+                          color: WidgetStateProperty.resolveWith<Color?>((states) {
+                            if (index.isEven) {
+                              return isDark ? Colors.white.withValues(alpha: 0.02) : Colors.grey.withValues(alpha: 0.06);
+                            }
+                            return null;
+                          }),
+                          cells: [
+                            DataCell(Text(AppDateUtils.format(rec.dateTime), style: const TextStyle(fontWeight: FontWeight.bold))),
+                            DataCell(Text(rec.odometer.toStringAsFixed(1))),
+                            // Distance Travelled beside Odometer
+                            DataCell(Text(
+                              calc.distanceTraveled != null ? '+${calc.distanceTraveled!.toStringAsFixed(1)}' : 'First Log',
+                              style: TextStyle(
+                                color: calc.distanceTraveled != null ? Colors.blueAccent : Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )),
+                            DataCell(Text(rec.fuelAmount.toStringAsFixed(2))),
+                            DataCell(Text('${vehicle.currency}${rec.totalPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600))),
+                            DataCell(Text('${vehicle.currency}${calc.pricePerUnit.toStringAsFixed(3)}')),
+                            // Efficiency with inc/dec and color coding
+                            DataCell(
+                              currentEff != null
+                                  ? _buildValueWithDelta(
+                                      valueStr: '${currentEff.toStringAsFixed(2)} $effUnit',
+                                      delta: effDelta,
+                                      baseColor: Colors.green.shade700,
+                                    )
+                                  : const Text('-'),
+                            ),
+                            // L/100km with inc/dec and color coding
+                            DataCell(
+                              currentCons != null
+                                  ? _buildValueWithDelta(
+                                      valueStr: '${currentCons.toStringAsFixed(2)} L/100km',
+                                      delta: consDelta,
+                                      baseColor: isDark ? Colors.cyanAccent : Colors.teal.shade700,
+                                    )
+                                  : const Text('-'),
+                            ),
+                            DataCell(Text(calc.daysSincePrevious != null ? '${calc.daysSincePrevious!.toStringAsFixed(1)} d' : '-')),
+                            DataCell(Text(rec.gasStation.isNotEmpty ? rec.gasStation : '-')),
+                            DataCell(Text(rec.fuelType.isNotEmpty ? rec.fuelType : vehicle.fuelType)),
+                            DataCell(Icon(rec.isFullTank ? Icons.check_circle : Icons.radio_button_unchecked, size: 16, color: rec.isFullTank ? Colors.green : Colors.grey)),
+                            DataCell(Text(rec.notes.isNotEmpty ? rec.notes : '-')),
+                          ],
+                        );
+                      }),
                     ),
                   ),
-          ),
-        ],
-      ),
+                ),
+              ),
+            ),
     );
   }
 
@@ -535,19 +581,72 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
     );
   }
 
-  void _showExportModal(BuildContext context, String title, String content) {
+  void _showExportModal(BuildContext context, Vehicle vehicle, File file) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: SelectableText(content, style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
-          ),
+        title: Row(
+          children: const [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Text('CSV File Exported', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Your fuel records have been exported into a separate CSV file on your device:',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.25)),
+              ),
+              child: SelectableText(
+                file.path,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 11, fontWeight: FontWeight.w600),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.copy, size: 14),
+                  label: const Text('Copy Path', style: TextStyle(fontSize: 12)),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: file.path));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('File path copied to clipboard!')),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.file_copy, size: 14),
+                  label: const Text('Copy CSV', style: TextStyle(fontSize: 12)),
+                  onPressed: () {
+                    final content = file.readAsStringSync();
+                    Clipboard.setData(ClipboardData(text: content));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('CSV content copied to clipboard!')),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Close')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Done'),
+          ),
         ],
       ),
     );

@@ -172,3 +172,4 @@ out1024 = img.resize((1024, 1024), Image.Resampling.LANCZOS)
 os.makedirs('fuel_records/assets', exist_ok=True)
 out1024.save('fuel_records/assets/app_icon_1024.png')
 print('Generated bright high-contrast app_icon_1024.png successfully!')
+

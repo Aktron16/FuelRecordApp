@@ -47,3 +47,4 @@ if os.path.exists(os.path.dirname(web_icon_192)):
     print('Updated web icons')
 
 print('All platform launcher icons updated successfully!')
+

@@ -176,28 +176,6 @@ flutter build ipa --release
 
 ---
 
-## 🤖 Automated GitHub Releases (Android & iOS)
-
-A complete CI/CD workflow is included in `.github/workflows/release.yml`. When you push this project to GitHub, you can publish a new release with compiled Android & iOS binaries in two ways:
-
-### Method 1: Push a Git Tag (Recommended)
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-This triggers GitHub Actions to automatically:
-1. Run `flutter analyze` and `flutter test`.
-2. Compile the Android release APK (`FuelMetrics-v1.0.0-android.apk`) and App Bundle (`FuelMetrics-v1.0.0-android.aab`).
-3. Compile the iOS application bundle (`FuelMetrics-v1.0.0-ios-unsigned.ipa` and `Runner.app.zip`) on a macOS runner.
-4. Create a formal GitHub Release and attach all binaries automatically.
-
-### Method 2: Manual Trigger via GitHub UI
-1. Navigate to the **Actions** tab on your GitHub repository.
-2. Select **"Release Fuel Metrics"** from the left sidebar.
-3. Click **"Run workflow"**, specify the version tag (e.g. `v1.0.0`), and run.
-
----
-
 ## 🛡️ Security & Privacy Notice
 All records and personal vehicle metrics remain strictly on your physical device. No telemetry, analytics, or private log files are transmitted to external cloud servers. Records are secured locally using encryption within the app's dedicated storage directory.
 

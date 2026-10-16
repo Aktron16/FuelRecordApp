@@ -136,6 +136,46 @@ void main() {
 
       tempDir.deleteSync(recursive: true);
     });
+
+    test('Full JSON backup and restore functions accurately', () async {
+      SharedPreferences.setMockInitialValues({});
+      final tempDir = Directory.systemTemp.createTempSync('fuel_backup_test_');
+      final appState = FuelAppState(customStorageDir: tempDir, autoLoad: false);
+
+      final v = Vehicle(id: 'v_bak', name: 'Cruiser', type: VehicleType.suv, brand: 'Toyota', owner: 'Bob', fuelType: 'Diesel');
+      await appState.addVehicle(v);
+
+      final r = FuelRecord(
+        id: 'r_bak',
+        vehicleId: 'v_bak',
+        dateTime: DateTime(2026, 10, 16),
+        odometer: 50000,
+        fuelAmount: 60,
+        totalPrice: 120,
+        fuelType: 'Diesel',
+        gasStation: 'BP',
+      );
+      await appState.addRecord(r);
+
+      final backupStr = appState.exportAllDataBackup();
+      expect(backupStr.contains('Cruiser'), isTrue);
+      expect(backupStr.contains('50000'), isTrue);
+
+      final file = await appState.saveBackupToFile();
+      expect(file.existsSync(), isTrue);
+
+      // Now clear and restore
+      await appState.clearAllData();
+      expect(appState.vehicles.isEmpty, isTrue);
+
+      await appState.importAllDataBackup(backupStr);
+      expect(appState.vehicles.length, 1);
+      expect(appState.vehicles.first.name, 'Cruiser');
+      expect(appState.allRecords.length, 1);
+      expect(appState.allRecords.first.odometer, 50000);
+
+      tempDir.deleteSync(recursive: true);
+    });
   });
 
   testWidgets('FuelRecordApp smoke test', (WidgetTester tester) async {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/fuel_app_state.dart';
 import '../services/country_data.dart';
 import '../widgets/app_logo.dart';
@@ -99,7 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.3),
                       ),
                       Text(
-                        'Version 1.0.1 • Private Offline Record Tracker',
+                        'Version 1.0.2 • Private Offline Record Tracker',
                         style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.65)),
                       ),
                     ],
@@ -408,7 +409,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 16),
 
-          // 4. Data Management
+          // 4. Data Backup & Management
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Padding(
@@ -416,7 +417,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Data Management', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const Text('Data Backup & Portability', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Export or restore a complete encrypted-ready snapshot of your vehicles, fuel records, and service logs.',
+                    style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.65)),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.tonalIcon(
+                          onPressed: () => _handleExportBackup(context),
+                          icon: const Icon(Icons.backup_outlined, size: 18),
+                          label: const Text('Backup Data'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _handleRestoreBackup(context),
+                          icon: const Icon(Icons.settings_backup_restore, size: 18),
+                          label: const Text('Restore Data'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -429,7 +457,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             );
                           },
                           icon: const Icon(Icons.cloud_download_outlined, size: 18),
-                          label: const Text('Load Demo Data'),
+                          label: const Text('Demo Data'),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -451,12 +479,115 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Version Footer
           Center(
             child: Text(
-              'Fuel Metrics • Version 1.0.0',
+              'Fuel Metrics • Version 1.0.2',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
             ),
           ),
 
           const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleExportBackup(BuildContext context) async {
+    try {
+      final file = await widget.appState.saveBackupToFile();
+      final jsonStr = widget.appState.exportAllDataBackup();
+      await Clipboard.setData(ClipboardData(text: jsonStr));
+
+      if (!context.mounted) return;
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green),
+              SizedBox(width: 10),
+              Text('Backup Created'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Your complete data backup has been created and copied to clipboard.'),
+              const SizedBox(height: 12),
+              const Text('Saved File Path:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              const SizedBox(height: 4),
+              SelectableText(
+                file.path,
+                style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+              ),
+            ],
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Backup failed: $e')),
+      );
+    }
+  }
+
+  void _handleRestoreBackup(BuildContext context) {
+    final textController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Restore Data Backup'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Paste your backup JSON text below to restore your vehicles and fuel records:',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: textController,
+              maxLines: 6,
+              style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+              decoration: const InputDecoration(
+                hintText: '{\n  "version": "1.0.2",\n  "vehicles": [...]\n}',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final raw = textController.text.trim();
+              if (raw.isEmpty) return;
+              try {
+                await widget.appState.importAllDataBackup(raw);
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Data restored successfully!')),
+                );
+              } catch (e) {
+                if (!ctx.mounted) return;
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text('Failed to restore: $e')),
+                );
+              }
+            },
+            child: const Text('Restore'),
+          ),
         ],
       ),
     );

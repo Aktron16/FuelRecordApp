@@ -1,4 +1,4 @@
-package com.example.fuel_records
+package com.aktron.fuelmetrics
 
 import io.flutter.embedding.android.FlutterActivity
 

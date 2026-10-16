@@ -138,15 +138,21 @@ class _FuelManPainter extends CustomPainter {
       ).createShader(Rect.fromLTWH(w * 0.14, h * 0.41, w * 0.38, h * 0.14));
     canvas.drawPath(glassPath, glassPaint);
 
-    // Taillights (Left & Right)
-    final tailLightPaint = Paint()..color = const Color(0xFFD32F2F);
+    // Taillights (Left & Right) with bright connecting LED strip
+    final tailLightPaint = Paint()..color = const Color(0xFFFF2A4B);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.10, h * 0.58, w * 0.09, h * 0.05), const Radius.circular(2)),
+      RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.10, h * 0.58, w * 0.09, h * 0.05), const Radius.circular(2.5)),
       tailLightPaint,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.51, h * 0.58, w * 0.09, h * 0.05), const Radius.circular(2)),
+      RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.51, h * 0.58, w * 0.09, h * 0.05), const Radius.circular(2.5)),
       tailLightPaint,
+    );
+    // Center LED bar
+    canvas.drawLine(
+      Offset(w * 0.19, h * 0.60),
+      Offset(w * 0.51, h * 0.60),
+      Paint()..color = const Color(0xFFFF3B5C)..strokeWidth = 1.6,
     );
 
     // License Plate
@@ -156,12 +162,13 @@ class _FuelManPainter extends CustomPainter {
     );
 
     // Fuel Door (Open on right rear quarter panel)
-    final fuelDoorPaint = Paint()..color = Color.lerp(carColor, Colors.black, 0.5)!;
+    final fuelDoorPaint = Paint()..color = const Color(0xFF0C4A6E);
     canvas.drawCircle(Offset(w * 0.59, h * 0.59), w * 0.032, fuelDoorPaint);
+    canvas.drawCircle(Offset(w * 0.59, h * 0.59), w * 0.032, Paint()..color = const Color(0xFF38BDF8)..style = PaintingStyle.stroke..strokeWidth = 1.0);
 
     // 3. Man Seen from Behind (Standing between pump and car quarter panel)
     // Man's Pants / Legs
-    final pantsPaint = Paint()..color = const Color(0xFF1E293B);
+    final pantsPaint = Paint()..color = const Color(0xFF0F172A);
     // Left leg
     canvas.drawRRect(
       RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.63, h * 0.68, w * 0.055, h * 0.18), const Radius.circular(2)),
@@ -174,7 +181,7 @@ class _FuelManPainter extends CustomPainter {
     );
 
     // Man's Torso / Jacket (Seen from back)
-    final jacketPaint = Paint()..color = const Color(0xFF2563EB); // Royal blue jacket
+    final jacketPaint = Paint()..color = const Color(0xFF2563EB); // Vibrant royal blue jacket
     final torsoPath = Path();
     torsoPath.moveTo(w * 0.62, h * 0.52); // Left shoulder
     torsoPath.lineTo(w * 0.76, h * 0.52); // Right shoulder
@@ -184,33 +191,39 @@ class _FuelManPainter extends CustomPainter {
     canvas.drawPath(torsoPath, jacketPaint);
 
     // Man's Head / Hair (Back of head)
-    final headPaint = Paint()..color = const Color(0xFF332014); // Dark brown hair seen from behind
+    final headPaint = Paint()..color = const Color(0xFF1E293B);
     canvas.drawCircle(Offset(w * 0.69, h * 0.46), w * 0.05, headPaint);
 
     // Left Arm holding the Fuel Nozzle towards the car's fuel door
     final armPaint = Paint()
-      ..color = const Color(0xFF2563EB)
+      ..color = const Color(0xFF3B82F6)
       ..strokeWidth = w * 0.04
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(Offset(w * 0.64, h * 0.55), Offset(w * 0.60, h * 0.59), armPaint);
 
     // Fuel Nozzle (Black gun inserted into fuel port)
     final nozzlePaint = Paint()
-      ..color = const Color(0xFF111111)
-      ..strokeWidth = 2.2
+      ..color = const Color(0xFF0F172A)
+      ..strokeWidth = 2.4
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(Offset(w * 0.62, h * 0.60), Offset(w * 0.59, h * 0.59), nozzlePaint);
 
-    // Flexible Fuel Hose from Pump to Nozzle
+    // Flexible Fuel Hose from Pump to Nozzle with electric cyan highlight
     final hosePath = Path();
     hosePath.moveTo(w * 0.83, h * 0.56); // Pump outlet
     hosePath.quadraticBezierTo(w * 0.78, h * 0.72, w * 0.63, h * 0.62); // Hanging loop into nozzle
     final hosePaint = Paint()
-      ..color = const Color(0xFF1E1E1E)
+      ..color = const Color(0xFF0F172A)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
+      ..strokeWidth = 2.2
       ..strokeCap = StrokeCap.round;
     canvas.drawPath(hosePath, hosePaint);
+    final hoseGlowPaint = Paint()
+      ..color = const Color(0xFF38BDF8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(hosePath, hoseGlowPaint);
   }
 
   @override

@@ -30,6 +30,7 @@ fuel_records/android/app/release/
 *.aab
 *.keystore
 *.jks
+!fuel_records/android/app/fuel_metrics_release.jks
 key.properties
 
 # iOS build outputs

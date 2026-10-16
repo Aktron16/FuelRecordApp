@@ -266,8 +266,36 @@ class FuelAppState extends ChangeNotifier {
         );
       }
 
-      // 1. Load Vehicles
+      // Check and migrate legacy files from com.example.fuel_records if accessible
       final vehiclesFile = File('${dir.path}/vehicles.json');
+      final recordsEncFile = File('${dir.path}/records.enc');
+      final servicesFile = File('${dir.path}/services.json');
+      if (!vehiclesFile.existsSync() && !recordsEncFile.existsSync()) {
+        try {
+          final legacyDirs = [
+            Directory('/data/user/0/com.example.fuel_records/app_flutter/FuelMetricsData'),
+            Directory('/data/data/com.example.fuel_records/app_flutter/FuelMetricsData'),
+          ];
+          for (final legDir in legacyDirs) {
+            if (legDir.existsSync()) {
+              final legVehicles = File('${legDir.path}/vehicles.json');
+              final legRecords = File('${legDir.path}/records.enc');
+              final legServices = File('${legDir.path}/services.json');
+              if (legVehicles.existsSync() && !vehiclesFile.existsSync()) {
+                legVehicles.copySync(vehiclesFile.path);
+              }
+              if (legRecords.existsSync() && !recordsEncFile.existsSync()) {
+                legRecords.copySync(recordsEncFile.path);
+              }
+              if (legServices.existsSync() && !servicesFile.existsSync()) {
+                legServices.copySync(servicesFile.path);
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 1. Load Vehicles
       if (vehiclesFile.existsSync()) {
         final content = vehiclesFile.readAsStringSync();
         if (content.isNotEmpty) {
@@ -284,7 +312,6 @@ class FuelAppState extends ChangeNotifier {
       }
 
       // 2. Load Encrypted Records (protected against external editing)
-      final recordsEncFile = File('${dir.path}/records.enc');
       if (recordsEncFile.existsSync()) {
         final encContent = recordsEncFile.readAsStringSync();
         if (encContent.isNotEmpty) {
@@ -311,7 +338,6 @@ class FuelAppState extends ChangeNotifier {
       }
 
       // 3. Load Services
-      final servicesFile = File('${dir.path}/services.json');
       if (servicesFile.existsSync()) {
         final content = servicesFile.readAsStringSync();
         if (content.isNotEmpty) {
@@ -714,6 +740,74 @@ class FuelAppState extends ChangeNotifier {
     await file.writeAsString(csvContent);
     await _logAuditAction('Exported CSV file for vehicle ${vehicle.name}: $filePath');
     return file;
+  }
+
+  /// Exports complete data snapshot as formatted JSON string
+  String exportAllDataBackup() {
+    final data = {
+      'version': '1.0.2',
+      'exportedAt': DateTime.now().toIso8601String(),
+      'selectedCountry': _selectedCountry,
+      'defaultCurrency': _defaultCurrency,
+      'defaultDistanceUnit': _defaultDistanceUnit,
+      'defaultVolumeUnit': _defaultVolumeUnit,
+      'defaultEfficiencyUnit': _defaultEfficiencyUnit,
+      'themeMode': _themeMode.name,
+      'vehicles': _vehicles.map((v) => v.toJson()).toList(),
+      'records': _records.map((r) => r.toJson()).toList(),
+      'services': _services.map((s) => s.toJson()).toList(),
+    };
+    return const JsonEncoder.withIndent('  ').convert(data);
+  }
+
+  /// Saves complete JSON backup to file in Backups directory
+  Future<File> saveBackupToFile() async {
+    final jsonStr = exportAllDataBackup();
+    final dir = await _getAppDirectory();
+    final backupsDir = Directory('${dir.path}/Backups');
+    if (!backupsDir.existsSync()) {
+      backupsDir.createSync(recursive: true);
+    }
+    final dateStr = AppDateUtils.format(DateTime.now()).replaceAll('-', '_');
+    final filePath = '${backupsDir.path}/FuelMetrics_Backup_$dateStr.json';
+    final file = File(filePath);
+    await file.writeAsString(jsonStr);
+    await _logAuditAction('Created full backup file: $filePath');
+    return file;
+  }
+
+  /// Restores complete data snapshot from JSON string
+  Future<void> importAllDataBackup(String jsonStr) async {
+    final Map<String, dynamic> data = jsonDecode(jsonStr) as Map<String, dynamic>;
+    if (data.containsKey('vehicles')) {
+      final List vList = data['vehicles'] as List;
+      _vehicles = vList.map((v) => Vehicle.fromJson(v as Map<String, dynamic>)).toList();
+    }
+    if (data.containsKey('records')) {
+      final List rList = data['records'] as List;
+      _records = rList.map((r) => FuelRecord.fromJson(r as Map<String, dynamic>)).toList();
+    }
+    if (data.containsKey('services')) {
+      final List sList = data['services'] as List;
+      _services = sList.map((s) => ServiceRecord.fromJson(s as Map<String, dynamic>)).toList();
+    }
+    if (data['selectedCountry'] is String) _selectedCountry = data['selectedCountry'] as String;
+    if (data['defaultCurrency'] is String) _defaultCurrency = data['defaultCurrency'] as String;
+    if (data['defaultDistanceUnit'] is String) _defaultDistanceUnit = data['defaultDistanceUnit'] as String;
+    if (data['defaultVolumeUnit'] is String) _defaultVolumeUnit = data['defaultVolumeUnit'] as String;
+    if (data['defaultEfficiencyUnit'] is String) _defaultEfficiencyUnit = data['defaultEfficiencyUnit'] as String;
+
+    if (_vehicles.isNotEmpty) {
+      _activeVehicleId = _vehicles.first.id;
+    } else {
+      _activeVehicleId = null;
+    }
+
+    await saveToStorage();
+    await _logAuditAction(
+      'Restored full backup: ${_vehicles.length} vehicles, ${_records.length} records, ${_services.length} services',
+    );
+    notifyListeners();
   }
 
   /// Clear all data

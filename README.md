@@ -1,4 +1,4 @@
-# Fuel Metrics (Version 1.0.1)
+# Fuel Metrics (Version 1.0.2)
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2.svg?logo=dart)](https://dart.dev)
@@ -6,7 +6,7 @@
 [![Material Design](https://img.shields.io/badge/UI-Material%203-7C4DFF.svg)]()
 [![License](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-**Fuel Metrics** is a private, modern, cross-platform mobile application designed for Android and iOS to keep detailed, private records of vehicle fuel consumption, track running expenses, compute granular efficiency analytics, and monitor periodic vehicle maintenance—all stored locally with built-in encryption and tamper-evident audit tracking.
+**Fuel Metrics** is a private, modern, cross-platform mobile application designed for Android and iOS to keep detailed, private records of vehicle fuel consumption, track running expenses, compute granular efficiency analytics, and monitor periodic vehicle maintenance—all stored locally with built-in encryption, full JSON backup/restore portability, and tamper-evident audit tracking.
 
 ---
 
@@ -62,12 +62,14 @@ For every refueling record, the app automatically calculates and displays:
 - **Country & Currency Synchronization:** Select your country of residence to automatically configure the appropriate currency symbol and regional gas station presets.
 - **Simplified Dropdown Selectors:** Centralized dropdown selectors for Distance (`km`, `mi`), Volume (`L`, `gal`), and Efficiency (`km/L`, `L/100km`, `MPG`).
 - **Dark & Light Themes:** Toggle between dark mode and clean light mode with adaptive Material 3 color palettes.
-- **App Icon & Logo:** Distinctive silhouette icon and vector artwork depicting a person filling a sedan from behind.
+- **Bright High-Contrast App Icon & Logo:** High-contrast, vibrant palette icon depicting a person filling a sedan from behind with bright neon accents.
+- **Data Backup & Restore:** Complete JSON snapshot export/import with one-tap clipboard copy and file backup for total peace of mind.
 
 ---
 
 ### 🔒 Privacy, Local Storage & Security
 - **Local Application Data Directory:** All records, settings, and logs are stored in a dedicated app directory (`<app_documents>/FuelMetricsData/`).
+- **Production Package ID & Permanent Keystore:** Configured with `com.aktron.fuelmetrics` and dedicated release signing for seamless, conflict-free updates forever.
 - **Basic Encryption:** Fuel logs are saved encrypted in `records.enc` to protect against unauthorized direct reading or external file tampering outside the app.
 - **Private Tamper-Evident Timestamps:** Every record maintains non-user-editable internal timestamps (`createdTimestamp`, `lastModifiedTimestamp`) for audit validation.
 - **Audit Logging:** An internal `audit_logs.txt` log records operations and security checkpoints locally.

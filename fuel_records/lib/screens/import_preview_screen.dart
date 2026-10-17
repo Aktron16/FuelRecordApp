@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,8 @@ import '../models/fuel_record.dart';
 import '../services/fuel_app_state.dart';
 import '../services/file_parser_service.dart';
 import '../services/header_auto_mapper.dart';
+import '../services/gemini_cleaner_constants.dart';
+import '../widgets/gemini_fallback_card.dart';
 import '../utils/app_date_format.dart';
 
 /// Screen implementing the 3-Layer Hybrid Import Architecture:
@@ -147,11 +150,22 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
     }
   }
 
+  void handlePasteImport(String rawCsvText) {
+    final sanitized = cleanMarkdownFences(rawCsvText);
+    if (sanitized.isEmpty) {
+      _showSnackbar('No tabular data found to parse.', isError: true);
+      return;
+    }
+    _processRawText(sanitized);
+    _showSnackbar('Parsed clean table from AI! Review the columns and rows below.');
+  }
+
   void _processRawText(String text) {
-    if (text.trim().isEmpty) return;
+    final sanitized = cleanMarkdownFences(text);
+    if (sanitized.trim().isEmpty) return;
     final table = FileParserService.parseSpreadsheetBytes(
-      Uint8List.fromList(text.codeUnits),
-      'PastedText.csv',
+      Uint8List.fromList(utf8.encode(sanitized)),
+      'CleanedImport.csv',
     );
     _applyParsedTable(table);
   }
@@ -476,59 +490,9 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
-            // Top Action Buttons Bar: Cancel (Red) & Accept (Green)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E28) : Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.18)),
-                ),
-              ),
-              child: Row(
-                children: [
-                  // Cancel Button in RED Background
-                  Expanded(
-                    child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFDC2626),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
-                      ),
-                      onPressed: _handleCancel,
-                      icon: const Icon(Icons.close, size: 18, color: Colors.white),
-                      label: const Text(
-                        'Cancel',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 0.2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  // Accept Button in GREEN Background
-                  Expanded(
-                    child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF16A34A),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
-                      ),
-                      onPressed: _handleAccept,
-                      icon: const Icon(Icons.check, size: 18, color: Colors.white),
-                      label: Text(
-                        _stagedRecords.isEmpty ? 'Accept' : 'Accept ($validCount)',
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 0.2),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
 
             // Simple 1-Paragraph Non-Technical Explanation
             Container(
@@ -709,12 +673,17 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                   ],
                 ),
               ),
+              if (invalidCount > 0)
+                GeminiFallbackCard(
+                  onParseCsv: handlePasteImport,
+                  isHighlighted: true,
+                ),
 
               // Interactive Column-Mapper and Staged Table
               Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.vertical,
-                  padding: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.only(bottom: 32),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Padding(
@@ -852,34 +821,101 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                 ),
               ),
             ] else ...[
-              // Empty State Placeholder
+              // Empty State Placeholder with Gemini Fallback Card
               Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.table_chart_outlined, size: 64, color: Colors.grey.withValues(alpha: 0.5)),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'No spreadsheet loaded yet',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(0, 4, 0, 36),
+                  children: [
+                    GeminiFallbackCard(
+                      onParseCsv: handlePasteImport,
+                      isHighlighted: false,
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.table_chart_outlined, size: 48, color: Colors.grey.withValues(alpha: 0.5)),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Or Pick an Existing Spreadsheet File',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Tap below to load .csv or .xlsx from your device.',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 14),
+                          FilledButton.icon(
+                            onPressed: _pickFile,
+                            icon: const Icon(Icons.file_upload),
+                            label: const Text('Pick Spreadsheet File'),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Tap "Pick File" to load .csv or .xlsx, or tap "Template" to download a sample.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 20),
-                      FilledButton.icon(
-                        onPressed: _pickFile,
-                        icon: const Icon(Icons.file_upload),
-                        label: const Text('Pick Spreadsheet File'),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+          border: Border(
+            top: BorderSide(color: Colors.grey.withValues(alpha: 0.18)),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, -3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Cancel Button in RED Background
+            Expanded(
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC2626),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                onPressed: _handleCancel,
+                icon: const Icon(Icons.close, size: 18, color: Colors.white),
+                label: const Text(
+                  'Cancel',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 0.2),
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            // Accept Button in GREEN Background
+            Expanded(
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                onPressed: _handleAccept,
+                icon: const Icon(Icons.check, size: 18, color: Colors.white),
+                label: Text(
+                  _stagedRecords.isEmpty ? 'Accept' : 'Accept ($validCount)',
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 0.2),
+                ),
+              ),
+            ),
           ],
         ),
       ),

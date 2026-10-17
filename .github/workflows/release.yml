@@ -27,6 +27,9 @@ on:
 permissions:
   contents: write
 
+env:
+  ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION: 'node24'
+
 jobs:
   build-android:
     name: Build Android (APK & AAB)
@@ -57,8 +60,13 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "Building for Tag: $TAG"
 
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -141,6 +149,11 @@ jobs:
           fi
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "Building for Tag: $TAG"
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2

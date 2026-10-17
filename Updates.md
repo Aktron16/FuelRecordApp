@@ -4,7 +4,38 @@ All notable changes, feature releases, database migrations, and platform updates
 
 ---
 
-## [Version 1.1.0] — Stable Release (Current)
+## [Version 1.1.1] — Stable Release (Current)
+
+### 🌟 New Features & Enhancements
+
+#### 🤖 Layer 4: AI Data Cleaner (Convert via Gemini / ChatGPT)
+- **1-Click AI Formatting Assistant**:
+  - Embedded `GeminiFallbackCard` in the Import Screen, automatically highlighted when local parsers detect 0 rows or high error rates.
+  - Step 1: One-tap button (`Copy Prompt & Open Gemini`) copies strict formatting instructions to the clipboard and opens `https://gemini.google.com/app` in the external browser or Gemini mobile app (with optional ChatGPT quick-link).
+  - Explicit privacy disclaimer and explanation informing users of third-party processing before using external AI.
+- **Direct Paste-to-Parser Engine**:
+  - Step 2: Multi-line paste area allowing users to paste Gemini's output directly into the app without having to save a `.csv` file.
+  - `cleanMarkdownFences()` automatically sanitizes markdown wrappers (```` ```csv ```` and ```` ``` ````), strips invisible zero-width unicode characters, and normalizes line breaks.
+  - Feeds cleaned data straight into `FileParserService` and `ImportPreviewScreen`.
+
+#### 📱 Import UI Enhancements
+- **Bottom-Positioned Action Controls**:
+  - Relocated **Cancel (Red `#DC2626`)** and **Accept (Green `#16A34A`)** buttons from the top header into a pinned bottom navigation bar.
+  - Added bottom padding to the table scroll views so that all data rows remain fully visible above the bottom controls.
+
+#### ⛽ Fuel Grade Database Propagation
+- **Universal Fuel Type Sync**:
+  - When a vehicle's default fuel type (fuel grade) is edited or changed in vehicle details, all historical and existing records for that vehicle in the database automatically update to reflect the new fuel grade.
+
+#### 💾 Public Downloads Folder Integration
+- **Direct Public File Export**:
+  - Standalone JSON full database backups are saved directly into the device's public Downloads directory (`/storage/emulated/0/Download` on Android, system Downloads on desktop/iOS).
+  - Grid view table CSV exports are saved directly to the public Downloads folder for easy file management and sharing.
+  - Maintained redundant internal storage mirroring to protect against external file deletion.
+
+---
+
+## [Version 1.1.0] — Previous Release
 
 ### 🌟 New Features & Enhancements
 
@@ -32,6 +63,22 @@ All notable changes, feature releases, database migrations, and platform updates
 - **Zero Data Reset**:
   - All car profiles, fuel records, service logs, and custom settings stored in internal storage (`<app_documents>/FuelMetricsData/`) and `SharedPreferences` are completely preserved during updates.
   - Explicit `android:allowBackup="true"` configuration enabled.
+
+#### 🛠️ Platform & Build System Optimizations
+- **Android SDK 36 Compatibility**:
+  - Upgraded main application `compileSdk = 36` in `android/app/build.gradle.kts`.
+  - Injected dynamic subproject SDK configuration in `android/build.gradle.kts` to safely align all transitive dependencies (e.g., `flutter_plugin_android_lifecycle`, `file_picker`) to Android SDK 36, eliminating `checkDebugAarMetadata` emulator and device build failures.
+- **GitHub Actions Modernization**:
+  - Upgraded Java runtime setup to `actions/setup-java@v5` with Temurin JDK 17 and Gradle build caching.
+  - Migrated CI/CD runner execution environment to **Node.js 24** (`ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION: 'node24'` and `actions/setup-node@v4` with `node-version: 24`).
+  - Added repository-level `.nvmrc` and `.node-version` locks to enforce Node.js 24 consistency.
+- **Codebase Optimization & Pruning**:
+  - Deprecated and removed redundant `lib/screens/text_import_review_screen.dart` (554 lines of superseded logic), unifying both spreadsheet files and unstructured text through `ImportPreviewScreen`.
+  - Zero lint warnings (`flutter analyze`) and 100% green test suite across 23 unit and widget test cases.
+- **Global Graphify Skill & Architecture Map**:
+  - Installed `graphifyy` and registered the global Antigravity skill (`~/.gemini/config/skills/graphify/SKILL.md`).
+  - Extracted complete project AST knowledge graph into `graphify-out/graph.json` (788 nodes, 1025 edges, 40 communities).
+  - Generated standalone interactive visual maps (`graphify-out/graph.html` and `graphify-out/GRAPH_TREE.html`).
 
 ---
 

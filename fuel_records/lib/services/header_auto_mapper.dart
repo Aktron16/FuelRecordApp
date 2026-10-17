@@ -93,23 +93,23 @@ class HeaderAutoMapper {
       'dist', 'kilometer', 'kilometre', 'reading', 'readings', 'dash', 'counter'
     ],
     FuelField.fuelVolume: [
-      'liters', 'litres', 'gallons', 'gal', 'gals', 'l', 'ltr', 'ltrs', 'fuel',
+      'fuelvolume', 'fuel volume', 'liters', 'litres', 'gallons', 'gal', 'gals', 'l', 'ltr', 'ltrs', 'fuel',
       'volume', 'vol', 'qty', 'quantity', 'amount', 'petrol', 'diesel', 'gas',
       'fuel amount', 'pumped', 'dispensed'
     ],
     FuelField.pricePerUnit: [
-      'cost per liter', 'cost per litre', 'cost per gallon', 'cost per unit',
-      'price per liter', 'price per litre', 'price per gallon', 'price per unit',
+      'priceperunit', 'price per unit', 'cost per liter', 'cost per litre', 'cost per gallon', 'cost per unit',
+      'price per liter', 'price per litre', 'price per gallon',
       'unit price', 'rate', 'cost/l', 'cost l', 'price/l', 'price l',
       'price/gal', 'price gal', 'cost/gal', 'cost gal', 'ppg', 'ppl',
       'price', 'cost/unit', 'price/unit'
     ],
     FuelField.totalCost: [
-      'total cost', 'total price', 'amount paid', 'total amount', 'net amount',
+      'totalcost', 'total cost', 'total price', 'amount paid', 'total amount', 'net amount',
       'total', 'cost', 'paid', 'expense', 'bill', 'spent', 'charge'
     ],
     FuelField.gasStation: [
-      'station', 'gas station', 'petrol station', 'vendor', 'brand',
+      'stationname', 'station name', 'station', 'gas station', 'petrol station', 'vendor', 'brand',
       'location', 'pump', 'store'
     ],
     FuelField.fuelType: [

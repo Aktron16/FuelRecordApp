@@ -479,7 +479,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Version Footer
           Center(
             child: Text(
-              'Fuel Metrics • Version 1.0.2',
+              'Fuel Metrics • Version 1.1.1',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
             ),
           ),

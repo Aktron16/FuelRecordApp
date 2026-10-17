@@ -58,6 +58,7 @@ class FuelAppState extends ChangeNotifier {
   bool get isLoading => _isLoading;
   List<Vehicle> get vehicles => List.unmodifiable(_vehicles);
   List<FuelRecord> get allRecords => List.unmodifiable(_records);
+  List<FuelRecord> get records => allRecords;
   List<ServiceRecord> get allServices => List.unmodifiable(_services);
   ThemeMode get themeMode => _themeMode;
   String get selectedCountry => _selectedCountry;
@@ -476,9 +477,27 @@ class FuelAppState extends ChangeNotifier {
   Future<void> updateVehicle(Vehicle updated) async {
     final idx = _vehicles.indexWhere((v) => v.id == updated.id);
     if (idx != -1) {
+      final oldVehicle = _vehicles[idx];
+      final fuelTypeChanged = oldVehicle.fuelType != updated.fuelType;
       _vehicles[idx] = updated;
+
+      // If the car's default fuel type (fuel grade) gets changed in the car's records,
+      // reflect it everywhere in the records database for this vehicle.
+      if (fuelTypeChanged) {
+        for (int i = 0; i < _records.length; i++) {
+          if (_records[i].vehicleId == updated.id) {
+            _records[i] = _records[i].copyWith(
+              fuelType: updated.fuelType,
+              lastModifiedTimestamp: DateTime.now(),
+            );
+          }
+        }
+      }
+
       await saveToStorage();
-      await _logAuditAction('Updated vehicle ${updated.name}');
+      await _logAuditAction(
+        'Updated vehicle ${updated.name}${fuelTypeChanged ? ' (propagated fuel grade to ${updated.fuelType} across all records)' : ''}',
+      );
       notifyListeners();
     }
   }
@@ -753,20 +772,43 @@ class FuelAppState extends ChangeNotifier {
     return sb.toString();
   }
 
-  /// Exports vehicle records to a standalone .csv file in the app documents storage directory.
+  /// Returns the device's public Downloads directory if accessible,
+  /// with automatic platform fallbacks for Android, iOS, and desktop.
+  Future<Directory> getPublicDownloadsDirectory() async {
+    try {
+      if (Platform.isAndroid) {
+        final androidDownloadDir = Directory('/storage/emulated/0/Download');
+        if (androidDownloadDir.existsSync()) {
+          return androidDownloadDir;
+        }
+      }
+      final dir = await getDownloadsDirectory();
+      if (dir != null && dir.existsSync()) {
+        return dir;
+      }
+    } catch (_) {}
+    return await _getAppDirectory();
+  }
+
+  /// Exports vehicle records to a standalone .csv file in the public downloads directory.
   Future<File> exportVehicleRecordsToCsvFile(String vehicleId) async {
     final csvContent = exportRecordsToCsv(vehicleId);
-    final dir = await _getAppDirectory();
-    final exportsDir = Directory('${dir.path}/Exports');
-    if (!exportsDir.existsSync()) {
-      exportsDir.createSync(recursive: true);
-    }
+    final targetDir = await getPublicDownloadsDirectory();
     final vehicle = _vehicles.firstWhere((x) => x.id == vehicleId, orElse: () => activeVehicle!);
     final sanitizedName = vehicle.name.replaceAll(RegExp(r'[^\w\s\.-]'), '_').trim().replaceAll(' ', '_');
     final dateStr = AppDateUtils.format(DateTime.now()).replaceAll('-', '_');
-    final filePath = '${exportsDir.path}/FuelMetrics_${sanitizedName}_$dateStr.csv';
+    final filePath = '${targetDir.path}/FuelMetrics_${sanitizedName}_$dateStr.csv';
     final file = File(filePath);
-    await file.writeAsString(csvContent);
+    await file.writeAsString(csvContent, flush: true);
+
+    // Also mirror to app storage for backup redundancy
+    try {
+      final appDir = await _getAppDirectory();
+      final exportsDir = Directory('${appDir.path}/Exports');
+      if (!exportsDir.existsSync()) exportsDir.createSync(recursive: true);
+      await File('${exportsDir.path}/FuelMetrics_${sanitizedName}_$dateStr.csv').writeAsString(csvContent);
+    } catch (_) {}
+
     await _logAuditAction('Exported CSV file for vehicle ${vehicle.name}: $filePath');
     return file;
   }
@@ -774,7 +816,7 @@ class FuelAppState extends ChangeNotifier {
   /// Exports complete data snapshot as formatted JSON string
   String exportAllDataBackup() {
     final data = {
-      'version': '1.0.2',
+      'version': '1.1.1',
       'exportedAt': DateTime.now().toIso8601String(),
       'selectedCountry': _selectedCountry,
       'defaultCurrency': _defaultCurrency,
@@ -789,19 +831,24 @@ class FuelAppState extends ChangeNotifier {
     return const JsonEncoder.withIndent('  ').convert(data);
   }
 
-  /// Saves complete JSON backup to file in Backups directory
+  /// Saves complete JSON backup to file in the public downloads directory.
   Future<File> saveBackupToFile() async {
     final jsonStr = exportAllDataBackup();
-    final dir = await _getAppDirectory();
-    final backupsDir = Directory('${dir.path}/Backups');
-    if (!backupsDir.existsSync()) {
-      backupsDir.createSync(recursive: true);
-    }
+    final targetDir = await getPublicDownloadsDirectory();
     final dateStr = AppDateUtils.format(DateTime.now()).replaceAll('-', '_');
-    final filePath = '${backupsDir.path}/FuelMetrics_Backup_$dateStr.json';
+    final filePath = '${targetDir.path}/FuelMetrics_Backup_$dateStr.json';
     final file = File(filePath);
-    await file.writeAsString(jsonStr);
-    await _logAuditAction('Created full backup file: $filePath');
+    await file.writeAsString(jsonStr, flush: true);
+
+    // Also mirror to internal app directory for backup redundancy
+    try {
+      final appDir = await _getAppDirectory();
+      final backupsDir = Directory('${appDir.path}/Backups');
+      if (!backupsDir.existsSync()) backupsDir.createSync(recursive: true);
+      await File('${backupsDir.path}/FuelMetrics_Backup_$dateStr.json').writeAsString(jsonStr);
+    } catch (_) {}
+
+    await _logAuditAction('Created full backup file in downloads: $filePath');
     return file;
   }
 

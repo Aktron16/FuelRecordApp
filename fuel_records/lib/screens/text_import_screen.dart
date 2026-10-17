@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/vehicle.dart';
 import '../services/fuel_app_state.dart';
-import '../services/unstructured_text_parser.dart';
-import 'text_import_review_screen.dart';
+import 'import_preview_screen.dart';
 
 /// Screen where user inputs unstructured text with full descriptions and examples.
 class TextImportScreen extends StatefulWidget {
@@ -64,27 +63,12 @@ class _TextImportScreenState extends State<TextImportScreen> {
       return;
     }
 
-    final drafts = UnstructuredTextParser.parse(
-      rawText,
-      defaultFuelType: widget.vehicle.fuelType,
-    );
-
-    if (drafts.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not detect fuel records. Check the format examples above and try again.'),
-          backgroundColor: Color(0xFFDC2626),
-        ),
-      );
-      return;
-    }
-
     Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (ctx) => TextImportReviewScreen(
+        builder: (ctx) => ImportPreviewScreen(
           vehicle: widget.vehicle,
           appState: widget.appState,
-          parsedDrafts: drafts,
+          initialText: rawText,
         ),
       ),
     ).then((accepted) {

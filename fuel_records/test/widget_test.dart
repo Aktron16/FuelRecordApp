@@ -7,9 +7,7 @@ import 'package:fuel_records/models/fuel_record.dart';
 import 'package:fuel_records/models/record_calculation.dart';
 import 'package:fuel_records/models/vehicle_stats.dart';
 import 'package:fuel_records/services/fuel_app_state.dart';
-import 'package:fuel_records/services/unstructured_text_parser.dart';
 import 'package:fuel_records/screens/text_import_screen.dart';
-import 'package:fuel_records/screens/text_import_review_screen.dart';
 import 'package:fuel_records/screens/import_preview_screen.dart';
 import 'package:fuel_records/utils/app_date_format.dart';
 import 'package:fuel_records/main.dart';
@@ -205,30 +203,20 @@ void main() {
       expect(find.textContaining('Shell'), findsWidgets);
     });
 
-    testWidgets('TextImportReviewScreen displays red Cancel and green Accept buttons with editable grid', (tester) async {
+    testWidgets('ImportPreviewScreen handles text input and displays red Cancel and green Accept buttons', (tester) async {
       SharedPreferences.setMockInitialValues({});
       final v = Vehicle(id: 'v_grid', name: 'GridCar', type: VehicleType.compact, brand: 'Toyota', owner: 'Alex', fuelType: 'Regular (87)');
       final tempDir = Directory.systemTemp.createTempSync('fuel_grid_test_');
       final appState = FuelAppState(customStorageDir: tempDir, autoLoad: false);
 
-      final draft = ParsedRecordDraft(
-        dateTime: DateTime(2026, 10, 16),
-        odometer: 44000,
-        fuelAmount: 38.5,
-        totalPrice: 65.0,
-        gasStation: 'Shell',
-        fuelType: 'Regular (87)',
-        isFullTank: true,
-      );
-
       await tester.pumpWidget(MaterialApp(
-        home: TextImportReviewScreen(
+        home: ImportPreviewScreen(
           vehicle: v,
           appState: appState,
-          parsedDrafts: [draft],
+          initialText: '2026-10-16, 44000, 38.5, 1.68, 65.0, Shell',
         ),
       ));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // Verify Red Cancel and Green Accept buttons exist at top
       final cancelFinder = find.widgetWithText(FilledButton, 'Cancel');
@@ -242,11 +230,8 @@ void main() {
       final acceptBtn = tester.widget<FilledButton>(acceptFinder);
       expect(acceptBtn.style?.backgroundColor?.resolve({}), const Color(0xFF16A34A)); // Green
 
-      // Verify grid data row
-      expect(find.text('44000.0'), findsOneWidget);
-      expect(find.text('38.50'), findsOneWidget);
-      expect(find.text('65.00'), findsOneWidget);
-      expect(find.text('Shell'), findsOneWidget);
+      // Verify staged record summary exists
+      expect(find.textContaining('ready to import'), findsOneWidget);
 
       tempDir.deleteSync(recursive: true);
     });

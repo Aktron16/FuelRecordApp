@@ -22,6 +22,7 @@ fuel_records/.pub/
 
 # Android build outputs & local configurations
 fuel_records/android/.gradle/
+fuel_records/android/build/
 fuel_records/android/local.properties
 fuel_records/android/app/debug/
 fuel_records/android/app/profile/
@@ -43,4 +44,11 @@ fuel_records/ios/Flutter/flutter_export_environment.sh
 FuelMetricsData/
 *.enc
 audit_logs.txt
+
+# Graphify knowledge graph outputs & metadata
+graphify-out/
+.graphify/
+.graphify_analysis.json
+.graphifyignore
+.agents/
 

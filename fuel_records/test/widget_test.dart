@@ -10,6 +10,7 @@ import 'package:fuel_records/services/fuel_app_state.dart';
 import 'package:fuel_records/services/unstructured_text_parser.dart';
 import 'package:fuel_records/screens/text_import_screen.dart';
 import 'package:fuel_records/screens/text_import_review_screen.dart';
+import 'package:fuel_records/screens/import_preview_screen.dart';
 import 'package:fuel_records/utils/app_date_format.dart';
 import 'package:fuel_records/main.dart';
 
@@ -190,9 +191,8 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      // Verify description card
-      expect(find.text('What does this feature do?'), findsOneWidget);
-      expect(find.textContaining('This smart parser takes raw, unstructured text'), findsOneWidget);
+      // Verify description card (1-paragraph simple non-technical explanation)
+      expect(find.textContaining('Easily add your past fill-ups all at once'), findsOneWidget);
 
       // Verify template example chips
       expect(find.text('SMS / Receipt Note'), findsOneWidget);
@@ -247,6 +247,43 @@ void main() {
       expect(find.text('38.50'), findsOneWidget);
       expect(find.text('65.00'), findsOneWidget);
       expect(find.text('Shell'), findsOneWidget);
+
+      tempDir.deleteSync(recursive: true);
+    });
+
+    testWidgets('ImportPreviewScreen displays 1-paragraph explanation, template button, and top Red/Green buttons', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final v = Vehicle(id: 'v_prev', name: 'PrevCar', type: VehicleType.compact, brand: 'Toyota', owner: 'Alex');
+      final tempDir = Directory.systemTemp.createTempSync('fuel_prev_test_');
+      final appState = FuelAppState(customStorageDir: tempDir, autoLoad: false);
+
+      await tester.pumpWidget(MaterialApp(
+        home: ImportPreviewScreen(
+          vehicle: v,
+          appState: appState,
+          initialText: 'Date,Odometer,Fuel Volume,Total Cost,Gas Station\n2026-10-15,50000,40,100,Shell',
+        ),
+      ));
+      await tester.pump();
+
+      // Verify simple 1-paragraph non-technical explanation
+      expect(find.textContaining('Easily add your past fill-ups all at once'), findsOneWidget);
+
+      // Verify Red Cancel and Green Accept buttons
+      final cancelFinder = find.widgetWithText(FilledButton, 'Cancel');
+      final acceptFinder = find.widgetWithText(FilledButton, 'Accept (1)');
+      expect(cancelFinder, findsOneWidget);
+      expect(acceptFinder, findsOneWidget);
+
+      final cancelBtn = tester.widget<FilledButton>(cancelFinder);
+      expect(cancelBtn.style?.backgroundColor?.resolve({}), const Color(0xFFDC2626)); // Red
+
+      final acceptBtn = tester.widget<FilledButton>(acceptFinder);
+      expect(acceptBtn.style?.backgroundColor?.resolve({}), const Color(0xFF16A34A)); // Green
+
+      // Verify Template and Pick File buttons
+      expect(find.text('Template'), findsOneWidget);
+      expect(find.text('Change File'), findsOneWidget);
 
       tempDir.deleteSync(recursive: true);
     });

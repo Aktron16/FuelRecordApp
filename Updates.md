@@ -8,25 +8,22 @@ All notable changes, feature releases, database migrations, and platform updates
 
 ### 🌟 New Features & Enhancements
 
-#### 📝 Smart Unstructured Text Import
-- **Natural Language & Receipt Parser**: Convert raw notes, SMS payment alerts, and unstructured receipt text directly into structured fuel records without external cloud APIs or third-party tracking.
-- **Dedicated Import Flow**: Accessible via the "Import Data from Text" button when adding new vehicle records or from the Records List screen. Features an educational walkthrough card and one-tap template chips (SMS/Receipt Note, Gallon/US format, Compact quick-log).
-- **Expanded Synonyms for Odometer**:
-  - Prefix keywords: `distance`, `dist`, `kms`, `km`, `kilometres`, `kilometers`, `miles`, `mi`, `odometer`, `odo`, `reading`, `readings`, `meter`, `dash`, `clock`, `clocked`, `counter`, `travelled`, `traveled`.
-  - Suffix units: `54000 km`, `54000 kms`, `54000 distance`, `54000 dist`, `54000 miles`, `54000 mi`.
-- **Expanded Synonyms for Fuel Quantity**:
-  - Prefix keywords: `petrol`, `diesel`, `gas`, `gasoline`, `fuel`, `quantity`, `qty`, `volume`, `vol`, `litres`, `liters`, `ltrs`, `gallons`, `gals`, `filled`, `pumped`, `dispensed`, `refuel`, `refueled`, `put in`, `added`.
-  - Suffix units: `45.2 petrol`, `40 diesel`, `12 gas`, `45.2 litres`, `45.2 liters`, `45.2 ltrs`, `45.2 L`, `12.4 gallons`, `12.4 gal`.
-- **Strict Column Validation (No Forced Guesswork)**:
-  - If a column keyword or unit is absent, numbers are **never forced** into the odometer, fuel volume, or price columns.
-  - Residual numbers and text are safely routed to record notes for transparent inspection.
-- **Dual-Action Review Data Grid Screen**:
-  - Before committing parsed records to storage, all rows are displayed in an editable, dual-axis scrollable data grid.
-  - In-cell text editing for odometer, fuel quantity, total price, gas station, and notes.
-  - Interactive date picker chips and fuel grade dropdown selectors.
-  - **Top Action Controls**:
-    - **Cancel** (`#DC2626` Red Background): Confirms cancellation and discards uncommitted parsed drafts.
-    - **Accept** (`#16A34A` Green Background): Validates all entries and commits an atomic batch write to local storage with encrypted backup and audit logging.
+#### 📊 3-Layer Hybrid Import System (Spreadsheets & Text)
+- **Layer 1: Official Template Generation (`exportSampleTemplate()`)**:
+  - One-tap download and sharing of clean `.csv` sample files containing canonical database headers and realistic example fuel data.
+- **Layer 2: Universal File Reader & Auto-Header Detector**:
+  - Reads `.csv`, `.tsv`, and Microsoft Excel `.xlsx` spreadsheets (with multi-sheet auto-selection).
+  - Skips non-data title banners automatically until rows with $\ge 3$ columns appear.
+  - **Header Nickname Dictionary**: Matches normalized column nicknames with prioritized multi-word matching (`Cost Per Liter`, `Mileage (KM)`, `Ltrs Pumped`, `Amount Paid`).
+  - **Math Fallback Rule**: Solves missing headers by discovering numeric triplets where $|A \times B - C| \le 0.05$, mapping $C \to \text{totalCost}$, $\min(A,B) \to \text{pricePerUnit}$, and $\max(A,B) \to \text{fuelVolume}$.
+  - **Data Cleaner**: Strips currency signs (`$`, `AED`, `€`, `£`, `₹`), unit suffixes (`L`, `km`, `mi`), and parses multiple date styles (`YYYY-MM-DD`, `DD/MM/YYYY`, `MM/DD/YYYY`, `15-Oct-26`).
+- **Layer 3: Interactive Column-Mapper & Staging Preview UI**:
+  - Clear 1-paragraph non-technical explanation banner on arrival.
+  - Interactive dropdown selector over every column pre-populated with auto-detected fields.
+  - Quarantine view highlighting incomplete rows, routing raw unparseable data to `notes`, and providing inline cell editors plus a "Skip invalid rows" toggle.
+  - Prominent top action buttons: **Cancel (Red `#DC2626`)** and **Accept (Green `#16A34A`)**.
+- **Component D: Atomic Database Batch Insert**:
+  - `FuelAppState.importSpreadsheetRecordsBatch()` commits all records in a single atomic memory and disk transaction with SHA-256 encrypted persistence and audit logging.
 
 #### 🔄 In-Place Upgrade & Data Integrity Guarantee
 - **Clean In-Place Replacement**:
@@ -81,3 +78,4 @@ All notable changes, feature releases, database migrations, and platform updates
 - Encrypted local storage with XOR cipher and SHA-256 integrity verification.
 - Tamper-evident private audit action logging.
 - Light and dark theme switching.
+

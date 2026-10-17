@@ -8,6 +8,7 @@ import '../services/fuel_app_state.dart';
 import '../utils/app_date_format.dart';
 import 'add_edit_record_screen.dart';
 import 'text_import_screen.dart';
+import 'import_preview_screen.dart';
 
 class RecordsListScreen extends StatefulWidget {
   final FuelAppState appState;
@@ -108,11 +109,11 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.auto_awesome, color: Color(0xFF16A34A)),
-            tooltip: 'Import Data from Text',
+            tooltip: 'Import Fuel Data',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (ctx) => TextImportScreen(
+                  builder: (ctx) => ImportPreviewScreen(
                     vehicle: vehicle,
                     appState: widget.appState,
                   ),

@@ -5,7 +5,7 @@ import '../models/record_calculation.dart';
 import '../widgets/vehicle_artwork.dart';
 import '../utils/app_date_format.dart';
 import '../services/fuel_app_state.dart';
-import 'text_import_screen.dart';
+import 'import_preview_screen.dart';
 
 class AddEditRecordScreen extends StatefulWidget {
   final Vehicle vehicle;
@@ -193,12 +193,12 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
           if (!isEditing && widget.appState != null)
             IconButton(
               icon: const Icon(Icons.auto_awesome, color: Color(0xFF16A34A)),
-              tooltip: 'Import Data from Text',
+              tooltip: 'Import Fuel Data',
               onPressed: () async {
                 final nav = Navigator.of(context);
                 final imported = await nav.push<bool>(
                   MaterialPageRoute(
-                    builder: (ctx) => TextImportScreen(
+                    builder: (ctx) => ImportPreviewScreen(
                       vehicle: widget.vehicle,
                       appState: widget.appState!,
                     ),
@@ -279,7 +279,7 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                   ),
                 ),
 
-                // Import Data from Text Button (for creating new records)
+                // Import Fuel Data Button (for creating new records)
                 if (!isEditing && widget.appState != null) ...[
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
@@ -291,14 +291,14 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                     ),
                     icon: const Icon(Icons.auto_awesome, size: 18),
                     label: const Text(
-                      'Import Data from Text',
+                      'Import Data (Spreadsheet / Text)',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     onPressed: () async {
                       final nav = Navigator.of(context);
                       final imported = await nav.push<bool>(
                         MaterialPageRoute(
-                          builder: (ctx) => TextImportScreen(
+                          builder: (ctx) => ImportPreviewScreen(
                             vehicle: widget.vehicle,
                             appState: widget.appState!,
                           ),

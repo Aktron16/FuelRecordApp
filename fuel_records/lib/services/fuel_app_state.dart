@@ -524,6 +524,24 @@ class FuelAppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Single atomic batch transaction that imports spreadsheet records,
+  /// commits to memory, safely persists to disk with atomic write,
+  /// updates preferences, logs audit action, and triggers UI refresh.
+  Future<int> importSpreadsheetRecordsBatch(List<FuelRecord> newRecords) async {
+    if (newRecords.isEmpty) return 0;
+    final now = DateTime.now();
+    for (final rec in newRecords) {
+      final recordWithAudit = rec.copyWith(
+        lastModifiedTimestamp: now,
+      );
+      _records.add(recordWithAudit);
+    }
+    await saveToStorage();
+    await _logAuditAction('Atomic spreadsheet batch import: committed ${newRecords.length} records');
+    notifyListeners();
+    return newRecords.length;
+  }
+
   Future<void> updateRecord(FuelRecord updated) async {
     final idx = _records.indexWhere((r) => r.id == updated.id);
     if (idx != -1) {

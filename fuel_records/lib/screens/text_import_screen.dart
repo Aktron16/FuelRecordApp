@@ -107,6 +107,7 @@ class _TextImportScreenState extends State<TextImportScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           // 1. Description Card
+          // 1. Description Card (Maximum 1 paragraph, non-technical simple words)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -116,59 +117,20 @@ class _TextImportScreenState extends State<TextImportScreen> {
                 color: isDark ? Colors.grey.withValues(alpha: 0.2) : const Color(0xFF86EFAC),
               ),
             ),
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF16A34A).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.auto_awesome, color: Color(0xFF16A34A), size: 20),
+                const Icon(Icons.auto_awesome, color: Color(0xFF16A34A), size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Easily add your past fill-ups all at once. Paste your notes or receipts below, match your details, and review everything before saving to your records.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.45,
+                      fontWeight: FontWeight.w500,
+                      color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.9),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'What does this feature do?',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                          ),
-                          Text(
-                            'Convert free-form text & SMS into table records',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'This smart parser takes raw, unstructured text—such as phone notes, SMS bank notifications, gas pump receipts, or exported logs—and automatically recognizes and extracts:',
-                  style: TextStyle(fontSize: 13, height: 1.4),
-                ),
-                const SizedBox(height: 8),
-                _buildBulletPoint('Date: detects formats like 16-Oct-26, 2026-10-16, "today", "yesterday"'),
-                _buildBulletPoint('Odometer: identifies numbers with odo, km, mi, reading, dash, clock'),
-                _buildBulletPoint('Fuel Quantity: extracts litres, liters, gallons, qty, volume, filled'),
-                _buildBulletPoint('Total Price: parses currency symbols (\$, €, £, AED, ₹) or paid/cost words'),
-                _buildBulletPoint('Gas Station: recognizes Shell, BP, Chevron, Exxon, Mobil, and 30+ brands'),
-                _buildBulletPoint('Fuel Grade: detects Regular (87), Premium (93), Diesel, E85, Super (95)'),
-                const SizedBox(height: 10),
-                Text(
-                  'Next, your parsed data is cleaned, whitespaces are stripped, and presented in an interactive Data Grid where you can inspect and edit every cell before committing.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -289,24 +251,6 @@ class _TextImportScreenState extends State<TextImportScreen> {
           ),
 
           const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBulletPoint(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('• ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 12, height: 1.3),
-            ),
-          ),
         ],
       ),
     );

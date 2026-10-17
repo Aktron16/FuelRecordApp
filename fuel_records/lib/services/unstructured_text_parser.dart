@@ -1,3 +1,6 @@
+export 'file_parser_service.dart';
+export 'header_auto_mapper.dart';
+
 /// Draft representation of a parsed fuel record prior to user confirmation.
 class ParsedRecordDraft {
   DateTime dateTime;

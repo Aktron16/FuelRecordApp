@@ -1,11 +1,11 @@
-# Fuel Metrics (Version 1.1.0)
+# Fuel Metrics (Version 1.1.3)
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2.svg?logo=dart)](https://dart.dev)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-green.svg)]()
 [![Material Design](https://img.shields.io/badge/UI-Material%203-7C4DFF.svg)]()
 [![Updates](https://img.shields.io/badge/Changelog-Updates.md-brightgreen.svg)](Updates.md)
-[![License](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0%20w%2F%20Commons%20Clause-blue.svg)](LICENSE)
 
 **Fuel Metrics** is a private, modern, cross-platform mobile application designed for Android and iOS to keep detailed, private records of vehicle fuel consumption, track running expenses, compute granular efficiency analytics, and monitor periodic vehicle maintenance—all stored locally with built-in encryption, full JSON backup/restore portability, and tamper-evident audit tracking.
 

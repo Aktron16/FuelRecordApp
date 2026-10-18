@@ -741,13 +741,14 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
                 // Fuel Grade / Type Selector
                 DropdownButtonFormField<String>(
                   value: _fuelTypes.contains(_selectedFuelType) ? _selectedFuelType : _fuelTypes.first,
+                  isExpanded: true,
                   decoration: InputDecoration(
                     labelText: 'Default Fuel Grade',
                     prefixIcon: const Icon(Icons.local_gas_station),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     filled: true,
                   ),
-                  items: _fuelTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                  items: _fuelTypes.map((t) => DropdownMenuItem(value: t, child: Text(t, overflow: TextOverflow.ellipsis))).toList(),
                   onChanged: (val) {
                     if (val != null) setState(() => _selectedFuelType = val);
                   },

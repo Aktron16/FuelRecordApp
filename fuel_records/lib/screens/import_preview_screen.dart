@@ -288,6 +288,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     value: selectedGrade,
+                    isExpanded: true,
                     decoration: const InputDecoration(labelText: 'Fuel Grade', isDense: true),
                     items: const [
                       'Regular (87)',
@@ -297,7 +298,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                       'Super (98)',
                       'Diesel',
                       'E85'
-                    ].map((g) => DropdownMenuItem(value: g, child: Text(g, style: const TextStyle(fontSize: 13)))).toList(),
+                    ].map((g) => DropdownMenuItem(value: g, child: Text(g, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis))).toList(),
                     onChanged: (val) {
                       if (val != null) setDialogState(() => selectedGrade = val);
                     },

@@ -131,12 +131,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: const Icon(Icons.palette_outlined, color: Colors.purple),
                       ),
                       const SizedBox(width: 12),
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Appearance', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                          Text('Choose Light or Dark mode', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text('Appearance', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text('Choose Light or Dark mode', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -144,6 +146,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   DropdownButtonFormField<ThemeMode>(
                     value: _themeMode,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Theme Mode',
                       prefixIcon: Icon(
@@ -158,15 +161,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     items: const [
                       DropdownMenuItem(
                         value: ThemeMode.system,
-                        child: Text('System Default (Follow Device)'),
+                        child: Text('System Default (Follow Device)', overflow: TextOverflow.ellipsis),
                       ),
                       DropdownMenuItem(
                         value: ThemeMode.light,
-                        child: Text('Light Mode'),
+                        child: Text('Light Mode', overflow: TextOverflow.ellipsis),
                       ),
                       DropdownMenuItem(
                         value: ThemeMode.dark,
-                        child: Text('Dark Mode'),
+                        child: Text('Dark Mode', overflow: TextOverflow.ellipsis),
                       ),
                     ],
                     onChanged: (mode) {
@@ -217,6 +220,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   DropdownButtonFormField<String>(
                     value: _selectedCountry,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Select Country',
                       prefixIcon: const Icon(Icons.location_on_outlined),
@@ -226,7 +230,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     items: CountryRepository.countries.map((c) {
                       return DropdownMenuItem(
                         value: c.name,
-                        child: Text('${c.name} (${c.currency})'),
+                        child: Text('${c.name} (${c.currency})', overflow: TextOverflow.ellipsis),
                       );
                     }).toList(),
                     onChanged: _onCountryChanged,
@@ -277,12 +281,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: const Icon(Icons.tune, color: Colors.teal),
                       ),
                       const SizedBox(width: 12),
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Units & Currency', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                          Text('Applies to all vehicles and records', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text('Units & Currency', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text('Applies to all vehicles and records', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -291,6 +297,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // Distance Unit Dropdown
                   DropdownButtonFormField<String>(
                     value: _distanceUnit,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Distance Unit',
                       prefixIcon: const Icon(Icons.route_outlined),
@@ -298,8 +305,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       filled: true,
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'km', child: Text('Kilometers (km)')),
-                      DropdownMenuItem(value: 'mi', child: Text('Miles (mi)')),
+                      DropdownMenuItem(value: 'km', child: Text('Kilometers (km)', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'mi', child: Text('Miles (mi)', overflow: TextOverflow.ellipsis)),
                     ],
                     onChanged: (val) {
                       if (val != null) {
@@ -314,6 +321,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // Volume Unit Dropdown
                   DropdownButtonFormField<String>(
                     value: _volumeUnit,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Fuel Volume Unit',
                       prefixIcon: const Icon(Icons.local_gas_station_outlined),
@@ -321,8 +329,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       filled: true,
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'L', child: Text('Litres (L)')),
-                      DropdownMenuItem(value: 'gal', child: Text('Gallons (gal)')),
+                      DropdownMenuItem(value: 'L', child: Text('Litres (L)', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'gal', child: Text('Gallons (gal)', overflow: TextOverflow.ellipsis)),
                     ],
                     onChanged: (val) {
                       if (val != null) {
@@ -337,6 +345,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // Fuel Efficiency Unit Dropdown
                   DropdownButtonFormField<String>(
                     value: _efficiencyUnit,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       labelText: 'Default Fuel Efficiency',
                       prefixIcon: const Icon(Icons.eco_outlined),
@@ -344,9 +353,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       filled: true,
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'km/L', child: Text('Kilometers per Litre (km/L)')),
-                      DropdownMenuItem(value: 'L/100km', child: Text('Litres per 100 Kilometers (L/100km)')),
-                      DropdownMenuItem(value: 'MPG', child: Text('Miles per Gallon (MPG)')),
+                      DropdownMenuItem(value: 'km/L', child: Text('Kilometers per Litre (km/L)', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'L/100km', child: Text('Litres per 100 Kilometers (L/100km)', overflow: TextOverflow.ellipsis)),
+                      DropdownMenuItem(value: 'MPG', child: Text('Miles per Gallon (MPG)', overflow: TextOverflow.ellipsis)),
                     ],
                     onChanged: (val) {
                       if (val != null) {
@@ -364,6 +373,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           value: _currency,
+                          isExpanded: true,
                           decoration: InputDecoration(
                             labelText: 'Default Currency',
                             prefixIcon: const Icon(Icons.attach_money),
@@ -371,7 +381,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             filled: true,
                           ),
                           items: {..._popularCurrencies, _currency}.map((c) {
-                            return DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontWeight: FontWeight.bold)));
+                            return DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis));
                           }).toList(),
                           onChanged: (val) {
                             if (val != null) {
@@ -431,7 +441,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: FilledButton.tonalIcon(
                           onPressed: () => _handleExportBackup(context),
                           icon: const Icon(Icons.backup_outlined, size: 18),
-                          label: const Text('Backup Data'),
+                          label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Backup Data')),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -439,7 +449,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: OutlinedButton.icon(
                           onPressed: () => _handleRestoreBackup(context),
                           icon: const Icon(Icons.settings_backup_restore, size: 18),
-                          label: const Text('Restore Data'),
+                          label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Restore Data')),
                         ),
                       ),
                     ],
@@ -458,15 +468,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             );
                           },
                           icon: const Icon(Icons.cloud_download_outlined, size: 18),
-                          label: const Text('Demo Data'),
+                          label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Demo Data')),
                         ),
                       ),
                       const SizedBox(width: 10),
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-                        onPressed: () => _confirmClearData(context),
-                        icon: const Icon(Icons.delete_forever, size: 18),
-                        label: const Text('Clear All'),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                          onPressed: () => _confirmClearData(context),
+                          icon: const Icon(Icons.delete_forever, size: 18),
+                          label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Clear All')),
+                        ),
                       ),
                     ],
                   ),

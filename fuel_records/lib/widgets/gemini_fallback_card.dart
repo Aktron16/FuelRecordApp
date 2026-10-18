@@ -179,13 +179,9 @@ class _GeminiFallbackCardState extends State<GeminiFallbackCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            const Text(
-                              'Clean with AI',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
-                          ],
+                        const Text(
+                          'Clean with AI',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -262,42 +258,88 @@ class _GeminiFallbackCardState extends State<GeminiFallbackCard> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                   const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF2563EB),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 290;
+                      if (isNarrow) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              onPressed: () => _copyPromptAndOpenGemini(context),
+                              icon: const Icon(Icons.copy_all, size: 16),
+                              label: const Text(
+                                'Copy & Open Gemini',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              onPressed: () => _openChatGpt(context),
+                              icon: const Icon(Icons.open_in_new, size: 15),
+                              label: const Text(
+                                'ChatGPT',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              onPressed: () => _copyPromptAndOpenGemini(context),
+                              icon: const Icon(Icons.copy_all, size: 16),
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Copy & Open Gemini',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
                           ),
-                          onPressed: () => _copyPromptAndOpenGemini(context),
-                          icon: const Icon(Icons.copy_all, size: 16),
-                          label: const Text(
-                            'Copy Prompt & Open Gemini',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              onPressed: () => _openChatGpt(context),
+                              icon: const Icon(Icons.open_in_new, size: 15),
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'ChatGPT',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 2,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          onPressed: () => _openChatGpt(context),
-                          icon: const Icon(Icons.open_in_new, size: 15),
-                          label: const Text(
-                            'ChatGPT',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 14),
@@ -306,18 +348,25 @@ class _GeminiFallbackCardState extends State<GeminiFallbackCard> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Step 2: Paste Cleaned Data Here',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                      ),
-                      TextButton.icon(
-                        style: TextButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                      const Expanded(
+                        child: Text(
+                          'Step 2: Paste Cleaned Data',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        onPressed: _pasteFromClipboard,
-                        icon: const Icon(Icons.paste, size: 14),
-                        label: const Text('Paste from Clipboard', style: TextStyle(fontSize: 11)),
+                      ),
+                      const SizedBox(width: 8),
+                      Tooltip(
+                        message: 'Paste from Clipboard',
+                        child: TextButton.icon(
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          onPressed: _pasteFromClipboard,
+                          icon: const Icon(Icons.paste, size: 14),
+                          label: const Text('Paste', style: TextStyle(fontSize: 11)),
+                        ),
                       ),
                     ],
                   ),

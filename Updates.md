@@ -4,7 +4,30 @@ All notable changes, feature releases, database migrations, and platform updates
 
 ---
 
-## [Version 1.1.2] — Current Release
+## [Version 1.1.3] — Current Release
+
+### 🛠️ Bug Fixes & Layout Responsiveness
+- **Layout Overflow Elimination**:
+  - Fixed `RenderFlex overflowed by 10 pixels on the right` in `GeminiFallbackCard` Step 2 header by wrapping the title in `Expanded` and streamlining the action button to `Paste` (with tooltip).
+  - Fixed `RenderFlex overflowed by 18 pixels on the right` in `SettingsScreen`'s Fuel Efficiency dropdown by setting `isExpanded: true` and `TextOverflow.ellipsis`.
+  - Added `isExpanded: true` and text truncation across all dropdowns in the app:
+    - `Country`, `Distance Unit`, `Volume Unit`, `Fuel Efficiency`, and `Currency` in Settings Screen.
+    - `Default Fuel Grade` in Vehicle Creation/Edit Sheet.
+    - `Service Type` in Vehicle Maintenance & Services Screen.
+    - `Fuel Grade` in Spreadsheet Import dialog.
+  - Added responsive `LayoutBuilder` in `GeminiFallbackCard` Step 1 to dynamically stack `Copy & Open Gemini` and `ChatGPT` buttons when container width is under 290px.
+  - Fixed Card header column overflows in Settings Screen by enclosing title columns in `Expanded`.
+  - Fixed backup and data management button row overflow by wrapping `Clear All` and `Demo Data` buttons in `Expanded` with `FittedBox`.
+- **Build & JVM Optimization**:
+  - Added `--enable-native-access=ALL-UNNAMED` to `org.gradle.jvmargs` in `android/gradle.properties` to eliminate JVM warnings when compiling on modern Java 21+ / 24 runtimes.
+- **Beautified Licensing**:
+  - Cleanly formatted and aligned the Apache 2.0 License with Commons Clause Condition with elegant section dividers in both root `LICENSE` and `fuel_records/LICENSE`.
+- **Automated Viewport Regression Tests**:
+  - Added `v1_1_3_layout_test.dart` to assert 0 layout overflows on compact 317px and 320px mobile viewport widths.
+
+---
+
+## [Version 1.1.2] — Previous Release
 
 ### 🌟 New Features & Enhancements
 

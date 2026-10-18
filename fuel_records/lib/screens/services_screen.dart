@@ -445,12 +445,13 @@ class _AddEditServiceModalState extends State<_AddEditServiceModal> {
               // Service Type Dropdown
               DropdownButtonFormField<String>(
                 value: _serviceType,
+                isExpanded: true,
                 decoration: InputDecoration(
                   labelText: 'Service Type / Category',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                   filled: true,
                 ),
-                items: _servicePresets.map((p) => DropdownMenuItem(value: p, child: Text(p, style: const TextStyle(fontSize: 13)))).toList(),
+                items: _servicePresets.map((p) => DropdownMenuItem(value: p, child: Text(p, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis))).toList(),
                 onChanged: (val) {
                   if (val != null) setState(() => _serviceType = val);
                 },

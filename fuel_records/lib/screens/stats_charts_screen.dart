@@ -75,12 +75,12 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'LIFETIME FUEL METRICS',
+                        'Lifetime Metrics',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
+                          letterSpacing: 0.8,
                         ),
                       ),
                       Container(
@@ -167,7 +167,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
 
             // Interactive Chart Section
             Text(
-              'Trends & Performance Visualizer',
+              'Trends',
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
@@ -218,7 +218,7 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
 
             // Detailed Calculated Metrics Breakdown
             Text(
-              'Calculated Metrics & Records Breakdown',
+              'Key Metrics',
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),

@@ -32,6 +32,10 @@ class FuelAppState extends ChangeNotifier {
   String? _activeVehicleId;
   ThemeMode _themeMode = ThemeMode.system;
 
+  // In-memory indexing and memoized stats cache for fast O(1) lookups
+  final Map<String, List<FuelRecord>> _recordsByVehicleId = {};
+  final Map<String, VehicleStats> _statsCache = {};
+
   // Settings
   String _selectedCountry = 'United States';
   String _defaultCurrency = '\$';
@@ -51,6 +55,27 @@ class FuelAppState extends ChangeNotifier {
   FuelAppState({this.customStorageDir, bool autoLoad = true}) {
     if (autoLoad) {
       loadFromStorage();
+    }
+  }
+
+  /// Rebuilds fast in-memory vehicleId indices and clears stats cache
+  void _rebuildIndexes() {
+    _recordsByVehicleId.clear();
+    for (final r in _records) {
+      (_recordsByVehicleId[r.vehicleId] ??= []).add(r);
+    }
+    for (final list in _recordsByVehicleId.values) {
+      list.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    }
+    _statsCache.clear();
+  }
+
+  /// Invalidate memoized stats for a specific vehicle or all vehicles
+  void _invalidateStats([String? vehicleId]) {
+    if (vehicleId != null) {
+      _statsCache.remove(vehicleId);
+    } else {
+      _statsCache.clear();
     }
   }
 
@@ -106,9 +131,7 @@ class FuelAppState extends ChangeNotifier {
   List<FuelRecord> get activeVehicleRecordsAscending {
     final vId = activeVehicleId;
     if (vId == null) return [];
-    final list = _records.where((r) => r.vehicleId == vId).toList();
-    list.sort((a, b) => a.dateTime.compareTo(b.dateTime));
-    return list;
+    return List.unmodifiable(_recordsByVehicleId[vId] ?? []);
   }
 
   /// Returns records for the active vehicle, sorted by date descending (newest first for display)
@@ -126,9 +149,27 @@ class FuelAppState extends ChangeNotifier {
     return list;
   }
 
-  /// Calculates vehicle stats for active vehicle
+  /// Calculates or retrieves memoized vehicle stats for active vehicle
   VehicleStats get activeVehicleStats {
-    return VehicleStats.fromRecords(activeVehicleRecordsAscending);
+    final vId = activeVehicleId;
+    if (vId == null) {
+      return VehicleStats(
+        totalRecords: 0,
+        totalDistance: 0.0,
+        totalFuel: 0.0,
+        totalCost: 0.0,
+        averagePricePerUnit: 0.0,
+      );
+    }
+    return getVehicleStats(vId);
+  }
+
+  /// Returns memoized vehicle stats for any vehicle
+  VehicleStats getVehicleStats(String vehicleId) {
+    return _statsCache.putIfAbsent(
+      vehicleId,
+      () => VehicleStats.fromRecords(_recordsByVehicleId[vehicleId] ?? []),
+    );
   }
 
   /// Finds calculation for a given record against its previous chronologically
@@ -357,12 +398,47 @@ class FuelAppState extends ChangeNotifier {
       if (_vehicles.isNotEmpty && (_activeVehicleId == null || !_vehicles.any((v) => v.id == _activeVehicleId))) {
         _activeVehicleId = _vehicles.first.id;
       }
+      _rebuildIndexes();
     } catch (e) {
       debugPrint('Error loading storage: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Atomically writes content to a target file via a temporary staging file
+  Future<void> _atomicWriteFile(File file, String content) async {
+    final tempFile = File('${file.path}.tmp');
+    await tempFile.writeAsString(content, flush: true);
+    if (await tempFile.exists()) {
+      if (await file.exists()) {
+        try {
+          await file.delete();
+        } catch (_) {}
+      }
+      try {
+        await tempFile.rename(file.path);
+      } catch (_) {
+        // Fallback for Windows file lock
+        await file.writeAsString(content, flush: true);
+        if (await tempFile.exists()) {
+          try {
+            await tempFile.delete();
+          } catch (_) {}
+        }
+      }
+    }
+  }
+
+  /// Returns folder for storing vehicle photos and banner images
+  Future<Directory> getVehicleImagesDirectory() async {
+    final appDir = await _getAppDirectory();
+    final imagesDir = Directory('${appDir.path}/vehicle_images');
+    if (!imagesDir.existsSync()) {
+      imagesDir.createSync(recursive: true);
+    }
+    return imagesDir;
   }
 
   /// Saves data to encrypted app folder on disk and syncs with SharedPreferences
@@ -374,20 +450,20 @@ class FuelAppState extends ChangeNotifier {
       // 1. Save Vehicles
       final vehiclesJson = jsonEncode(_vehicles.map((v) => v.toJson()).toList());
       final vehiclesFile = File('${dir.path}/vehicles.json');
-      await vehiclesFile.writeAsString(vehiclesJson);
+      await _atomicWriteFile(vehiclesFile, vehiclesJson);
       await prefs.setString(_keyVehicles, vehiclesJson);
 
       // 2. Save Encrypted Records
       final recordsPlainJson = jsonEncode(_records.map((r) => r.toJson()).toList());
       final recordsEncrypted = _encryptData(recordsPlainJson);
       final recordsEncFile = File('${dir.path}/records.enc');
-      await recordsEncFile.writeAsString(recordsEncrypted);
+      await _atomicWriteFile(recordsEncFile, recordsEncrypted);
       await prefs.setString(_keyRecords, recordsPlainJson);
 
       // 3. Save Services
       final servicesJson = jsonEncode(_services.map((s) => s.toJson()).toList());
       final servicesFile = File('${dir.path}/services.json');
-      await servicesFile.writeAsString(servicesJson);
+      await _atomicWriteFile(servicesFile, servicesJson);
       await prefs.setString(_keyServices, servicesJson);
 
       // 4. Save App Settings
@@ -401,7 +477,7 @@ class FuelAppState extends ChangeNotifier {
         'activeVehicleId': _activeVehicleId,
       };
       final settingsFile = File('${dir.path}/settings.json');
-      await settingsFile.writeAsString(const JsonEncoder.withIndent('  ').convert(settingsData));
+      await _atomicWriteFile(settingsFile, const JsonEncoder.withIndent('  ').convert(settingsData));
 
       if (_activeVehicleId != null) {
         await prefs.setString(_keyActiveVehicleId, _activeVehicleId!);
@@ -435,6 +511,7 @@ class FuelAppState extends ChangeNotifier {
       );
     }
 
+    _invalidateStats();
     await saveToStorage();
     await _logAuditAction('Changed country to ${info.name} (Currency: ${info.currency}, Dist: ${info.defaultDistanceUnit}, Vol: ${info.defaultVolumeUnit})');
     notifyListeners();
@@ -460,6 +537,7 @@ class FuelAppState extends ChangeNotifier {
       );
     }
 
+    _invalidateStats();
     await saveToStorage();
     await _logAuditAction('Updated default units: $distanceUnit, $volumeUnit, $efficiencyUnit, $currency');
     notifyListeners();
@@ -469,6 +547,7 @@ class FuelAppState extends ChangeNotifier {
   Future<void> addVehicle(Vehicle vehicle) async {
     _vehicles.add(vehicle);
     _activeVehicleId = vehicle.id;
+    _rebuildIndexes();
     await saveToStorage();
     await _logAuditAction('Added vehicle ${vehicle.name} (${vehicle.brand}, ${vehicle.type.name})');
     notifyListeners();
@@ -494,6 +573,7 @@ class FuelAppState extends ChangeNotifier {
         }
       }
 
+      _rebuildIndexes();
       await saveToStorage();
       await _logAuditAction(
         'Updated vehicle ${updated.name}${fuelTypeChanged ? ' (propagated fuel grade to ${updated.fuelType} across all records)' : ''}',
@@ -503,15 +583,35 @@ class FuelAppState extends ChangeNotifier {
   }
 
   Future<void> deleteVehicle(String vehicleId) async {
+    // Purge local photos and banner images if they exist
+    final vIndex = _vehicles.indexWhere((v) => v.id == vehicleId);
+    if (vIndex != -1) {
+      final v = _vehicles[vIndex];
+      if (v.profileImageUri != null && v.profileImageUri!.isNotEmpty) {
+        try {
+          final f = File(v.profileImageUri!);
+          if (f.existsSync()) f.deleteSync();
+        } catch (_) {}
+      }
+      if (v.bannerImageUri != null && v.bannerImageUri!.isNotEmpty) {
+        try {
+          final f = File(v.bannerImageUri!);
+          if (f.existsSync()) f.deleteSync();
+        } catch (_) {}
+      }
+    }
+
     _vehicles.removeWhere((v) => v.id == vehicleId);
     _records.removeWhere((r) => r.vehicleId == vehicleId);
     _services.removeWhere((s) => s.vehicleId == vehicleId);
+
+    _rebuildIndexes();
 
     if (_activeVehicleId == vehicleId) {
       _activeVehicleId = _vehicles.isNotEmpty ? _vehicles.first.id : null;
     }
     await saveToStorage();
-    await _logAuditAction('Deleted vehicle ID $vehicleId');
+    await _logAuditAction('Deleted vehicle ID $vehicleId with cascade record & photo purge');
     notifyListeners();
   }
 
@@ -527,6 +627,7 @@ class FuelAppState extends ChangeNotifier {
   Future<void> addRecord(FuelRecord record) async {
     final recordWithAudit = record.copyWith(); // Sets createdTimestamp and lastModifiedTimestamp
     _records.add(recordWithAudit);
+    _rebuildIndexes();
     await saveToStorage();
     await _logAuditAction('Added fuel record ID ${record.id} (Odo: ${record.odometer}, Fuel: ${record.fuelAmount}, Price: ${record.totalPrice})');
     notifyListeners();
@@ -538,6 +639,7 @@ class FuelAppState extends ChangeNotifier {
       final recordWithAudit = rec.copyWith();
       _records.add(recordWithAudit);
     }
+    _rebuildIndexes();
     await saveToStorage();
     await _logAuditAction('Imported batch of ${newRecords.length} fuel records from unstructured text');
     notifyListeners();
@@ -555,6 +657,7 @@ class FuelAppState extends ChangeNotifier {
       );
       _records.add(recordWithAudit);
     }
+    _rebuildIndexes();
     await saveToStorage();
     await _logAuditAction('Atomic spreadsheet batch import: committed ${newRecords.length} records');
     notifyListeners();
@@ -568,6 +671,7 @@ class FuelAppState extends ChangeNotifier {
         lastModifiedTimestamp: DateTime.now(),
       );
       _records[idx] = updatedWithAudit;
+      _rebuildIndexes();
       await saveToStorage();
       await _logAuditAction('Modified fuel record ID ${updated.id}');
       notifyListeners();
@@ -576,9 +680,23 @@ class FuelAppState extends ChangeNotifier {
 
   Future<void> deleteRecord(String recordId) async {
     _records.removeWhere((r) => r.id == recordId);
+    _rebuildIndexes();
     await saveToStorage();
     await _logAuditAction('Deleted fuel record ID $recordId');
     notifyListeners();
+  }
+
+  /// Deletes multiple fuel records in a single atomic pass
+  Future<int> deleteRecordsBatch(List<String> recordIds) async {
+    if (recordIds.isEmpty) return 0;
+    final idSet = recordIds.toSet();
+    final countBefore = _records.length;
+    _records.removeWhere((r) => idSet.contains(r.id));
+    _rebuildIndexes();
+    await saveToStorage();
+    await _logAuditAction('Deleted batch of ${idSet.length} fuel records');
+    notifyListeners();
+    return countBefore - _records.length;
   }
 
   // Service Records Management
@@ -733,6 +851,7 @@ class FuelAppState extends ChangeNotifier {
     _records = records;
     _services = services;
     _activeVehicleId = vehicle1.id;
+    _rebuildIndexes();
     await saveToStorage();
     await _logAuditAction('Loaded sample demo data');
     notifyListeners();
@@ -816,7 +935,7 @@ class FuelAppState extends ChangeNotifier {
   /// Exports complete data snapshot as formatted JSON string
   String exportAllDataBackup() {
     final data = {
-      'version': '1.1.1',
+      'version': '1.1.2',
       'exportedAt': DateTime.now().toIso8601String(),
       'selectedCountry': _selectedCountry,
       'defaultCurrency': _defaultCurrency,
@@ -879,6 +998,7 @@ class FuelAppState extends ChangeNotifier {
       _activeVehicleId = null;
     }
 
+    _rebuildIndexes();
     await saveToStorage();
     await _logAuditAction(
       'Restored full backup: ${_vehicles.length} vehicles, ${_records.length} records, ${_services.length} services',
@@ -892,6 +1012,7 @@ class FuelAppState extends ChangeNotifier {
     _records.clear();
     _services.clear();
     _activeVehicleId = null;
+    _rebuildIndexes();
     await saveToStorage();
     await _logAuditAction('Cleared all app data');
     notifyListeners();

@@ -131,28 +131,71 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
   }
 
   void _confirmDelete() {
+    bool createBackup = true;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Fuel Record?'),
-        content: const Text('Are you sure you want to delete this fuel record? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) => AlertDialog(
+          title: Row(
+            children: const [
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626)),
+              SizedBox(width: 8),
+              Text('Delete Fuel Record?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+            ],
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              Navigator.of(ctx).pop(); // Dismiss dialog
-              if (widget.onDelete != null && widget.recordToEdit != null) {
-                widget.onDelete!(widget.recordToEdit!.id);
-              }
-              Navigator.of(context).pop(); // Pop screen
-            },
-            child: const Text('Delete'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Are you sure you want to delete this fuel record? This action cannot be undone.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: () => setDialogState(() => createBackup = !createBackup),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: createBackup,
+                      onChanged: (val) => setDialogState(() => createBackup = val ?? false),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'Create backup before deletion',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+              onPressed: () async {
+                Navigator.of(ctx).pop(); // Dismiss dialog
+                if (createBackup && widget.appState != null) {
+                  try {
+                    await widget.appState!.saveBackupToFile();
+                  } catch (_) {}
+                }
+                if (widget.onDelete != null && widget.recordToEdit != null) {
+                  widget.onDelete!(widget.recordToEdit!.id);
+                }
+                if (mounted) {
+                  Navigator.of(context).pop(); // Pop screen
+                }
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
       ),
     );
   }

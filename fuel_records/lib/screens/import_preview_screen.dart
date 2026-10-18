@@ -40,9 +40,11 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
   List<FuelField> _columnMappings = [];
   List<StagedFuelRecord> _stagedRecords = [];
 
+  // Tab Selection: 0 = Pick File, 1 = Paste Text, 2 = Clean with AI
+  int _selectedMethodTab = 0;
+
   // Manual Text Input Controller
   final TextEditingController _pasteController = TextEditingController();
-  bool _showPasteArea = false;
 
   // Quarantine & Filter State
   String _activeFilter = 'all'; // 'all', 'invalid', 'valid'
@@ -53,6 +55,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
   void initState() {
     super.initState();
     if (widget.initialText != null && widget.initialText!.trim().isNotEmpty) {
+      _selectedMethodTab = 1;
       _pasteController.text = widget.initialText!;
       _processRawText(widget.initialText!);
     }
@@ -187,7 +190,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
       _rawDataRows = table.dataRows;
       _columnMappings = autoMappings;
       _recomputeStagedRecords();
-      _showPasteArea = false;
+      _selectedMethodTab = 0;
     });
   }
 
@@ -523,81 +526,21 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
               ),
             ),
 
-            // Action Buttons: File Picker & Sample Template Generator
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 11),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onPressed: _isLoading ? null : _pickFile,
-                      icon: const Icon(Icons.file_open_outlined, size: 18),
-                      label: Text(
-                        _sourceFileName.isEmpty ? 'Pick File (.csv, .xlsx)' : 'Change File',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    onPressed: _downloadSampleTemplate,
-                    icon: const Icon(Icons.download_outlined, size: 18),
-                    label: const Text('Template', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                  ),
-                  const SizedBox(width: 6),
-                  IconButton(
-                    icon: Icon(_showPasteArea ? Icons.table_chart : Icons.paste),
-                    tooltip: _showPasteArea ? 'Show Table' : 'Paste Raw Text',
-                    onPressed: () {
-                      setState(() => _showPasteArea = !_showPasteArea);
-                    },
-                  ),
-                ],
-              ),
-            ),
+            // Segmented / Tabbed Option Selector
+            _buildMethodSelector(theme, isDark),
 
-            // Optional Manual Paste Area
-            if (_showPasteArea)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF22222E) : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+            if (_rawHeaders.isEmpty)
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  child: _buildDynamicMethodArea(theme, isDark, isStaged: false),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: _pasteController,
-                      maxLines: 4,
-                      style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
-                      decoration: const InputDecoration(
-                        hintText: 'Paste CSV, TSV, or notes here...\ne.g. 2026-10-15, 84500, 42.5, 2.50, 106.25, Shell',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: () => _processRawText(_pasteController.text),
-                      child: const Text('Parse Staged Table'),
-                    ),
-                  ],
-                ),
+              )
+            else ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildDynamicMethodArea(theme, isDark, isStaged: true),
               ),
-
-            // Staging Table & Quarantine Section
-            if (_rawHeaders.isNotEmpty) ...[
               // Quarantine & Filter Summary Bar
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -674,9 +617,33 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                 ),
               ),
               if (invalidCount > 0)
-                GeminiFallbackCard(
-                  onParseCsv: handlePasteImport,
-                  isHighlighted: true,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: InkWell(
+                    onTap: () => setState(() => _selectedMethodTab = 2),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFCA5A5)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.auto_awesome, size: 16, color: Color(0xFFDC2626)),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Some rows need attention. Tap here to clean with AI.',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF991B1B)),
+                            ),
+                          ),
+                          Icon(Icons.chevron_right, size: 18, color: Color(0xFFDC2626)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
 
               // Interactive Column-Mapper and Staged Table
@@ -820,44 +787,6 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                   ),
                 ),
               ),
-            ] else ...[
-              // Empty State Placeholder with Gemini Fallback Card
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(0, 4, 0, 36),
-                  children: [
-                    GeminiFallbackCard(
-                      onParseCsv: handlePasteImport,
-                      isHighlighted: false,
-                    ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.table_chart_outlined, size: 48, color: Colors.grey.withValues(alpha: 0.5)),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Or Pick an Existing Spreadsheet File',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Tap below to load .csv or .xlsx from your device.',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                          const SizedBox(height: 14),
-                          FilledButton.icon(
-                            onPressed: _pickFile,
-                            icon: const Icon(Icons.file_upload),
-                            label: const Text('Pick Spreadsheet File'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ],
         ),
@@ -920,6 +849,264 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildMethodSelector(ThemeData theme, bool isDark) {
+    final tabs = [
+      (0, 'Pick File (.csv, .xlsx)', Icons.file_present_outlined),
+      (1, 'Paste Text', Icons.paste_outlined),
+      (2, 'Clean with AI', Icons.auto_awesome_outlined),
+    ];
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF232332) : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: tabs.map((tab) {
+          final isSelected = _selectedMethodTab == tab.$1;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedMethodTab = tab.$1),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark ? const Color(0xFF3B82F6) : theme.colorScheme.primary)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: (isDark ? const Color(0xFF3B82F6) : theme.colorScheme.primary).withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      tab.$3,
+                      size: 16,
+                      color: isSelected ? Colors.white : (isDark ? Colors.grey[400] : Colors.grey[700]),
+                    ),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        tab.$2,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected ? Colors.white : (isDark ? Colors.grey[300] : Colors.grey[800]),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildDynamicMethodArea(ThemeData theme, bool isDark, {required bool isStaged}) {
+    switch (_selectedMethodTab) {
+      case 0:
+        if (isStaged) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.description_outlined, size: 18, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _sourceFileName.isEmpty ? 'Spreadsheet Data Loaded' : _sourceFileName,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: _isLoading ? null : _pickFile,
+                  icon: const Icon(Icons.refresh, size: 15),
+                  label: const Text('Change File', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(width: 6),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: _downloadSampleTemplate,
+                  icon: const Icon(Icons.download_outlined, size: 15),
+                  label: const Text('Template', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          );
+        }
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Select a spreadsheet from your device (.csv, .xlsx) or download our sample template to see the format.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.85),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  shadowColor: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: _isLoading ? null : _pickFile,
+                icon: const Icon(Icons.file_open_outlined, size: 20),
+                label: Text(
+                  _sourceFileName.isEmpty ? 'Select Spreadsheet / CSV File' : 'Change File ($_sourceFileName)',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: _downloadSampleTemplate,
+                icon: const Icon(Icons.download_outlined, size: 18),
+                label: const Text('Download Sample Template', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              ),
+            ],
+          ),
+        );
+
+      case 1:
+        return Container(
+          margin: isStaged ? const EdgeInsets.only(bottom: 6) : EdgeInsets.zero,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Copy and paste your table, tab-separated, or comma-separated fuel entries directly into the box below.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.85),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _pasteController,
+                maxLines: isStaged ? 3 : 5,
+                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                decoration: const InputDecoration(
+                  hintText: 'Paste CSV, TSV, or notes here...\ne.g. 2026-10-15, 84500, 42.5, 2.50, 106.25, Shell',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  shadowColor: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () => _processRawText(_pasteController.text),
+                icon: const Icon(Icons.table_rows_outlined, size: 18),
+                label: const Text('Parse Pasted Data', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              ),
+            ],
+          ),
+        );
+
+      case 2:
+      default:
+        return Container(
+          margin: isStaged ? const EdgeInsets.only(bottom: 6) : EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Use Gemini AI to quickly reformat messy notes, text, or receipts into a clean table ready for import.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.85),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              GeminiFallbackCard(
+                onParseCsv: handlePasteImport,
+                isHighlighted: false,
+              ),
+            ],
+          ),
+        );
+    }
   }
 }
 

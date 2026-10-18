@@ -64,6 +64,9 @@ class Vehicle {
   final String unitVolume; // 'L' or 'gal'
   final String currency; // '$', '€', '₹', '£', etc.
   final String fuelType; // Default fuel grade/type for this vehicle
+  final String? licensePlate;
+  final String? profileImageUri;
+  final String? bannerImageUri;
   final double? initialOdometer;
   final DateTime? dateBought; // Date vehicle was purchased
   final DateTime createdAt;
@@ -79,6 +82,9 @@ class Vehicle {
     this.unitVolume = 'L',
     this.currency = '\$',
     this.fuelType = 'Regular (87)',
+    this.licensePlate,
+    this.profileImageUri,
+    this.bannerImageUri,
     this.initialOdometer,
     this.dateBought,
     DateTime? createdAt,
@@ -115,6 +121,9 @@ class Vehicle {
       'unitVolume': unitVolume,
       'currency': currency,
       'fuelType': fuelType,
+      'licensePlate': licensePlate,
+      'profileImageUri': profileImageUri,
+      'bannerImageUri': bannerImageUri,
       'initialOdometer': initialOdometer,
       'dateBought': dateBought?.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
@@ -141,6 +150,9 @@ class Vehicle {
       unitVolume: json['unitVolume'] as String? ?? 'L',
       currency: json['currency'] as String? ?? '\$',
       fuelType: json['fuelType'] as String? ?? 'Regular (87)',
+      licensePlate: json['licensePlate'] as String?,
+      profileImageUri: json['profileImageUri'] as String?,
+      bannerImageUri: json['bannerImageUri'] as String?,
       initialOdometer: (json['initialOdometer'] as num?)?.toDouble(),
       dateBought: json['dateBought'] != null
           ? DateTime.tryParse(json['dateBought'] as String)
@@ -161,8 +173,13 @@ class Vehicle {
     String? unitVolume,
     String? currency,
     String? fuelType,
+    String? licensePlate,
+    String? profileImageUri,
+    String? bannerImageUri,
     double? initialOdometer,
     DateTime? dateBought,
+    bool clearProfileImage = false,
+    bool clearBannerImage = false,
   }) {
     return Vehicle(
       id: id,
@@ -175,6 +192,9 @@ class Vehicle {
       unitVolume: unitVolume ?? this.unitVolume,
       currency: currency ?? this.currency,
       fuelType: fuelType ?? this.fuelType,
+      licensePlate: licensePlate ?? this.licensePlate,
+      profileImageUri: clearProfileImage ? null : (profileImageUri ?? this.profileImageUri),
+      bannerImageUri: clearBannerImage ? null : (bannerImageUri ?? this.bannerImageUri),
       initialOdometer: initialOdometer ?? this.initialOdometer,
       dateBought: dateBought ?? this.dateBought,
       createdAt: createdAt,

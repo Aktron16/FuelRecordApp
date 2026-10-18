@@ -181,23 +181,9 @@ class _GeminiFallbackCardState extends State<GeminiFallbackCard> {
                       children: [
                         Row(
                           children: [
-                            const Flexible(
-                              child: Text(
-                                'Clean with Gemini AI',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF2563EB),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                'Layer 4 Fallback',
-                                style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                              ),
+                            const Text(
+                              'Clean with AI',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                             ),
                           ],
                         ),

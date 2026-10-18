@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/vehicle.dart';
 import '../models/record_calculation.dart';
@@ -238,7 +239,6 @@ class HomeScreen extends StatelessWidget {
 
             // Vehicle Hero Artwork & Overview Card
             Container(
-              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -258,120 +258,211 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Car info
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Column(
+                  children: [
+                    if (vehicle.bannerImageUri != null && File(vehicle.bannerImageUri!).existsSync())
+                      Stack(
+                        children: [
+                          Image.file(
+                            File(vehicle.bannerImageUri!),
+                            width: double.infinity,
+                            height: 130,
+                            fit: BoxFit.cover,
+                          ),
+                          Positioned.fill(
+                            child: Container(
                               decoration: BoxDecoration(
-                                color: primaryColor,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                vehicle.type.displayName.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.6,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.black.withValues(alpha: 0.15),
+                                    Colors.black.withValues(alpha: 0.75),
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              vehicle.name,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
+                          ),
+                          if (vehicle.licensePlate != null && vehicle.licensePlate!.isNotEmpty)
+                            Positioned(
+                              top: 10,
+                              right: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.black87,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.white70, width: 1.2),
+                                ),
+                                child: Text(
+                                  vehicle.licensePlate!.toUpperCase(),
+                                  style: const TextStyle(
+                                    fontFamily: 'monospace',
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 11,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
                               ),
                             ),
-                            Text(
-                              '${vehicle.brand} • Owner: ${vehicle.owner}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-                              ),
-                            ),
-                            if (vehicle.dateBought != null) ...[
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(Icons.shopping_bag_outlined, size: 12, color: Colors.grey.shade600),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Bought: ${AppDateUtils.format(vehicle.dateBought!)} (${vehicle.ownershipDuration})',
-                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                        ],
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Car info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: primaryColor,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        vehicle.type.displayName.toUpperCase(),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.6,
+                                        ),
+                                      ),
+                                    ),
+                                    if ((vehicle.bannerImageUri == null || !File(vehicle.bannerImageUri!).existsSync()) &&
+                                        vehicle.licensePlate != null && vehicle.licensePlate!.isNotEmpty) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: isDark ? Colors.black45 : Colors.grey.shade100,
+                                          borderRadius: BorderRadius.circular(5),
+                                          border: Border.all(color: Colors.grey.shade400, width: 1),
+                                        ),
+                                        child: Text(
+                                          vehicle.licensePlate!.toUpperCase(),
+                                          style: const TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 10,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  vehicle.name,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                Text(
+                                  '${vehicle.brand} • Owner: ${vehicle.owner}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                                  ),
+                                ),
+                                if (vehicle.dateBought != null) ...[
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.shopping_bag_outlined, size: 12, color: Colors.grey.shade600),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Bought: ${AppDateUtils.format(vehicle.dateBought!)} (${vehicle.ownershipDuration})',
+                                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
                                   ),
                                 ],
+                                const SizedBox(height: 8),
+                                if (latestRecord != null)
+                                  Row(
+                                    children: [
+                                      Icon(Icons.speed, size: 14, color: primaryColor),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${latestRecord.odometer.toStringAsFixed(0)} ${vehicle.unitDistance}',
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                          ),
+                          // Vehicle Artwork or Profile Photo
+                          Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: vehicle.profileImageUri != null && File(vehicle.profileImageUri!).existsSync()
+                                    ? Image.file(
+                                        File(vehicle.profileImageUri!),
+                                        width: 100,
+                                        height: 75,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : VehicleArtwork(
+                                        type: vehicle.type,
+                                        bodyColor: primaryColor,
+                                        width: 135,
+                                        height: 75,
+                                        showBadge: false,
+                                      ),
+                              ),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                onTap: () {
+                                  AddEditVehicleSheet.show(
+                                    context,
+                                    vehicle: vehicle,
+                                    defaultDistanceUnit: appState.defaultDistanceUnit,
+                                    defaultVolumeUnit: appState.defaultVolumeUnit,
+                                    defaultCurrency: appState.defaultCurrency,
+                                    appState: appState,
+                                    onSave: (updated) => appState.updateVehicle(updated),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.edit, size: 12, color: primaryColor),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Edit Car',
+                                        style: TextStyle(
+                                          color: primaryColor,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ],
-                            const SizedBox(height: 8),
-                            if (latestRecord != null)
-                              Row(
-                                children: [
-                                  Icon(Icons.speed, size: 14, color: primaryColor),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${latestRecord.odometer.toStringAsFixed(0)} ${vehicle.unitDistance}',
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-                      ),
-                      // Vehicle Artwork
-                      Column(
-                        children: [
-                          VehicleArtwork(
-                            type: vehicle.type,
-                            bodyColor: primaryColor,
-                            width: 135,
-                            height: 75,
-                            showBadge: false,
-                          ),
-                          InkWell(
-                            onTap: () {
-                              AddEditVehicleSheet.show(
-                                context,
-                                vehicle: vehicle,
-                                defaultDistanceUnit: appState.defaultDistanceUnit,
-                                defaultVolumeUnit: appState.defaultVolumeUnit,
-                                defaultCurrency: appState.defaultCurrency,
-                                onSave: (updated) => appState.updateVehicle(updated),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.edit, size: 12, color: primaryColor),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Edit Car Details',
-                                    style: TextStyle(
-                                      color: primaryColor,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -498,7 +589,7 @@ class HomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Latest Refuel Calculated Metrics',
+                  'Recent Metrics',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.3,
@@ -622,7 +713,7 @@ class HomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Recent Fuel Entries',
+                  'Recent Entries',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.3,
@@ -861,7 +952,7 @@ class HomeScreen extends StatelessWidget {
                   Icon(Icons.query_stats, size: 18, color: primaryColor),
                   const SizedBox(width: 8),
                   const Text(
-                    'Overall Combined Stats (All Records)',
+                    'Overall Stats',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ],

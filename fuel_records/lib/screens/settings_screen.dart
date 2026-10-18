@@ -100,7 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.3),
                       ),
                       Text(
-                        'Version 1.0.2 • Private Offline Record Tracker',
+                        'Version 1.1.2 • Offline Fuel Tracker',
                         style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.65)),
                       ),
                     ],
@@ -134,8 +134,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Appearance & Theme', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                          Text('Select Light or Dark mode', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                          Text('Appearance', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          Text('Choose Light or Dark mode', style: TextStyle(color: Colors.grey, fontSize: 11)),
                         ],
                       ),
                     ],
@@ -206,8 +206,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Country Lived In', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                            Text('Sets currency and popular gas station brands', style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
+                            const Text('Country', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text('Sets currency and popular gas stations', style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
                           ],
                         ),
                       ),
@@ -258,7 +258,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 16),
 
-          // 3. Centralized Units & Currency (All Dropdowns)
+          // 3. Centralized Units & Currency
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Padding(
@@ -280,8 +280,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Centralized Units & Currency', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                          Text('Used across all vehicles, records, and metrics', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                          Text('Units & Currency', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          Text('Applies to all vehicles and records', style: TextStyle(color: Colors.grey, fontSize: 11)),
                         ],
                       ),
                     ],
@@ -363,14 +363,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: _popularCurrencies.contains(_currency) ? _currency : _popularCurrencies.first,
+                          value: _currency,
                           decoration: InputDecoration(
-                            labelText: 'Default Currency Symbol',
+                            labelText: 'Default Currency',
                             prefixIcon: const Icon(Icons.attach_money),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                             filled: true,
                           ),
-                          items: _popularCurrencies.map((c) {
+                          items: {..._popularCurrencies, _currency}.map((c) {
                             return DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontWeight: FontWeight.bold)));
                           }).toList(),
                           onChanged: (val) {
@@ -383,8 +383,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(width: 10),
                       SizedBox(
-                        width: 80,
+                        width: 85,
                         child: TextFormField(
+                          key: ValueKey(_currency),
                           initialValue: _currency,
                           textAlign: TextAlign.center,
                           decoration: InputDecoration(
@@ -417,10 +418,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Data Backup & Portability', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  const Text('Backup & Data', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   const SizedBox(height: 6),
                   Text(
-                    'Export or restore a complete encrypted-ready snapshot of your vehicles, fuel records, and service logs.',
+                    'Export or restore a complete snapshot of your vehicles, fuel records, and service logs.',
                     style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.65)),
                   ),
                   const SizedBox(height: 14),
@@ -479,7 +480,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Version Footer
           Center(
             child: Text(
-              'Fuel Metrics • Version 1.1.1',
+              'Fuel Metrics • Version 1.1.2',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
             ),
           ),
@@ -594,22 +595,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _confirmClearData(BuildContext context) {
+    bool createBackup = true;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Clear All Data?'),
-        content: const Text('This will erase all vehicles, records, and service logs. Are you sure?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              widget.appState.clearAllData();
-            },
-            child: const Text('Clear'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) => AlertDialog(
+          title: Row(
+            children: const [
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626)),
+              SizedBox(width: 8),
+              Text('Clear All Data?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+            ],
           ),
-        ],
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('This will erase all vehicles, records, and service logs. Are you sure?'),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: () => setDialogState(() => createBackup = !createBackup),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: createBackup,
+                      onChanged: (val) => setDialogState(() => createBackup = val ?? false),
+                    ),
+                    const Expanded(
+                      child: Text(
+                        'Create backup before deletion',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                if (createBackup) {
+                  try {
+                    await widget.appState.saveBackupToFile();
+                  } catch (_) {}
+                }
+                await widget.appState.clearAllData();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('All data has been cleared.')),
+                  );
+                }
+              },
+              child: const Text('Clear All'),
+            ),
+          ],
+        ),
       ),
     );
   }

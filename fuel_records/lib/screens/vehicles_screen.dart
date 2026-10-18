@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/vehicle.dart';
 import '../services/fuel_app_state.dart';
@@ -21,13 +22,14 @@ class VehiclesScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Garage & Vehicles', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Garage', style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         icon: const Icon(Icons.add),
         label: const Text('Add Vehicle', style: TextStyle(fontWeight: FontWeight.bold)),
         onPressed: () {
@@ -36,6 +38,7 @@ class VehiclesScreen extends StatelessWidget {
             defaultDistanceUnit: appState.defaultDistanceUnit,
             defaultVolumeUnit: appState.defaultVolumeUnit,
             defaultCurrency: appState.defaultCurrency,
+            appState: appState,
             onSave: (newVehicle) => appState.addVehicle(newVehicle),
           );
         },
@@ -71,7 +74,7 @@ class VehiclesScreen extends StatelessWidget {
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(20),
                     gradient: LinearGradient(
                       colors: [
                         primaryColor.withValues(alpha: isActive ? 0.22 : 0.08),
@@ -93,10 +96,10 @@ class VehiclesScreen extends StatelessWidget {
                     ],
                   ),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(20),
                     onTap: () {
                       appState.setActiveVehicle(vehicle.id);
-                      Navigator.of(context).pop(); // Single tap takes you directly to car's info
+                      Navigator.of(context).pop();
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -105,13 +108,13 @@ class VehiclesScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              // Active Indicator / Switch Badge
+                              // Active Indicator / Select Button
                               if (isActive)
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: primaryColor,
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -119,7 +122,7 @@ class VehiclesScreen extends StatelessWidget {
                                       Icon(Icons.check, size: 14, color: Colors.white),
                                       SizedBox(width: 4),
                                       Text(
-                                        'ACTIVE VEHICLE',
+                                        'ACTIVE',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 10,
@@ -146,7 +149,7 @@ class VehiclesScreen extends StatelessWidget {
 
                               const Spacer(),
 
-                                // Edit Vehicle
+                              // Edit Vehicle
                               IconButton(
                                 icon: const Icon(Icons.edit_outlined, size: 20),
                                 tooltip: 'Edit Vehicle',
@@ -157,6 +160,7 @@ class VehiclesScreen extends StatelessWidget {
                                     defaultDistanceUnit: appState.defaultDistanceUnit,
                                     defaultVolumeUnit: appState.defaultVolumeUnit,
                                     defaultCurrency: appState.defaultCurrency,
+                                    appState: appState,
                                     onSave: (updated) => appState.updateVehicle(updated),
                                   );
                                 },
@@ -171,20 +175,30 @@ class VehiclesScreen extends StatelessWidget {
                             ],
                           ),
 
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
 
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // Large Vehicle Artwork
-                              VehicleArtwork(
-                                type: vehicle.type,
-                                bodyColor: primaryColor,
-                                width: 110,
-                                height: 60,
-                                showBadge: false,
+                              // Vehicle Avatar (PFP or Artwork)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: vehicle.profileImageUri != null && File(vehicle.profileImageUri!).existsSync()
+                                    ? Image.file(
+                                        File(vehicle.profileImageUri!),
+                                        width: 80,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : VehicleArtwork(
+                                        type: vehicle.type,
+                                        bodyColor: primaryColor,
+                                        width: 80,
+                                        height: 50,
+                                        showBadge: false,
+                                      ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 14),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,32 +207,43 @@ class VehiclesScreen extends StatelessWidget {
                                       vehicle.name,
                                       style: theme.textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 18,
+                                        fontSize: 17,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       '${vehicle.brand} • ${vehicle.type.displayName}',
                                       style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 12,
                                         color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
+                                    const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        Icon(Icons.person_outline, size: 14, color: Colors.grey.shade600),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          vehicle.owner,
-                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Icon(Icons.receipt_outlined, size: 14, color: Colors.grey.shade600),
-                                        const SizedBox(width: 4),
+                                        if (vehicle.licensePlate != null && vehicle.licensePlate!.isNotEmpty) ...[
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: isDark ? Colors.black45 : Colors.grey.shade100,
+                                              borderRadius: BorderRadius.circular(5),
+                                              border: Border.all(color: Colors.grey.shade400, width: 1),
+                                            ),
+                                            child: Text(
+                                              vehicle.licensePlate!.toUpperCase(),
+                                              style: const TextStyle(
+                                                fontFamily: 'monospace',
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 10,
+                                                letterSpacing: 0.8,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                        ],
                                         Text(
                                           '$count records',
-                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                          style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                                         ),
                                       ],
                                     ),
@@ -263,27 +288,66 @@ class VehiclesScreen extends StatelessWidget {
   }
 
   void _confirmDeleteVehicle(BuildContext context, Vehicle vehicle) {
+    final fuelCount = appState.allRecords.where((r) => r.vehicleId == vehicle.id).length;
+    final serviceCount = appState.allServices.where((s) => s.vehicleId == vehicle.id).length;
+    bool createBackup = true;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Delete "${vehicle.name}"?'),
-        content: const Text(
-          'Deleting this vehicle will also remove all associated fuel records. Are you sure you wish to proceed?',
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Delete "${vehicle.name}"?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'This will permanently delete this vehicle and all $fuelCount associated fuel records${serviceCount > 0 ? ' (and $serviceCount service records).' : '.'} This action cannot be undone.',
+                style: const TextStyle(fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text('Create backup before deletion', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                value: createBackup,
+                onChanged: (val) => setDialogState(() => createBackup = val ?? false),
+              ),
+            ],
+          ),
+          actions: [
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              icon: const Icon(Icons.delete_forever, size: 16),
+              label: const Text('Delete'),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                if (createBackup) {
+                  try {
+                    final backupFile = await appState.saveBackupToFile();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Backup saved before deletion: ${backupFile.path.split(Platform.pathSeparator).last}')),
+                      );
+                    }
+                  } catch (_) {}
+                }
+                await appState.deleteVehicle(vehicle.id);
+              },
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              appState.deleteVehicle(vehicle.id);
-            },
-            child: const Text('Delete'),
-          ),
-        ],
       ),
     );
   }

@@ -4,7 +4,56 @@ All notable changes, feature releases, database migrations, and platform updates
 
 ---
 
-## [Version 1.1.1] — Stable Release (Current)
+## [Version 1.1.2] — Current Release
+
+### 🌟 New Features & Enhancements
+
+#### 🎨 UI/UX Decluttering & Refined Button Styling
+- **Concise Copywriting**: Removed redundant parenthetical specifications and technical jargon across all headings, metrics, and cards (e.g., "Overall Stats", "Clean with AI", "Key Metrics", "Trends").
+- **Tastefully Elevated Buttons**: Upgraded primary and secondary buttons across the app with subtle drop shadows, 10–12px rounded corners, clear leading icons, and polished tap feedback.
+
+#### 📑 Redesigned "Import Fuel Data" Page (Tabbed Method Selector)
+- **3-Pill Segmented Selector**: Switch seamlessly between three import methods via a modern segmented pill bar:
+  - `Pick File (.csv, .xlsx)`: Direct spreadsheet file picker with sample template generator.
+  - `Paste Text`: Multi-line text field to directly paste CSV/TSV table rows or receipts.
+  - `Clean with AI`: Integrated Gemini AI data cleaner fallback card.
+- **Dynamic Action Area**: Contextual instructions and tools display dynamically based on the active tab without screen clutter.
+- **Sticky Bottom Action Bar**: Redesigned bottom navigation bar with Cancel (red `#DC2626`) and Accept (green `#16A34A`) buttons with responsive bottom padding.
+
+#### 🚗 Car License Plate, Profile Picture (PFP) & Banner Image
+- **Vehicle Customization**:
+  - Added License Plate tracking with uppercase auto-capitalization and pill badges.
+  - Added camera and gallery pickers for car Profile Pictures (avatars) and Banner Images (cover photos).
+  - Integrated native image compression on capture (512×512 for PFP, 1280×720 at 80% quality for banners) to prevent memory overhead.
+  - PFP displayed across the Garage and Home Screen, with banner image and gradient scrim overlay displayed on the Home hero overview card.
+  - Image removal support and automatic local file purging when deleting vehicles.
+
+#### 📊 Grid View Table Updates (Sticky Selection Column)
+- **Sticky Leftmost Checkbox Column**: Pinned ~52px selection column remains strictly fixed during horizontal scrolling of wide data columns, utilizing dual synchronized vertical controllers.
+- **Master Select All**: Checkbox in the table header toggles all visible records simultaneously.
+- **Floating Multi-Select Action Bar**: Appears at the bottom when rows are selected, showing selected count, "Deselect All", and a red "Delete Selected" button.
+- **Removed Fuel Grade Column**: Cleaned up the table by eliminating the redundant "Fuel Grade" column from headers and data rows.
+
+#### 🛡️ Safe Record Deletion & Backup Checkbox
+- **Accidental Deletion Prevention**: Prominent confirmation dialogs detail the exact number of records or data being deleted.
+- **Create Backup Before Deletion Checkbox**: Every deletion modal (single record deletion in edit sheets, bulk deletion in grid view table, cascade vehicle deletion in Garage, and clear all data in Settings) includes an explicit `[x] Create backup before deletion` checkbox that saves a complete JSON snapshot to Downloads before executing the deletion.
+
+#### ⚡ Performance & Data Architecture Optimizations
+- **In-Memory Indexing**: Added `_recordsByVehicleId` and sorted date lookups for $O(1)$ and instant query times.
+- **Memoized Statistics Cache**: Reusable `_statsCache` eliminates redundant KPI recalculation on UI rebuilds.
+- **Atomic File Writing**: File writes use temporary file replacement (`.tmp` -> replace destination) to prevent file corruption during sudden app termination or power loss.
+- **Atomic Batch Deletions**: Single-pass `deleteRecordsBatch()` deletes multi-selected records in an atomic transaction.
+
+#### 🌍 45-Country Presets Dataset & Custom Currency Box
+- **Comprehensive Country Database**: Expanded `CountryRepository` to 45 major countries with ISO codes, currency symbol/code (USD, EUR, GBP, JPY, CAD, AUD, etc.), default units, popular station brands, and regional fuel grades.
+- **Custom Currency Box**: Retained the editable custom currency text box in Settings so users can override default currency symbols anytime.
+
+#### 📜 Licensing (Apache 2.0 with Commons Clause)
+- **Open Source with Non-Sale Restriction**: Added official `LICENSE` file containing the Apache License 2.0 with the Commons Clause ("Nothing in this License grants any right to 'Sell' the Software").
+
+---
+
+## [Version 1.1.1] — Previous Release
 
 ### 🌟 New Features & Enhancements
 

@@ -114,7 +114,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'A clean template with the exact column headers has been saved to your device. You can open it in Excel, Google Sheets, or fill it out directly:',
+                'A clean template with the exact column headers has been saved to your Downloads folder. You can open it in Excel, Google Sheets, or fill it out directly:',
                 style: TextStyle(fontSize: 13, height: 1.4),
               ),
               const SizedBox(height: 12),
@@ -230,7 +230,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
     final stationCtrl = TextEditingController(text: record.gasStation);
     final notesCtrl = TextEditingController(text: record.notes);
     String selectedGrade = record.fuelType;
-    bool isFull = record.isFullTank;
+    bool isFull = record.isFullTank ?? true;
 
     showDialog(
       context: context,
@@ -429,7 +429,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
         totalPrice: item.totalPrice!,
         isFullTank: item.isFullTank,
         fuelType: item.fuelType.isNotEmpty ? item.fuelType : widget.vehicle.fuelType,
-        gasStation: item.gasStation.isNotEmpty ? item.gasStation : 'Gas Station',
+        gasStation: item.gasStation.isNotEmpty ? item.gasStation : '',
         notes: item.notes,
       ));
     }
@@ -495,48 +495,48 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
       ),
       body: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
 
-            // Simple 1-Paragraph Non-Technical Explanation
-            Container(
-              margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.22)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.info_outline, size: 20, color: theme.colorScheme.primary),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Easily add your past fill-ups all at once. Choose a spreadsheet file (.csv, .xlsx) or paste your notes, match your columns using the dropdowns, and review everything before saving.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.4,
-                        color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w500,
+              // Simple 1-Paragraph Non-Technical Explanation
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.22)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, size: 20, color: theme.colorScheme.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Easily add your past fill-ups all at once. Choose a spreadsheet file (.csv, .xlsx) or paste your notes, match your columns using the dropdowns, and review everything before saving.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            // Segmented / Tabbed Option Selector
-            _buildMethodSelector(theme, isDark),
+              // Segmented / Tabbed Option Selector
+              _buildMethodSelector(theme, isDark),
 
-            if (_rawHeaders.isEmpty)
-              Expanded(
-                child: SingleChildScrollView(
+              if (_rawHeaders.isEmpty)
+                Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   child: _buildDynamicMethodArea(theme, isDark, isStaged: false),
-                ),
-              )
+                )
             else ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -648,12 +648,8 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                 ),
 
               // Interactive Column-Mapper and Staged Table
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  padding: const EdgeInsets.only(bottom: 32),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: DataTable(
@@ -786,10 +782,11 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                       ),
                     ),
                   ),
-                ),
-              ),
+
+                const SizedBox(height: 24),
+              ],
             ],
-          ],
+          ),
         ),
       ),
       bottomNavigationBar: Container(

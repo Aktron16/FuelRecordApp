@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:archive/archive.dart';
 import 'package:csv/csv.dart';
 import 'package:excel/excel.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:xml/xml.dart';
 import '../models/vehicle.dart';
 
 /// Parsed tabular output from a raw file or spreadsheet.
@@ -123,7 +125,31 @@ class FileParserService {
 
   /// Parses Microsoft Excel (.xlsx) file bytes into 2D string matrix.
   static List<List<String>> _parseExcelBytes(Uint8List bytes, {int sheetIndex = 0}) {
-    final excel = Excel.decodeBytes(bytes);
+    Excel? excel;
+    try {
+      excel = Excel.decodeBytes(bytes);
+    } catch (e) {
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('numfmtid') || msg.contains('format')) {
+        final sanitized = _sanitizeXlsxStyles(bytes);
+        if (sanitized != null) {
+          try {
+            excel = Excel.decodeBytes(sanitized);
+          } catch (_) {
+            excel = null;
+          }
+        }
+      }
+    }
+
+    if (excel == null) {
+      final fallbackRows = _parseXlsxDirectXml(bytes, sheetIndex: sheetIndex);
+      if (fallbackRows.isNotEmpty) {
+        return fallbackRows;
+      }
+      return [];
+    }
+
     if (excel.tables.isEmpty) return [];
 
     // Select target sheet: default to first non-empty sheet
@@ -158,6 +184,151 @@ class FileParserService {
       rows.add(stringRow);
     }
     return rows;
+  }
+
+  /// Sanitizes xl/styles.xml by stripping custom numFmt elements where numFmtId < 164.
+  static Uint8List? _sanitizeXlsxStyles(Uint8List bytes) {
+    try {
+      final archive = ZipDecoder().decodeBytes(bytes);
+      final newArchive = Archive();
+      bool modified = false;
+
+      for (final file in archive) {
+        if (file.isFile && file.name.toLowerCase() == 'xl/styles.xml') {
+          final content = utf8.decode(file.content as List<int>);
+          try {
+            final xmlDoc = XmlDocument.parse(content);
+            final numFmts = xmlDoc.findAllElements('numFmts');
+            bool removedAny = false;
+            for (final numFmtsNode in numFmts) {
+              final toRemove = <XmlElement>[];
+              for (final numFmt in numFmtsNode.findElements('numFmt')) {
+                final idAttr = numFmt.getAttribute('numFmtId');
+                if (idAttr != null) {
+                  final id = int.tryParse(idAttr);
+                  if (id != null && id < 164) {
+                    toRemove.add(numFmt);
+                  }
+                }
+              }
+              for (final node in toRemove) {
+                node.parent?.children.remove(node);
+                removedAny = true;
+              }
+              if (removedAny) {
+                final remaining = numFmtsNode.findElements('numFmt').length;
+                numFmtsNode.setAttribute('count', remaining.toString());
+              }
+            }
+            if (removedAny) {
+              final newBytes = utf8.encode(xmlDoc.toXmlString());
+              newArchive.addFile(ArchiveFile(file.name, newBytes.length, newBytes));
+              modified = true;
+              continue;
+            }
+          } catch (_) {}
+        }
+        newArchive.addFile(file);
+      }
+
+      if (modified) {
+        final encoded = ZipEncoder().encode(newArchive);
+        if (encoded != null) return Uint8List.fromList(encoded);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Fallback XML parser that extracts raw table data directly from XLSX ZIP parts.
+  static List<List<String>> _parseXlsxDirectXml(Uint8List bytes, {int sheetIndex = 0}) {
+    try {
+      final archive = ZipDecoder().decodeBytes(bytes);
+
+      // Shared Strings Table
+      final sharedStrings = <String>[];
+      final sstFile = archive.findFile('xl/sharedStrings.xml');
+      if (sstFile != null) {
+        final sstXml = utf8.decode(sstFile.content as List<int>);
+        final sstDoc = XmlDocument.parse(sstXml);
+        for (final si in sstDoc.findAllElements('si')) {
+          final text = si.findAllElements('t').map((e) => e.innerText).join();
+          sharedStrings.add(text);
+        }
+      }
+
+      // Locate target sheet
+      final sheetFiles = archive.files.where((f) => f.name.startsWith('xl/worksheets/sheet') && f.name.endsWith('.xml')).toList();
+      sheetFiles.sort((a, b) => a.name.compareTo(b.name));
+      ArchiveFile? targetSheet;
+      if (sheetIndex >= 0 && sheetIndex < sheetFiles.length) {
+        targetSheet = sheetFiles[sheetIndex];
+      } else if (sheetFiles.isNotEmpty) {
+        targetSheet = sheetFiles.first;
+      }
+      if (targetSheet == null) return [];
+
+      final sheetXml = utf8.decode(targetSheet.content as List<int>);
+      final sheetDoc = XmlDocument.parse(sheetXml);
+
+      final List<List<String>> result = [];
+      for (final rowNode in sheetDoc.findAllElements('row')) {
+        final rowMap = <int, String>{};
+        int maxCol = -1;
+
+        for (final cNode in rowNode.findElements('c')) {
+          final ref = cNode.getAttribute('r') ?? '';
+          final colIdx = _colRefToIndex(ref);
+          if (colIdx > maxCol) maxCol = colIdx;
+
+          final type = cNode.getAttribute('t');
+          String cellVal = '';
+
+          if (type == 's') {
+            final v = cNode.findElements('v').firstOrNull?.innerText;
+            if (v != null) {
+              final sIdx = int.tryParse(v);
+              if (sIdx != null && sIdx >= 0 && sIdx < sharedStrings.length) {
+                cellVal = sharedStrings[sIdx];
+              }
+            }
+          } else if (type == 'inlineStr') {
+            cellVal = cNode.findAllElements('t').map((e) => e.innerText).join();
+          } else {
+            cellVal = cNode.findElements('v').firstOrNull?.innerText ?? '';
+          }
+          rowMap[colIdx] = cellVal.trim();
+        }
+
+        if (maxCol >= 0) {
+          final rowList = <String>[];
+          for (int c = 0; c <= maxCol; c++) {
+            rowList.add(rowMap[c] ?? '');
+          }
+          result.add(rowList);
+        }
+      }
+      return result;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static int _colRefToIndex(String cellRef) {
+    int col = 0;
+    bool foundLetter = false;
+    for (int i = 0; i < cellRef.length; i++) {
+      final code = cellRef.codeUnitAt(i);
+      if (code >= 65 && code <= 90) {
+        col = col * 26 + (code - 64);
+        foundLetter = true;
+      } else if (code >= 97 && code <= 122) {
+        col = col * 26 + (code - 96);
+        foundLetter = true;
+      } else {
+        break;
+      }
+    }
+    return foundLetter ? col - 1 : 0;
   }
 
   /// Automatically skips empty rows or top title banners until a row with at least 3 populated columns is found.
@@ -220,6 +391,18 @@ class FileParserService {
   }
 
   static Future<Directory> _getTemplatesDirectory() async {
+    try {
+      if (Platform.isAndroid) {
+        final androidDownloadDir = Directory('/storage/emulated/0/Download');
+        if (androidDownloadDir.existsSync()) {
+          return androidDownloadDir;
+        }
+      }
+      final dir = await getDownloadsDirectory();
+      if (dir != null && dir.existsSync()) {
+        return dir;
+      }
+    } catch (_) {}
     try {
       final docsDir = await getApplicationDocumentsDirectory();
       final tDir = Directory('${docsDir.path}/FuelMetricsData/Templates');

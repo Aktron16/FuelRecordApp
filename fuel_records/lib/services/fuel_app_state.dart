@@ -882,7 +882,7 @@ class FuelAppState extends ChangeNotifier {
       final days = calc.daysSincePrevious?.toStringAsFixed(1) ?? '';
       final fuelType = '"${curr.fuelType.replaceAll('"', '""')}"';
       final station = '"${curr.gasStation.replaceAll('"', '""')}"';
-      final fullTank = curr.isFullTank ? 'Yes' : 'No';
+      final fullTank = curr.isFullTank == null ? '' : (curr.isFullTank! ? 'Yes' : 'No');
       final notes = '"${curr.notes.replaceAll('"', '""')}"';
 
       sb.writeln('$dateStr,$odo,$dist,$fuel,$price,$ppu,$eff,$cons,$days,$fuelType,$station,$fullTank,$notes');

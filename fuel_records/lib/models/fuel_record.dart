@@ -5,7 +5,7 @@ class FuelRecord {
   final double odometer; // Total kms / miles
   final double fuelAmount; // Volume filled in litres or gallons
   final double totalPrice; // Total price paid
-  final bool isFullTank; // Whether tank was filled completely
+  final bool? isFullTank; // Whether tank was filled completely
   final String fuelType; // Regular, Premium, Diesel, etc.
   final String gasStation; // Shell, BP, Exxon, etc.
   final String notes;
@@ -22,7 +22,7 @@ class FuelRecord {
     required this.odometer,
     required this.fuelAmount,
     required this.totalPrice,
-    this.isFullTank = true,
+    this.isFullTank,
     this.fuelType = 'Regular',
     this.gasStation = '',
     this.notes = '',
@@ -59,7 +59,7 @@ class FuelRecord {
       odometer: (json['odometer'] as num?)?.toDouble() ?? 0.0,
       fuelAmount: (json['fuelAmount'] as num?)?.toDouble() ?? 0.0,
       totalPrice: (json['totalPrice'] as num?)?.toDouble() ?? 0.0,
-      isFullTank: json['isFullTank'] as bool? ?? true,
+      isFullTank: json['isFullTank'] as bool?,
       fuelType: json['fuelType'] as String? ?? 'Regular',
       gasStation: json['gasStation'] as String? ?? '',
       notes: json['notes'] as String? ?? '',

@@ -42,12 +42,12 @@ For every refueling record, the app automatically calculates and displays:
 ---
 
 ### 📈 Data Grid View & Interactive Trend Charting
-- **Data Grid View:** View every accessible metric in a scrollable, structured table format with elevated bottom padding to prevent navigation overlap.
+- **Data Grid View:** View every accessible metric in a structured table format with pinned selection, sticky headers, and full horizontal scrolling.
 - **Distance Travelled Alignment:** Positioned immediately adjacent to the Odometer column for intuitive tracking.
 - **Color-Coded Efficiency & Consumption Deltas:** Displays the incremental change vs. prior refuel (e.g., `16.00 km/L (+1.00)`), color-coded **green for increases** and **orange for decreases**.
-- **One-Tap Trend Graphs:** Tap any column header (Distance, Odometer, Price, Fuel Amount, Fuel Efficiency, Cost/km) to view an interactive line chart powered by `fl_chart`.
-- **Chart Telemetry:** Interactive line graphs display minimum, maximum, and average values with smooth Bezier curves and timestamp-labeled axes.
-- **CSV File Exporter:** One-tap export to standalone `.csv` files stored in `<app_documents>/FuelMetricsData/Exports/` with instant path and content clipboard copying.
+- **One-Tap Trend Graphs (Last 8 Records):** Tap any column header (Distance, Odometer, Price, Fuel Amount, Fuel Efficiency, Cost/km) to view an interactive line chart focused on the last 8 records.
+- **Month X-Axis & Day Annotations:** Displays month abbreviations along the x-axis, and automatically annotates the day of the month directly above adjacent points recorded within the same month.
+- **CSV & Template Exporters:** One-tap export of records and official sample CSV templates directly to the device's public Downloads directory (`/storage/emulated/0/Download`).
 - **Standardized Date Formats:** Clean, universal `DD-Month(abbreviation)-YY` formatting (e.g. `16-Oct-26`) across all screens, tables, and exports.
 
 ---

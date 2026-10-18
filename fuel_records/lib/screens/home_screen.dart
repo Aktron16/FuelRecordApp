@@ -134,6 +134,7 @@ class HomeScreen extends StatelessWidget {
                   defaultDistanceUnit: appState.defaultDistanceUnit,
                   defaultVolumeUnit: appState.defaultVolumeUnit,
                   defaultCurrency: appState.defaultCurrency,
+                  appState: appState,
                   onSave: (newVeh) => appState.addVehicle(newVeh),
                 );
               },
@@ -228,6 +229,7 @@ class HomeScreen extends StatelessWidget {
                       defaultDistanceUnit: appState.defaultDistanceUnit,
                       defaultVolumeUnit: appState.defaultVolumeUnit,
                       defaultCurrency: appState.defaultCurrency,
+                      appState: appState,
                       onSave: (newVeh) => appState.addVehicle(newVeh),
                     );
                   },
@@ -285,29 +287,6 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (vehicle.licensePlate != null && vehicle.licensePlate!.isNotEmpty)
-                            Positioned(
-                              top: 10,
-                              right: 12,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.black87,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Colors.white70, width: 1.2),
-                                ),
-                                child: Text(
-                                  vehicle.licensePlate!.toUpperCase(),
-                                  style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 11,
-                                    letterSpacing: 1.0,
-                                  ),
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     Padding(
@@ -320,46 +299,21 @@ class HomeScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: primaryColor,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        vehicle.type.displayName.toUpperCase(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 0.6,
-                                        ),
-                                      ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    vehicle.type.displayName.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.6,
                                     ),
-                                    if ((vehicle.bannerImageUri == null || !File(vehicle.bannerImageUri!).existsSync()) &&
-                                        vehicle.licensePlate != null && vehicle.licensePlate!.isNotEmpty) ...[
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: isDark ? Colors.black45 : Colors.grey.shade100,
-                                          borderRadius: BorderRadius.circular(5),
-                                          border: Border.all(color: Colors.grey.shade400, width: 1),
-                                        ),
-                                        child: Text(
-                                          vehicle.licensePlate!.toUpperCase(),
-                                          style: const TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 10,
-                                            letterSpacing: 0.8,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
@@ -369,12 +323,38 @@ class HomeScreen extends StatelessWidget {
                                     letterSpacing: -0.5,
                                   ),
                                 ),
-                                Text(
-                                  '${vehicle.brand} • Owner: ${vehicle.owner}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-                                  ),
+                                const SizedBox(height: 3),
+                                Row(
+                                  children: [
+                                    Text(
+                                      vehicle.brand,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                                      ),
+                                    ),
+                                    if (vehicle.licensePlate != null && vehicle.licensePlate!.trim().isNotEmpty) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: Colors.black, width: 1.2),
+                                        ),
+                                        child: Text(
+                                          vehicle.licensePlate!.trim().toUpperCase(),
+                                          style: const TextStyle(
+                                            fontFamily: 'monospace',
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 11,
+                                            letterSpacing: 1.0,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 if (vehicle.dateBought != null) ...[
                                   const SizedBox(height: 4),
@@ -1363,6 +1343,7 @@ class HomeScreen extends StatelessWidget {
                       defaultDistanceUnit: appState.defaultDistanceUnit,
                       defaultVolumeUnit: appState.defaultVolumeUnit,
                       defaultCurrency: appState.defaultCurrency,
+                      appState: appState,
                       onSave: (newVeh) => appState.addVehicle(newVeh),
                     );
                   },

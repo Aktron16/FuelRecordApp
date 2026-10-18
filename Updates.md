@@ -6,24 +6,48 @@ All notable changes, feature releases, database migrations, and platform updates
 
 ## [Version 1.1.3] — Current Release
 
-### 🛠️ Bug Fixes & Layout Responsiveness
+### 🛠️ UI/UX Refinements, Excel Resilience & Graph Enhancements
+
+- **License Plate & Owner Display Improvements**:
+  - Removed overlay license plate badge from the top of the vehicle banner image.
+  - Replaced the Owner section on the Home Screen overview card with a crisp, high-contrast License Plate badge (white background, bold black text, and solid 1.2px black border).
+  - Relocated the Owner name to the Garage Page vehicle cards, formatted cleanly as `[Brand] - [VehicleType] - [Owner]`.
+  - Standardized the license plate badge styling across the Garage screen to match the black-on-white badge styling.
+  - Updated Add Fuel Record screen summary header to display the license plate number instead of the owner name.
+
+- **Country-Aware Fuel Grade Sync**:
+  - Connected `appState` across all vehicle creation and edit dialog entry points in `home_screen.dart`.
+  - The vehicle fuel grade dropdown now immediately synchronizes with the user's selected country from Settings.
+
+- **Import Fuel Data Screen & Template Download**:
+  - **Continuous Vertical Scrollability**: Converted the staged data layout into a unified vertical scroll view, giving users full visibility of the entire preview table.
+  - **Preserved Optional Column Nullability**: When optional columns such as `gasStation` or `isFullTank` are missing or empty in the imported file, they are kept empty/null without auto-populating defaults like `'Gas Station'`, `'Shell'`, or `true`.
+  - **Public Downloads Folder for Sample Templates**: The "Download Sample Template" button now saves `FuelMetrics_Sample_Template.csv` directly into the public Downloads directory (`/storage/emulated/0/Download` on Android, standard Downloads folder on iOS and desktop) so users can easily open and edit the template.
+
+- **Excel (.xlsx) Import Resilience**:
+  - Fixed `Exception: custom numFmtId starts at 164 but found a value of 0` thrown by the `excel` package when reading spreadsheets exported by Google Sheets, LibreOffice, or third-party tools that include built-in format IDs inside `<numFmts>` in `xl/styles.xml`.
+  - Added automatic styles sanitization that strips custom `numFmtId < 164` overrides from `xl/styles.xml` and retries decoding.
+  - Added a direct XML parsing fallback that extracts raw cell values from `xl/worksheets/sheet1.xml` and `xl/sharedStrings.xml` if standard decoding encounters corrupt style structures.
+
+- **Data Grid View Trend Graph Enhancements**:
+  - Plotted records are now strictly focused on the **last 8 records** (or all records if $\le 8$).
+  - X-axis bottom titles display only the month abbreviation (e.g., `Oct`).
+  - If adjacent records share the same month, the day of the month (e.g., `15`) is displayed directly above the point in the graph using custom dot painter annotations.
+  - Added bottom padding gap (`MediaQuery.of(ctx).padding.bottom + 48`) to ensure navigation bars and modal buttons never overlap the chart.
+
+- **Settings Screen Version**:
+  - Updated the version footer in Settings to reflect Version `1.1.3`.
+
 - **Layout Overflow Elimination**:
   - Fixed `RenderFlex overflowed by 10 pixels on the right` in `GeminiFallbackCard` Step 2 header by wrapping the title in `Expanded` and streamlining the action button to `Paste` (with tooltip).
   - Fixed `RenderFlex overflowed by 18 pixels on the right` in `SettingsScreen`'s Fuel Efficiency dropdown by setting `isExpanded: true` and `TextOverflow.ellipsis`.
-  - Added `isExpanded: true` and text truncation across all dropdowns in the app:
-    - `Country`, `Distance Unit`, `Volume Unit`, `Fuel Efficiency`, and `Currency` in Settings Screen.
-    - `Default Fuel Grade` in Vehicle Creation/Edit Sheet.
-    - `Service Type` in Vehicle Maintenance & Services Screen.
-    - `Fuel Grade` in Spreadsheet Import dialog.
+  - Added `isExpanded: true` and text truncation across all dropdowns in the app.
   - Added responsive `LayoutBuilder` in `GeminiFallbackCard` Step 1 to dynamically stack `Copy & Open Gemini` and `ChatGPT` buttons when container width is under 290px.
   - Fixed Card header column overflows in Settings Screen by enclosing title columns in `Expanded`.
   - Fixed backup and data management button row overflow by wrapping `Clear All` and `Demo Data` buttons in `Expanded` with `FittedBox`.
-- **Build & JVM Optimization**:
-  - Added `--enable-native-access=ALL-UNNAMED` to `org.gradle.jvmargs` in `android/gradle.properties` to eliminate JVM warnings when compiling on modern Java 21+ / 24 runtimes.
-- **Beautified Licensing**:
-  - Cleanly formatted and aligned the Apache 2.0 License with Commons Clause Condition with elegant section dividers in both root `LICENSE` and `fuel_records/LICENSE`.
-- **Automated Viewport Regression Tests**:
-  - Added `v1_1_3_layout_test.dart` to assert 0 layout overflows on compact 317px and 320px mobile viewport widths.
+
+- **Automated Tests**:
+  - Added `v1_1_3_fixes_test.dart` and `v1_1_3_layout_test.dart` covering Excel sanitization, license plate badges, garage subtitle, nullability in mapper, and graph last-8 slicing.
 
 ---
 

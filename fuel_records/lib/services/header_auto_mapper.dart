@@ -27,7 +27,7 @@ class StagedFuelRecord {
   double? pricePerUnit;
   String gasStation;
   String fuelType;
-  bool isFullTank;
+  bool? isFullTank;
   String notes;
   bool isValid;
   String? validationError;
@@ -42,7 +42,7 @@ class StagedFuelRecord {
     this.pricePerUnit,
     this.gasStation = '',
     this.fuelType = 'Regular (87)',
-    this.isFullTank = true,
+    this.isFullTank,
     this.notes = '',
     this.isValid = true,
     this.validationError,
@@ -455,7 +455,7 @@ class HeaderAutoMapper {
     required List<List<String>> dataRows,
     required List<FuelField> columnMappings,
     String defaultFuelType = 'Regular (87)',
-    String defaultStation = 'Shell',
+    String defaultStation = '',
   }) {
     final List<StagedFuelRecord> staged = [];
 
@@ -468,7 +468,7 @@ class HeaderAutoMapper {
       double? totalCost;
       String station = defaultStation;
       String grade = defaultFuelType;
-      bool isFull = true;
+      bool? isFull;
       final List<String> notesParts = [];
       final List<String> unmappedResidual = [];
 
@@ -505,7 +505,7 @@ class HeaderAutoMapper {
             break;
           case FuelField.isFullTank:
             final lower = cell.toLowerCase();
-            isFull = !lower.contains('no') && !lower.contains('part') && !lower.contains('false');
+            isFull = !lower.contains('no') && !lower.contains('part') && !lower.contains('false') && !lower.contains('0');
             break;
           case FuelField.notes:
             notesParts.add(cell);

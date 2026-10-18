@@ -296,7 +296,7 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                               ),
                             ),
                             Text(
-                              '${widget.vehicle.brand} • ${widget.vehicle.owner}',
+                              '${widget.vehicle.brand}${widget.vehicle.licensePlate != null && widget.vehicle.licensePlate!.trim().isNotEmpty ? ' • ${widget.vehicle.licensePlate!.trim().toUpperCase()}' : ''}',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                               ),

@@ -212,7 +212,7 @@ class VehiclesScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '${vehicle.brand} • ${vehicle.type.displayName}',
+                                      '${vehicle.brand} - ${vehicle.type.displayName}${vehicle.owner.isNotEmpty ? ' - ${vehicle.owner}' : ''}',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
@@ -225,14 +225,15 @@ class VehiclesScreen extends StatelessWidget {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: isDark ? Colors.black45 : Colors.grey.shade100,
-                                              borderRadius: BorderRadius.circular(5),
-                                              border: Border.all(color: Colors.grey.shade400, width: 1),
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: Colors.black, width: 1.2),
                                             ),
                                             child: Text(
                                               vehicle.licensePlate!.toUpperCase(),
                                               style: const TextStyle(
                                                 fontFamily: 'monospace',
+                                                color: Colors.black,
                                                 fontWeight: FontWeight.w800,
                                                 fontSize: 10,
                                                 letterSpacing: 0.8,

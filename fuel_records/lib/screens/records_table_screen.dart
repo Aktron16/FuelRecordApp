@@ -1,11 +1,61 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../models/vehicle.dart';
 import '../models/record_calculation.dart';
 import '../services/fuel_app_state.dart';
 import '../utils/app_date_format.dart';
+
+class _DotWithDateLabelPainter extends FlDotPainter {
+  final FlDotCirclePainter circlePainter;
+  final String? dateLabel;
+  final TextStyle textStyle;
+
+  _DotWithDateLabelPainter({
+    required this.circlePainter,
+    this.dateLabel,
+    this.textStyle = const TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.bold,
+      color: Colors.blueGrey,
+    ),
+  });
+
+  @override
+  void draw(Canvas canvas, FlSpot spot, Offset offsetInCanvas) {
+    circlePainter.draw(canvas, spot, offsetInCanvas);
+    if (dateLabel != null && dateLabel!.isNotEmpty) {
+      final span = TextSpan(text: dateLabel, style: textStyle);
+      final tp = TextPainter(
+        text: span,
+        textAlign: TextAlign.center,
+        textDirection: ui.TextDirection.ltr,
+      )..layout();
+      tp.paint(
+        canvas,
+        Offset(
+          offsetInCanvas.dx - (tp.width / 2),
+          offsetInCanvas.dy - circlePainter.radius - tp.height - 3,
+        ),
+      );
+    }
+  }
+
+  @override
+  Size getSize(FlSpot spot) => circlePainter.getSize(spot);
+
+  @override
+  Color get mainColor => circlePainter.mainColor;
+
+  @override
+  FlDotPainter lerp(FlDotPainter a, FlDotPainter b, double t) => this;
+
+  @override
+  List<Object?> get props => [circlePainter, dateLabel, textStyle];
+}
 
 class RecordsTableScreen extends StatefulWidget {
   final FuelAppState appState;
@@ -65,15 +115,32 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
       return;
     }
 
-    final minVal = values.reduce((a, b) => a < b ? a : b);
-    final maxVal = values.reduce((a, b) => a > b ? a : b);
-    final avgVal = values.reduce((a, b) => a + b) / values.length;
-    final diff = values.last - values.first;
+    final count = values.length > 8 ? 8 : values.length;
+    final plotValues = values.sublist(values.length - count);
+    final plotDates = dates.sublist(dates.length - count);
+
+    final minVal = plotValues.reduce((a, b) => a < b ? a : b);
+    final maxVal = plotValues.reduce((a, b) => a > b ? a : b);
+    final avgVal = plotValues.reduce((a, b) => a + b) / plotValues.length;
+    final diff = plotValues.last - plotValues.first;
     final isIncrease = diff >= 0;
 
     final spots = <FlSpot>[];
-    for (int i = 0; i < values.length; i++) {
-      spots.add(FlSpot(i.toDouble(), values[i]));
+    for (int i = 0; i < plotValues.length; i++) {
+      spots.add(FlSpot(i.toDouble(), plotValues[i]));
+    }
+
+    bool hasSameMonthNeighbor(int i) {
+      final current = plotDates[i];
+      if (i > 0) {
+        final prev = plotDates[i - 1];
+        if (prev.year == current.year && prev.month == current.month) return true;
+      }
+      if (i < plotDates.length - 1) {
+        final next = plotDates[i + 1];
+        if (next.year == current.year && next.month == current.month) return true;
+      }
+      return false;
     }
 
     showModalBottomSheet(
@@ -86,7 +153,7 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).padding.bottom + 48),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -168,15 +235,15 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 22,
+                          reservedSize: 24,
                           getTitlesWidget: (val, _) {
                             final idx = val.toInt();
-                            if (idx < 0 || idx >= dates.length) return const SizedBox.shrink();
+                            if (idx < 0 || idx >= plotDates.length) return const SizedBox.shrink();
                             return Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
-                                AppDateUtils.formatShort(dates[idx]),
-                                style: const TextStyle(fontSize: 9, color: Colors.grey),
+                                DateFormat('MMM').format(plotDates[idx]),
+                                style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600),
                               ),
                             );
                           },
@@ -201,7 +268,30 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                         color: color,
                         barWidth: 3,
                         isStrokeCapRound: true,
-                        dotData: const FlDotData(show: true),
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, percent, barData, index) {
+                            final showDate = hasSameMonthNeighbor(index);
+                            final circle = FlDotCirclePainter(
+                              radius: 4,
+                              color: color,
+                              strokeColor: isDark ? const Color(0xFF1E1E28) : Colors.white,
+                              strokeWidth: 2,
+                            );
+                            if (showDate && index >= 0 && index < plotDates.length) {
+                              return _DotWithDateLabelPainter(
+                                circlePainter: circle,
+                                dateLabel: plotDates[index].day.toString(),
+                                textStyle: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.white70 : Colors.black87,
+                                ),
+                              );
+                            }
+                            return circle;
+                          },
+                        ),
                         belowBarData: BarAreaData(
                           show: true,
                           color: color.withValues(alpha: 0.15),
@@ -211,7 +301,7 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 24),
             ],
           ),
         );
@@ -661,7 +751,7 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                                   ),
                                   DataCell(Text(calc.daysSincePrevious != null ? '${calc.daysSincePrevious!.toStringAsFixed(1)} d' : '-')),
                                   DataCell(Text(rec.gasStation.isNotEmpty ? rec.gasStation : '-')),
-                                  DataCell(Icon(rec.isFullTank ? Icons.check_circle : Icons.radio_button_unchecked, size: 16, color: rec.isFullTank ? Colors.green : Colors.grey)),
+                                  DataCell(rec.isFullTank == null ? const Text('-') : Icon(rec.isFullTank! ? Icons.check_circle : Icons.radio_button_unchecked, size: 16, color: rec.isFullTank! ? Colors.green : Colors.grey)),
                                   DataCell(Text(rec.notes.isNotEmpty ? rec.notes : '-')),
                                 ],
                               );

@@ -188,7 +188,7 @@ date,odometer,fuelVolume,pricePerUnit,totalCost,stationName,notes
 
       final backupFile = await appState.saveBackupToFile();
       expect(backupFile.existsSync(), isTrue);
-      expect(backupFile.readAsStringSync().contains('"version": "1.1.2"'), isTrue);
+      expect(backupFile.readAsStringSync().contains('"version": "${FuelAppState.appVersion}"'), isTrue);
 
       tempDir.deleteSync(recursive: true);
     });

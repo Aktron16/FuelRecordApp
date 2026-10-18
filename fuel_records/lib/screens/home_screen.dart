@@ -336,20 +336,27 @@ class HomeScreen extends StatelessWidget {
                                     if (vehicle.licensePlate != null && vehicle.licensePlate!.trim().isNotEmpty) ...[
                                       const SizedBox(width: 8),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                           borderRadius: BorderRadius.circular(4),
-                                          border: Border.all(color: Colors.black, width: 1.2),
+                                          border: Border.all(color: Colors.black, width: 2.0),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.18),
+                                              blurRadius: 3,
+                                              offset: const Offset(0, 1.5),
+                                            ),
+                                          ],
                                         ),
                                         child: Text(
                                           vehicle.licensePlate!.trim().toUpperCase(),
                                           style: const TextStyle(
                                             fontFamily: 'monospace',
                                             color: Colors.black,
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 11,
-                                            letterSpacing: 1.0,
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 12,
+                                            letterSpacing: 1.4,
                                           ),
                                         ),
                                       ),

@@ -29,14 +29,22 @@ All notable changes, feature releases, database migrations, and platform updates
   - Added automatic styles sanitization that strips custom `numFmtId < 164` overrides from `xl/styles.xml` and retries decoding.
   - Added a direct XML parsing fallback that extracts raw cell values from `xl/worksheets/sheet1.xml` and `xl/sharedStrings.xml` if standard decoding encounters corrupt style structures.
 
+- **Data Grid View Sticky Header & Interaction**:
+  - Pinned the entire column header row (and select-all checkbox) at the top of the Data Grid View. As users scroll vertically through hundreds of records, the column headers remain pinned, visible, and fully interactable so users can tap any header at any time to open its trend graph.
+  - Linked horizontal scroll controllers between the sticky header and data rows for synchronized scrolling with fixed column widths.
+
 - **Data Grid View Trend Graph Enhancements**:
-  - Plotted records are now strictly focused on the **last 8 records** (or all records if $\le 8$).
-  - X-axis bottom titles display only the month abbreviation (e.g., `Oct`).
-  - If adjacent records share the same month, the day of the month (e.g., `15`) is displayed directly above the point in the graph using custom dot painter annotations.
+  - Plotted records are focused on the **last 8 records** (or all records if $\le 8$).
+  - **Two-Line Bottom Axis Dates**: Shifted the date label from above the point to right below the month on the x-axis (`(month)\n(date)`) when records in a single month are consecutive. Isolated records display only the month abbreviation (e.g. `Nov`).
+  - **Graph Y-Axis Safety Headroom**: Adjusted y-axis bounds (`minY` / `maxY` with 20% margin) and applied clipping to ensure the curved trend line and spline never touch or dip into the bottom axis text.
+  - **Darker & Prominent Axis Numerals**: Swapped light grey numerals and text on both x and y axes for bold high-contrast slate-800 (`Color(0xFF1E293B)` in light mode, crisp `Color(0xFFE2E8F0)` in dark mode).
   - Added bottom padding gap (`MediaQuery.of(ctx).padding.bottom + 48`) to ensure navigation bars and modal buttons never overlap the chart.
 
-- **Settings Screen Version**:
-  - Updated the version footer in Settings to reflect Version `1.1.3`.
+- **Thicker, Authentic Stamped License Plates**:
+  - Redesigned the license plate badge across all views (Home overview card, Garage vehicle list, Add/Edit Vehicle preview, and Add Fuel Record header) with a `2.0px` solid black border, `FontWeight.w900` monospace typography, wide letter-spacing (`1.2-1.4`), and subtle embossed drop shadow to look like an authentic stamped metal vehicle license plate.
+
+- **Synchronized Version in Settings & Backups**:
+  - Centralized the version string via `FuelAppState.appVersion` (`1.1.3`) so the top info card, bottom footer, and exported JSON backup files always stay perfectly synchronized across future releases.
 
 - **Layout Overflow Elimination**:
   - Fixed `RenderFlex overflowed by 10 pixels on the right` in `GeminiFallbackCard` Step 2 header by wrapping the title in `Expanded` and streamlining the action button to `Paste` (with tooltip).

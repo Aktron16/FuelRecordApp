@@ -295,11 +295,43 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Text(
-                              '${widget.vehicle.brand}${widget.vehicle.licensePlate != null && widget.vehicle.licensePlate!.trim().isNotEmpty ? ' • ${widget.vehicle.licensePlate!.trim().toUpperCase()}' : ''}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-                              ),
+                            Row(
+                              children: [
+                                Text(
+                                  widget.vehicle.brand,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                                  ),
+                                ),
+                                if (widget.vehicle.licensePlate != null && widget.vehicle.licensePlate!.trim().isNotEmpty) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: Colors.black, width: 1.8),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.12),
+                                          blurRadius: 2,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      widget.vehicle.licensePlate!.trim().toUpperCase(),
+                                      style: const TextStyle(
+                                        fontFamily: 'monospace',
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 10,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
                         ),

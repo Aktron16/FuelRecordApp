@@ -100,7 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.3),
                       ),
                       Text(
-                        'Version 1.1.2 • Offline Fuel Tracker',
+                        'Version ${FuelAppState.appVersion} • Offline Fuel Tracker',
                         style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.65)),
                       ),
                     ],
@@ -492,7 +492,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Version Footer
           Center(
             child: Text(
-              'Fuel Metrics • Version 1.1.3',
+              'Fuel Metrics • Version ${FuelAppState.appVersion}',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
             ),
           ),

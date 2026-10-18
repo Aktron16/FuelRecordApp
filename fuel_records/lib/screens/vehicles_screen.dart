@@ -223,20 +223,27 @@ class VehiclesScreen extends StatelessWidget {
                                       children: [
                                         if (vehicle.licensePlate != null && vehicle.licensePlate!.isNotEmpty) ...[
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                             decoration: BoxDecoration(
                                               color: Colors.white,
                                               borderRadius: BorderRadius.circular(4),
-                                              border: Border.all(color: Colors.black, width: 1.2),
+                                              border: Border.all(color: Colors.black, width: 2.0),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withValues(alpha: 0.15),
+                                                  blurRadius: 2.5,
+                                                  offset: const Offset(0, 1),
+                                                ),
+                                              ],
                                             ),
                                             child: Text(
                                               vehicle.licensePlate!.toUpperCase(),
                                               style: const TextStyle(
                                                 fontFamily: 'monospace',
                                                 color: Colors.black,
-                                                fontWeight: FontWeight.w800,
-                                                fontSize: 10,
-                                                letterSpacing: 0.8,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 11,
+                                                letterSpacing: 1.2,
                                               ),
                                             ),
                                           ),

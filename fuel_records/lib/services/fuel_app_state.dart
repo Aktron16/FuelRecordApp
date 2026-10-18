@@ -12,6 +12,9 @@ import '../utils/app_date_format.dart';
 import 'country_data.dart';
 
 class FuelAppState extends ChangeNotifier {
+  /// Current application version - single source of truth for UI and data backups
+  static const String appVersion = '1.1.3';
+
   static const String _keyVehicles = 'fuel_app_vehicles';
   static const String _keyRecords = 'fuel_app_records';
   static const String _keyServices = 'fuel_app_services';
@@ -935,7 +938,7 @@ class FuelAppState extends ChangeNotifier {
   /// Exports complete data snapshot as formatted JSON string
   String exportAllDataBackup() {
     final data = {
-      'version': '1.1.2',
+      'version': appVersion,
       'exportedAt': DateTime.now().toIso8601String(),
       'selectedCountry': _selectedCountry,
       'defaultCurrency': _defaultCurrency,

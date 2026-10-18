@@ -343,17 +343,25 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: isDark ? Colors.black45 : Colors.white,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: Colors.grey.shade400, width: 1.2),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: Colors.black, width: 2.0),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 2.5,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
                               ),
                               child: Text(
                                 _licensePlateController.text.trim().toUpperCase(),
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 11,
-                                  letterSpacing: 1.0,
                                   fontFamily: 'monospace',
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 11,
+                                  letterSpacing: 1.2,
                                 ),
                               ),
                             ),

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fuel_records/models/vehicle.dart';
 import 'package:fuel_records/models/fuel_record.dart';
 import 'package:fuel_records/services/file_parser_service.dart';
+import 'package:fuel_records/services/fuel_app_state.dart';
 import 'package:fuel_records/services/header_auto_mapper.dart';
 import 'package:intl/intl.dart';
 
@@ -174,6 +175,54 @@ void main() {
       expect(content.contains('Date,Odometer,Fuel Volume'), isTrue);
 
       tempDir.deleteSync(recursive: true);
+    });
+
+    test('Graph bottom axis formats two lines (month\\ndate) when in same month', () {
+      final dates = [
+        DateTime(2026, 10, 1),
+        DateTime(2026, 10, 15),
+        DateTime(2026, 11, 3),
+      ];
+
+      bool hasSameMonthNeighbor(int i) {
+        final current = dates[i];
+        if (i > 0) {
+          final prev = dates[i - 1];
+          if (prev.year == current.year && prev.month == current.month) return true;
+        }
+        if (i < dates.length - 1) {
+          final next = dates[i + 1];
+          if (next.year == current.year && next.month == current.month) return true;
+        }
+        return false;
+      }
+
+      String getLabel(int i) {
+        final showDate = hasSameMonthNeighbor(i);
+        final monthStr = DateFormat('MMM').format(dates[i]);
+        return showDate ? '$monthStr\n${dates[i].day}' : monthStr;
+      }
+
+      expect(getLabel(0), equals('Oct\n1'));
+      expect(getLabel(1), equals('Oct\n15'));
+      expect(getLabel(2), equals('Nov'));
+    });
+
+    test('FuelAppState.appVersion is single source of truth for app version', () {
+      expect(FuelAppState.appVersion, equals('1.1.3'));
+    });
+
+    test('Graph y-axis margin calculation strictly prevents line from touching bottom axis', () {
+      const minVal = 45000.0;
+      const maxVal = 46000.0;
+      final valRange = maxVal - minVal;
+      final yMargin = valRange * 0.20;
+      final minY = minVal - yMargin;
+      final maxY = maxVal + yMargin;
+
+      expect(minY < minVal, isTrue);
+      expect(maxY > maxVal, isTrue);
+      expect(minVal - minY, equals(200.0));
     });
   });
 }

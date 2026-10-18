@@ -42,13 +42,14 @@ For every refueling record, the app automatically calculates and displays:
 ---
 
 ### 📈 Data Grid View & Interactive Trend Charting
-- **Data Grid View:** View every accessible metric in a structured table format with pinned selection, sticky headers, and full horizontal scrolling.
+- **Data Grid View:** View every accessible metric in a structured table format with pinned selection, **sticky headers** that remain pinned at the top and fully interactable during vertical scrolling, and synchronized horizontal scrolling.
 - **Distance Travelled Alignment:** Positioned immediately adjacent to the Odometer column for intuitive tracking.
 - **Color-Coded Efficiency & Consumption Deltas:** Displays the incremental change vs. prior refuel (e.g., `16.00 km/L (+1.00)`), color-coded **green for increases** and **orange for decreases**.
 - **One-Tap Trend Graphs (Last 8 Records):** Tap any column header (Distance, Odometer, Price, Fuel Amount, Fuel Efficiency, Cost/km) to view an interactive line chart focused on the last 8 records.
-- **Month X-Axis & Day Annotations:** Displays month abbreviations along the x-axis, and automatically annotates the day of the month directly above adjacent points recorded within the same month.
+- **Two-Line Month/Date X-Axis & Dark High-Contrast Numerals:** Displays month abbreviations along the x-axis, and automatically formats consecutive records within the same month across two lines (`(month)\n(date)`). Both axes feature bold slate-800 high-contrast typography with a 20% y-axis buffer to ensure trend lines never touch or dip into axis text.
 - **CSV & Template Exporters:** One-tap export of records and official sample CSV templates directly to the device's public Downloads directory (`/storage/emulated/0/Download`).
 - **Standardized Date Formats:** Clean, universal `DD-Month(abbreviation)-YY` formatting (e.g. `16-Oct-26`) across all screens, tables, and exports.
+- **Thick Stamped License Plates:** Authentic stamped metal license plate badges (`2.0px` solid black border, heavy typography, and subtle drop shadow) across Home, Garage, Add/Edit Vehicle, and Add Record screens.
 
 ---
 

@@ -173,16 +173,20 @@ jobs:
         run: |
           APP_DIR="${{ steps.prep.outputs.app_dir }}"
           TAG="${{ steps.prep.outputs.tag }}"
-          mkdir -p dist/ios
-          mkdir -p Payload
+          ROOT_DIR="$(pwd)"
+          mkdir -p "$ROOT_DIR/dist/ios"
 
           APP_BUNDLE="$APP_DIR/build/ios/iphoneos/Runner.app"
 
           if [ -d "$APP_BUNDLE" ]; then
-            cp -r "$APP_BUNDLE" Payload/
-            zip -r -9 "dist/ios/FuelMetrics-${TAG}-ios-unsigned.ipa" Payload
-            zip -r -9 "dist/ios/FuelMetrics-${TAG}-ios-Runner.app.zip" "$APP_BUNDLE"
-            echo "Successfully packaged iOS release binaries."
+            rm -rf Payload
+            mkdir -p Payload
+            ditto "$APP_BUNDLE" Payload/Runner.app
+            zip -r -y -9 "$ROOT_DIR/dist/ios/FuelMetrics-${TAG}-ios-unsigned.ipa" Payload
+            rm -rf Payload
+
+            (cd "$APP_DIR/build/ios/iphoneos" && zip -r -y -9 "$ROOT_DIR/dist/ios/FuelMetrics-${TAG}-ios-Runner.app.zip" Runner.app)
+            echo "Successfully packaged iOS release binaries with symlinks preserved."
           else
             echo "Error: Runner.app not found at $APP_BUNDLE"
             exit 1
@@ -251,12 +255,12 @@ jobs:
             - **`FuelMetrics-${{ steps.meta.outputs.tag }}-ios-unsigned.ipa`**: Unsigned iOS application archive ready for sideloading via AltStore, Sideloadly, TrollStore, or re-signing with personal Apple ID.
             - **`FuelMetrics-${{ steps.meta.outputs.tag }}-ios-Runner.app.zip`**: Packaged iOS Runner.app bundle for simulator / direct testing.
 
-            ### ✨ What's New & Highlights
-            - **Smart Unstructured Text Import**: Convert natural notes, SMS receipts, or freeform text into fuel records instantly with zero-cloud, 100% offline parsing.
-            - **Comprehensive Synonyms**: Rich alternate detection for odometer (`distance`, `dist`, `kms`, `km`, `miles`, `reading`, `meter`, etc.) and fuel volume (`petrol`, `diesel`, `gas`, `fuel`, `qty`, `volume`, `litres`, `gallons`, etc.).
-            - **Strict Keyword Validation**: Data is never forced into columns without explicit identifying keywords/units; unverified numbers remain safe in notes.
-            - **Dual-Action Review Data Grid**: Review and edit parsed data in an interactive table before committing, featuring prominent **Cancel (Red)** and **Accept (Green)** controls.
-            - **Seamless Upgrade Guarantee**: Direct in-place replacement on Android and iOS preserving all vehicle logs, encrypted databases, and custom settings without package conflicts.
+            ### ✨ What's New & Highlights in v1.2.1
+            - **Decoupled Fuel Pricing from Location**: Location data is used strictly to identify the petrol pump name. Official website rates are sourced directly from [fuelpriceuae.com](https://fuelpriceuae.com) and [globalpetrolprices.com](https://www.globalpetrolprices.com).
+            - **Interactive Settings Fuel Prices Card**: Displays live prices per Liter or Gallon directly below the Country selector, featuring active vehicle fuel grade highlighting (`"YOUR CAR"` badge).
+            - **Vehicle Fuel Grade Cost Calculation**: Automatically calculates fuel expense on the exact fuel grade assigned to that vehicle (`vehicle.fuelType`).
+            - **Enhanced iOS & Android Privacy**: Added complete `Info.plist` usage descriptions for Camera, Photo Library, Location, Bluetooth, and Motion.
+            - **Preserved Dynamic Symlinks**: Fixed iOS IPA archive packaging with framework symlink preservation for seamless installation via AltStore, Sideloadly, and TrollStore.
             - **Full Release Changelog**: Detailed revision history is tracked in [`Updates.md`](https://github.com/Aktron16/FuelRecordApp/blob/main/Updates.md).
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

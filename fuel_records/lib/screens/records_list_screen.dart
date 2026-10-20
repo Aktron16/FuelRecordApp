@@ -547,7 +547,7 @@ class _RecordsListScreenState extends State<RecordsListScreen> {
 
               const Divider(height: 24),
 
-              Text('Calculated Intervals & Metrics', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700)),
+              Text('Calculated Intervals & Metrics', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
               const SizedBox(height: 8),
 
               _detailRow(

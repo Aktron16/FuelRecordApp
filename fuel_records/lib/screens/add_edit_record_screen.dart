@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/vehicle.dart';
 import '../models/fuel_record.dart';
 import '../models/record_calculation.dart';
+import '../theme/app_theme.dart';
 import '../widgets/vehicle_artwork.dart';
 import '../utils/app_date_format.dart';
 import '../services/fuel_app_state.dart';
@@ -126,8 +127,8 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
       notes: _notesController.text.trim(),
     );
 
-    widget.onSave(record);
     Navigator.of(context).pop();
+    widget.onSave(record);
   }
 
   void _confirmDelete() {
@@ -203,7 +204,6 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final isEditing = widget.recordToEdit != null;
     final primaryColor = Color(widget.vehicle.colorValue);
 
@@ -272,9 +272,9 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                    color: AppTheme.surfaceColor(context),
+                    borderRadius: BorderRadius.circular(AppRadii.lg),
+                    border: Border.all(color: AppTheme.borderColor(context)),
                   ),
                   child: Row(
                     children: [
@@ -300,7 +300,7 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                                 Text(
                                   widget.vehicle.brand,
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                                    color: AppTheme.textSecondaryColor(context),
                                   ),
                                 ),
                                 if (widget.vehicle.licensePlate != null && widget.vehicle.licensePlate!.trim().isNotEmpty) ...[
@@ -342,11 +342,15 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                           children: [
                             Text(
                               'Last Logged',
-                              style: theme.textTheme.labelSmall?.copyWith(color: Colors.grey),
+                              style: theme.textTheme.labelSmall?.copyWith(color: AppTheme.textMutedColor(context)),
                             ),
                             Text(
                               '${widget.previousRecord!.odometer.toStringAsFixed(0)} ${widget.vehicle.unitDistance}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                fontFeatures: [FontFeature.tabularFigures()],
+                              ),
                             ),
                           ],
                         ),
@@ -359,10 +363,10 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF16A34A),
-                      side: const BorderSide(color: Color(0xFF16A34A), width: 1.4),
+                      foregroundColor: AppColors.success,
+                      side: const BorderSide(color: AppColors.success, width: 1.4),
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.md)),
                     ),
                     icon: const Icon(Icons.auto_awesome, size: 18),
                     label: const Text(
@@ -395,14 +399,9 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                     margin: const EdgeInsets.only(bottom: 18),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          primaryColor.withValues(alpha: 0.2),
-                          isDark ? const Color(0xFF232533) : Colors.blueGrey.shade50,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: primaryColor.withValues(alpha: 0.4)),
+                      color: AppTheme.surfaceColor(context),
+                      borderRadius: BorderRadius.circular(AppRadii.lg),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.35), width: 1.2),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -423,38 +422,38 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                         ),
                         const SizedBox(height: 12),
                         Wrap(
-                          spacing: 16,
+                          spacing: 12,
                           runSpacing: 10,
                           children: [
                             if (currentFuel != null && currentPrice != null && currentFuel > 0)
                               _buildMetricChip(
                                 label: 'Price / ${widget.vehicle.unitVolume}',
                                 value: '${widget.vehicle.currency}${liveCalc.pricePerUnit.toStringAsFixed(3)}',
-                                color: Colors.blueAccent,
+                                color: AppColors.primary,
                               ),
                             if (liveCalc.distanceTraveled != null)
                               _buildMetricChip(
                                 label: 'Trip Distance',
                                 value: '+${liveCalc.distanceTraveled!.toStringAsFixed(1)} ${widget.vehicle.unitDistance}',
-                                color: Colors.green,
+                                color: AppColors.success,
                               ),
                             if (liveCalc.fuelEfficiency != null)
                               _buildMetricChip(
                                 label: 'Efficiency',
                                 value: '${liveCalc.fuelEfficiency!.toStringAsFixed(2)} ${widget.vehicle.unitDistance}/${widget.vehicle.unitVolume}',
-                                color: Colors.teal,
+                                color: const Color(0xFF0D9488),
                               ),
                             if (liveCalc.daysSincePrevious != null)
                               _buildMetricChip(
                                 label: 'Days Since Last',
                                 value: '${liveCalc.daysSincePrevious!.toStringAsFixed(1)} d',
-                                color: Colors.orange,
+                                color: AppColors.orange,
                               ),
                             if (liveCalc.priceDifferencePerUnit != null)
                               _buildMetricChip(
                                 label: 'Price Change',
                                 value: '${liveCalc.priceDifferencePerUnit! >= 0 ? '+' : ''}${widget.vehicle.currency}${liveCalc.priceDifferencePerUnit!.toStringAsFixed(3)}',
-                                color: liveCalc.priceDifferencePerUnit! > 0 ? Colors.redAccent : Colors.green,
+                                color: liveCalc.priceDifferencePerUnit! > 0 ? AppColors.danger : AppColors.success,
                               ),
                           ],
                         ),
@@ -465,13 +464,13 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                 // Date Picker Row (Date Only)
                 InkWell(
                   onTap: _pickDate,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadii.md),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.withValues(alpha: 0.4)),
-                      borderRadius: BorderRadius.circular(16),
-                      color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+                      border: Border.all(color: AppTheme.borderColor(context)),
+                      borderRadius: BorderRadius.circular(AppRadii.md),
+                      color: AppTheme.surfaceColor(context),
                     ),
                     child: Row(
                       children: [
@@ -718,7 +717,7 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadii.sm),
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Column(
@@ -739,6 +738,7 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: color,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],

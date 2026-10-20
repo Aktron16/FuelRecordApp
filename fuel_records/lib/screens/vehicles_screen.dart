@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/vehicle.dart';
 import '../services/fuel_app_state.dart';
+import '../theme/app_theme.dart';
 import '../widgets/vehicle_artwork.dart';
 import 'add_edit_vehicle_sheet.dart';
 
@@ -74,32 +75,30 @@ class VehiclesScreen extends StatelessWidget {
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: LinearGradient(
-                      colors: [
-                        primaryColor.withValues(alpha: isActive ? 0.22 : 0.08),
-                        isDark ? const Color(0xFF1E1E28) : Colors.white,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: AppTheme.surfaceColor(context),
+                    borderRadius: BorderRadius.circular(AppRadii.xl),
                     border: Border.all(
-                      color: isActive ? primaryColor : Colors.grey.withValues(alpha: 0.2),
+                      color: isActive ? primaryColor : AppTheme.borderColor(context),
                       width: isActive ? 2 : 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: isActive ? primaryColor.withValues(alpha: 0.18) : Colors.black.withValues(alpha: 0.04),
+                        color: isActive
+                            ? primaryColor.withValues(alpha: isDark ? 0.25 : 0.12)
+                            : Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadii.xl),
                     onTap: () {
-                      appState.setActiveVehicle(vehicle.id);
-                      Navigator.of(context).pop();
+                      final id = vehicle.id;
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
+                      appState.setActiveVehicle(id);
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -114,7 +113,7 @@ class VehiclesScreen extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: primaryColor,
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(AppRadii.sm),
                                   ),
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -141,8 +140,11 @@ class VehiclesScreen extends StatelessWidget {
                                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                   ),
                                   onPressed: () {
-                                    appState.setActiveVehicle(vehicle.id);
-                                    Navigator.of(context).pop();
+                                    final id = vehicle.id;
+                                    if (Navigator.of(context).canPop()) {
+                                      Navigator.of(context).pop();
+                                    }
+                                    appState.setActiveVehicle(id);
                                   },
                                   child: const Text('Select Car', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                                 ),
@@ -215,7 +217,7 @@ class VehiclesScreen extends StatelessWidget {
                                       '${vehicle.brand} - ${vehicle.type.displayName}${vehicle.owner.isNotEmpty ? ' - ${vehicle.owner}' : ''}',
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                                        color: AppTheme.textSecondaryColor(context),
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -251,7 +253,11 @@ class VehiclesScreen extends StatelessWidget {
                                         ],
                                         Text(
                                           '$count records',
-                                          style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: AppTheme.textMutedColor(context),
+                                            fontFeatures: const [FontFeature.tabularFigures()],
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -267,20 +273,24 @@ class VehiclesScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: isDark ? Colors.black26 : Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(10),
+                              color: AppTheme.elevatedSurfaceColor(context),
+                              borderRadius: BorderRadius.circular(AppRadii.sm),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   'Units: ${vehicle.unitDistance} • ${vehicle.unitVolume} • ${vehicle.currency}',
-                                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                  style: TextStyle(fontSize: 11, color: AppTheme.textMutedColor(context)),
                                 ),
                                 if (vehicle.initialOdometer != null)
                                   Text(
                                     'Initial: ${vehicle.initialOdometer!.toStringAsFixed(0)} ${vehicle.unitDistance}',
-                                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.textMutedColor(context),
+                                      fontFeatures: const [FontFeature.tabularFigures()],
+                                    ),
                                   ),
                               ],
                             ),

@@ -11,6 +11,7 @@ import '../services/header_auto_mapper.dart';
 import '../services/gemini_cleaner_constants.dart';
 import '../widgets/gemini_fallback_card.dart';
 import '../utils/app_date_format.dart';
+import '../theme/app_theme.dart';
 
 /// Screen implementing the 3-Layer Hybrid Import Architecture:
 /// 1. Official Template Generator
@@ -685,7 +686,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                                       height: 34,
                                       padding: const EdgeInsets.symmetric(horizontal: 6),
                                       decoration: BoxDecoration(
-                                        color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+                                        color: AppTheme.surfaceColor(context),
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.5)),
                                       ),
@@ -792,9 +793,9 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
       bottomNavigationBar: Container(
         padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+          color: AppTheme.surfaceColor(context),
           border: Border(
-            top: BorderSide(color: Colors.grey.withValues(alpha: 0.18)),
+            top: BorderSide(color: AppTheme.borderColor(context)),
           ),
           boxShadow: [
             BoxShadow(
@@ -927,9 +928,9 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
             margin: const EdgeInsets.only(bottom: 6),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+              color: AppTheme.surfaceColor(context),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+              border: Border.all(color: AppTheme.borderColor(context)),
             ),
             child: Row(
               children: [
@@ -970,9 +971,9 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+            color: AppTheme.surfaceColor(context),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+            border: Border.all(color: AppTheme.borderColor(context)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
@@ -996,7 +997,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   elevation: 2,
                   shadowColor: theme.colorScheme.primary.withValues(alpha: 0.3),
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1028,9 +1029,9 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
           margin: isStaged ? const EdgeInsets.only(bottom: 6) : EdgeInsets.zero,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+            color: AppTheme.surfaceColor(context),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+            border: Border.all(color: AppTheme.borderColor(context)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'services/fuel_app_state.dart';
 import 'screens/home_screen.dart';
 import 'screens/data_automation_consent_screen.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,74 +17,39 @@ void main() async {
   runApp(FuelRecordApp(appState: appState));
 }
 
-class FuelRecordApp extends StatelessWidget {
+class FuelRecordApp extends StatefulWidget {
   final FuelAppState appState;
 
   const FuelRecordApp({super.key, required this.appState});
 
   @override
+  State<FuelRecordApp> createState() => _FuelRecordAppState();
+}
+
+class _FuelRecordAppState extends State<FuelRecordApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: appState,
+      listenable: widget.appState,
       builder: (context, _) {
-        if (appState.isLoading) {
-          return const MaterialApp(
-            debugShowCheckedModeBanner: false,
-            home: Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          );
-        }
-
         return MaterialApp(
+          navigatorKey: _navigatorKey,
           title: 'Fuel Metrics',
           debugShowCheckedModeBanner: false,
-          themeMode: appState.themeMode,
-          theme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.light,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF1E88E5),
-              brightness: Brightness.light,
-              surface: const Color(0xFFF8F9FD),
-            ),
-            scaffoldBackgroundColor: const Color(0xFFF4F6FB),
-            cardTheme: const CardThemeData(
-              color: Colors.white,
-              elevation: 0,
-            ),
-            appBarTheme: const AppBarTheme(
-              elevation: 0,
-              centerTitle: false,
-              backgroundColor: Colors.transparent,
-              surfaceTintColor: Colors.transparent,
-            ),
-          ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.dark,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF1E88E5),
-              brightness: Brightness.dark,
-              surface: const Color(0xFF161620),
-            ),
-            scaffoldBackgroundColor: const Color(0xFF101018),
-            cardTheme: const CardThemeData(
-              color: Color(0xFF1A1A26),
-              elevation: 0,
-            ),
-            appBarTheme: const AppBarTheme(
-              elevation: 0,
-              centerTitle: false,
-              backgroundColor: Colors.transparent,
-              surfaceTintColor: Colors.transparent,
-            ),
-          ),
-          home: appState.hasCompletedDataConsent
-              ? HomeScreen(appState: appState)
-              : DataAutomationConsentScreen(appState: appState),
+          themeMode: widget.appState.themeMode,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          home: widget.appState.isLoading
+              ? const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              : (widget.appState.hasCompletedDataConsent
+                  ? HomeScreen(appState: widget.appState)
+                  : DataAutomationConsentScreen(appState: widget.appState)),
         );
       },
     );

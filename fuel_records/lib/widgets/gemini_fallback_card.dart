@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/gemini_cleaner_constants.dart';
+import '../theme/app_theme.dart';
 
 /// Clean, production-ready fallback card guiding users to Gemini / ChatGPT
 /// when local parsers fail or data is too unstructured.
@@ -132,12 +133,12 @@ class _GeminiFallbackCardState extends State<GeminiFallbackCard> {
     final isDark = theme.brightness == Brightness.dark;
 
     final borderColor = widget.isHighlighted
-        ? const Color(0xFFF59E0B)
-        : (isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.4) : const Color(0xFFBFDBFE));
+        ? theme.colorScheme.primary
+        : (isDark ? AppColors.darkBorder : AppColors.lightBorder);
 
     final cardBg = isDark
-        ? (widget.isHighlighted ? const Color(0xFF272118) : const Color(0xFF1B2232))
-        : (widget.isHighlighted ? const Color(0xFFFFFBEB) : const Color(0xFFF0F7FF));
+        ? (widget.isHighlighted ? const Color(0xFF22252C) : AppColors.darkSurface)
+        : (widget.isHighlighted ? const Color(0xFFFFEDD5) : AppColors.lightSurface);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -148,7 +149,7 @@ class _GeminiFallbackCardState extends State<GeminiFallbackCard> {
         boxShadow: widget.isHighlighted
             ? [
                 BoxShadow(
-                  color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
@@ -169,10 +170,10 @@ class _GeminiFallbackCardState extends State<GeminiFallbackCard> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB).withValues(alpha: 0.15),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.auto_awesome, color: Color(0xFF2563EB), size: 20),
+                    child: Icon(Icons.auto_awesome, color: theme.colorScheme.primary, size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -267,8 +268,8 @@ class _GeminiFallbackCardState extends State<GeminiFallbackCard> {
                           children: [
                             FilledButton.icon(
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF2563EB),
-                                foregroundColor: Colors.white,
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
                                 padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
@@ -302,8 +303,8 @@ class _GeminiFallbackCardState extends State<GeminiFallbackCard> {
                             flex: 3,
                             child: FilledButton.icon(
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF2563EB),
-                                foregroundColor: Colors.white,
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
                                 padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),

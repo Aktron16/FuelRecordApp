@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/fuel_app_state.dart';
 import '../models/pending_auto_refuel.dart';
 import '../models/vehicle.dart';
+import '../theme/app_theme.dart';
 
 class AutoRefuelSimulatorSheet extends StatefulWidget {
   final FuelAppState appState;
@@ -75,7 +76,7 @@ class _AutoRefuelSimulatorSheetState extends State<AutoRefuelSimulatorSheet> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+        color: AppTheme.surfaceColor(context),
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -155,7 +156,7 @@ class _AutoRefuelSimulatorSheetState extends State<AutoRefuelSimulatorSheet> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF101018) : const Color(0xFFF4F6FB),
+        color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -175,11 +176,11 @@ class _AutoRefuelSimulatorSheetState extends State<AutoRefuelSimulatorSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.auto_awesome, color: Color(0xFF1E88E5), size: 22),
-                    SizedBox(width: 8),
-                    Text(
+                    Icon(Icons.auto_awesome, color: theme.colorScheme.primary, size: 22),
+                    const SizedBox(width: 8),
+                    const Text(
                       '5-Tier Auto-Refuel Simulator',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.3),
                     ),
@@ -201,9 +202,9 @@ class _AutoRefuelSimulatorSheetState extends State<AutoRefuelSimulatorSheet> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+                    color: AppTheme.surfaceColor(context),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+                    border: Border.all(color: AppTheme.borderColor(context)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,15 +219,15 @@ class _AutoRefuelSimulatorSheetState extends State<AutoRefuelSimulatorSheet> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E88E5).withValues(alpha: 0.12),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               'Calibration: ${activeVehicle?.calibrationFactor.toStringAsFixed(3) ?? "1.000"}x',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E88E5),
+                                color: theme.colorScheme.primary,
                               ),
                             ),
                           ),
@@ -235,7 +236,7 @@ class _AutoRefuelSimulatorSheetState extends State<AutoRefuelSimulatorSheet> {
                       const SizedBox(height: 8),
                       Text(
                         'Tank: ${activeVehicle?.tankCapacityLiters ?? 55.0}L • Last Odo: ${activeVehicle?.lastKnownOdometer?.toStringAsFixed(1) ?? "0"} • Fuel %: ${activeVehicle?.lastKnownFuelPercent?.toStringAsFixed(1) ?? "30.0"}%',
-                        style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                        style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryColor(context)),
                       ),
                     ],
                   ),
@@ -246,9 +247,9 @@ class _AutoRefuelSimulatorSheetState extends State<AutoRefuelSimulatorSheet> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+                    color: AppTheme.surfaceColor(context),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+                    border: Border.all(color: AppTheme.borderColor(context)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,7 +264,7 @@ class _AutoRefuelSimulatorSheetState extends State<AutoRefuelSimulatorSheet> {
                         children: [
                           const Row(
                             children: [
-                              Icon(Icons.bluetooth, size: 18, color: Colors.blue),
+                              Icon(Icons.bluetooth, size: 18, color: AppColors.info),
                               SizedBox(width: 8),
                               Text('Bluetooth Hardware Switch', style: TextStyle(fontSize: 13)),
                             ],
@@ -329,9 +330,9 @@ class _AutoRefuelSimulatorSheetState extends State<AutoRefuelSimulatorSheet> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+                    color: AppTheme.surfaceColor(context),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+                    border: Border.all(color: AppTheme.borderColor(context)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

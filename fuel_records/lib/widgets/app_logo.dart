@@ -10,7 +10,7 @@ class FuelManLogo extends StatelessWidget {
   const FuelManLogo({
     super.key,
     this.size = 40,
-    this.primaryColor = const Color(0xFF1E88E5),
+    this.primaryColor = const Color(0xFFF59E0B), // Apex Tachometer Amber
     this.showBackground = true,
   });
 
@@ -181,7 +181,7 @@ class _FuelManPainter extends CustomPainter {
     );
 
     // Man's Torso / Jacket (Seen from back)
-    final jacketPaint = Paint()..color = const Color(0xFF2563EB); // Vibrant royal blue jacket
+    final jacketPaint = Paint()..color = carColor; // High-contrast tachometer tone
     final torsoPath = Path();
     torsoPath.moveTo(w * 0.62, h * 0.52); // Left shoulder
     torsoPath.lineTo(w * 0.76, h * 0.52); // Right shoulder

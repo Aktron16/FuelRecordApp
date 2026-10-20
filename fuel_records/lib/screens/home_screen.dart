@@ -5,6 +5,7 @@ import '../models/record_calculation.dart';
 import '../models/pending_auto_refuel.dart';
 import '../services/auto_refuel_orchestrator.dart';
 import '../services/fuel_app_state.dart';
+import '../theme/app_theme.dart';
 import '../widgets/vehicle_artwork.dart';
 import '../utils/app_date_format.dart';
 import 'add_edit_vehicle_sheet.dart';
@@ -196,27 +197,27 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadii.md),
                     onTap: () => _showQuickVehiclePickerSheet(context),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E1E28) : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                        color: AppTheme.surfaceColor(context),
+                        borderRadius: BorderRadius.circular(AppRadii.md),
+                        border: Border.all(color: AppTheme.borderColor(context)),
                       ),
                       child: Row(
                         children: [
                           Icon(Icons.directions_car, size: 18, color: primaryColor),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               vehicle.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
+                          Icon(Icons.unfold_more, size: 18, color: AppTheme.textSecondaryColor(context)),
                         ],
                       ),
                     ),
@@ -242,29 +243,22 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 14),
 
-            // Vehicle Hero Artwork & Overview Card
+            // Vehicle Hero Cockpit Card
             Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    primaryColor.withValues(alpha: 0.18),
-                    isDark ? const Color(0xFF1E1E28) : Colors.white,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: primaryColor.withValues(alpha: 0.35), width: 1.5),
+                color: AppTheme.surfaceColor(context),
+                borderRadius: BorderRadius.circular(AppRadii.xl),
+                border: Border.all(color: AppTheme.borderColor(context), width: 1.2),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
+                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(AppRadii.xl - 1),
                 child: Column(
                   children: [
                     if (vehicle.bannerImageUri != null && File(vehicle.bannerImageUri!).existsSync())
@@ -281,8 +275,8 @@ class HomeScreen extends StatelessWidget {
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Colors.black.withValues(alpha: 0.15),
-                                    Colors.black.withValues(alpha: 0.75),
+                                    Colors.black.withValues(alpha: 0.1),
+                                    Colors.black.withValues(alpha: 0.8),
                                   ],
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
@@ -306,7 +300,7 @@ class HomeScreen extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
                                     color: primaryColor,
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(AppRadii.sm),
                                   ),
                                   child: Text(
                                     vehicle.type.displayName.toUpperCase(),
@@ -326,14 +320,14 @@ class HomeScreen extends StatelessWidget {
                                     letterSpacing: -0.5,
                                   ),
                                 ),
-                                const SizedBox(height: 3),
+                                const SizedBox(height: 4),
                                 Row(
                                   children: [
                                     Text(
                                       vehicle.brand,
                                       style: TextStyle(
                                         fontSize: 13,
-                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                                        color: AppTheme.textSecondaryColor(context),
                                       ),
                                     ),
                                     if (vehicle.licensePlate != null && vehicle.licensePlate!.trim().isNotEmpty) ...[
@@ -367,28 +361,43 @@ class HomeScreen extends StatelessWidget {
                                   ],
                                 ),
                                 if (vehicle.dateBought != null) ...[
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 6),
                                   Row(
                                     children: [
-                                      Icon(Icons.shopping_bag_outlined, size: 12, color: Colors.grey.shade600),
+                                      Icon(Icons.shopping_bag_outlined, size: 12, color: AppTheme.textMutedColor(context)),
                                       const SizedBox(width: 4),
                                       Text(
                                         'Bought: ${AppDateUtils.format(vehicle.dateBought!)} (${vehicle.ownershipDuration})',
-                                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                                        style: TextStyle(fontSize: 11, color: AppTheme.textMutedColor(context), fontWeight: FontWeight.w500),
                                       ),
                                     ],
                                   ),
                                 ],
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 10),
                                 if (latestRecord != null)
                                   Row(
                                     children: [
-                                      Icon(Icons.speed, size: 14, color: primaryColor),
-                                      const SizedBox(width: 4),
+                                      Icon(Icons.speed, size: 15, color: primaryColor),
+                                      const SizedBox(width: 5),
                                       Text(
                                         '${latestRecord.odometer.toStringAsFixed(0)} ${vehicle.unitDistance}',
-                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.bold,
+                                          fontFeatures: [FontFeature.tabularFigures()],
+                                        ),
                                       ),
+                                      if (vehicle.tankCapacityMilliliters > 0) ...[
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          '• ${(vehicle.tankCapacityMilliliters / 1000.0).toStringAsFixed(0)} L Tank',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: AppTheme.textSecondaryColor(context),
+                                            fontFeatures: const [FontFeature.tabularFigures()],
+                                          ),
+                                        ),
+                                      ],
                                     ],
                                   ),
                               ],
@@ -656,7 +665,7 @@ class HomeScreen extends StatelessWidget {
                       ? Icons.price_check
                       : (latestCalc!.priceDifferencePerUnit! > 0 ? Icons.trending_up : Icons.trending_down),
                   iconColor: latestCalc?.priceDifferencePerUnit == null
-                      ? Colors.grey
+                      ? (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary)
                       : (latestCalc!.priceDifferencePerUnit! > 0 ? Colors.redAccent : Colors.green),
                   badgeText: latestCalc?.priceDifferencePerUnit != null && latestCalc!.priceDifferencePerUnit! > 0
                       ? 'Increased'
@@ -745,9 +754,9 @@ class HomeScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E1E28) : Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+                  color: AppTheme.surfaceColor(context),
+                  borderRadius: BorderRadius.circular(AppRadii.lg),
+                  border: Border.all(color: AppTheme.borderColor(context)),
                 ),
                 child: Column(
                   children: [
@@ -755,7 +764,11 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 10),
                     const Text('No fuel logs yet for this vehicle', style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    const Text('Tap "Add New Record" above to record your odometer and fuel!', style: TextStyle(fontSize: 12, color: Colors.grey), textAlign: TextAlign.center),
+                    Text(
+                      'Tap "Add New Record" above to record your odometer and fuel!',
+                      style: TextStyle(fontSize: 12, color: AppTheme.textMutedColor(context)),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               )
@@ -772,9 +785,9 @@ class HomeScreen extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E1E28) : Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+                      color: AppTheme.surfaceColor(context),
+                      borderRadius: BorderRadius.circular(AppRadii.lg),
+                      border: Border.all(color: AppTheme.borderColor(context)),
                     ),
                     child: Row(
                       children: [
@@ -782,7 +795,7 @@ class HomeScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: primaryColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadii.md),
                           ),
                           child: Icon(Icons.local_gas_station, color: primaryColor, size: 22),
                         ),
@@ -800,7 +813,8 @@ class HomeScreen extends StatelessWidget {
                                 '${rec.odometer.toStringAsFixed(0)} ${vehicle.unitDistance} • ${rec.fuelAmount.toStringAsFixed(1)} ${vehicle.unitVolume}',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                                  color: AppTheme.textSecondaryColor(context),
+                                  fontFeatures: const [FontFeature.tabularFigures()],
                                 ),
                               ),
                             ],
@@ -811,7 +825,11 @@ class HomeScreen extends StatelessWidget {
                           children: [
                             Text(
                               '${vehicle.currency}${rec.totalPrice.toStringAsFixed(2)}',
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                                fontFeatures: [FontFeature.tabularFigures()],
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -821,11 +839,15 @@ class HomeScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: calc.distanceTraveled != null ? Colors.blueAccent : Colors.grey,
+                                color: calc.distanceTraveled != null
+                                    ? (isDark ? AppColors.primaryLight : AppColors.primaryDark)
+                                    : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                                fontFeatures: const [FontFeature.tabularFigures()],
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(width: 4),
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, size: 18),
                           tooltip: 'Change record',
@@ -1049,25 +1071,23 @@ class HomeScreen extends StatelessWidget {
 
   /// Pending Auto-Refuel Verification Card with 1-Tap Confirmation and Custom Amount
   Widget _buildPendingAutoRefuelCard(BuildContext context, PendingAutoRefuel pending, Vehicle vehicle) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     Color tierColor;
     switch (pending.detectionTier) {
       case 1:
-        tierColor = const Color(0xFF2563EB); // Blue
+        tierColor = AppColors.primary; // Warm Amber (Tandem)
         break;
       case 2:
-        tierColor = const Color(0xFF0284C7); // Cyan
+        tierColor = AppColors.info; // Warm Desert Teal (OBD BLE)
         break;
       case 3:
-        tierColor = const Color(0xFF7C3AED); // Purple
+        tierColor = AppColors.purple; // Warm Plum (EXIF)
         break;
       case 4:
-        tierColor = const Color(0xFFEA580C); // Orange
+        tierColor = AppColors.orange; // Warm Burnt Orange (Pit-stop)
         break;
       case 5:
       default:
-        tierColor = const Color(0xFF059669); // Green
+        tierColor = AppColors.success; // Warm Emerald (ECU math)
         break;
     }
 
@@ -1075,9 +1095,9 @@ class HomeScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+        color: AppTheme.surfaceColor(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: tierColor.withValues(alpha: 0.5), width: 1.8),
+        border: Border.all(color: tierColor.withValues(alpha: 0.6), width: 1.8),
         boxShadow: [
           BoxShadow(
             color: tierColor.withValues(alpha: 0.08),
@@ -1147,7 +1167,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${pending.estimatedLiters.toStringAsFixed(2)} L @ ${vehicle.currency}${pending.resolvedPricePerLitre.toStringAsFixed(2)}/L • ${pending.estimatedOdometer.toStringAsFixed(0)} ${vehicle.unitDistance}',
-                      style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                      style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryColor(context)),
                     ),
                   ],
                 ),
@@ -1158,7 +1178,7 @@ class HomeScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF161620) : const Color(0xFFF8F9FD),
+              color: AppTheme.elevatedSurfaceColor(context),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -1170,7 +1190,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 Text(
                   AppDateUtils.format(pending.timestamp),
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  style: TextStyle(fontSize: 11, color: AppTheme.textMutedColor(context)),
                 ),
               ],
             ),
@@ -1230,7 +1250,11 @@ class HomeScreen extends StatelessWidget {
           children: [
             Text(
               'Enter the exact amount paid. This will automatically calibrate your tank percentage multiplier for even higher accuracy next time.',
-              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, height: 1.3),
+              style: TextStyle(
+                fontSize: 12.5,
+                color: Theme.of(ctx).brightness == Brightness.dark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                height: 1.3,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1351,13 +1375,14 @@ class HomeScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E28) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+        color: AppTheme.surfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadii.xl),
+        border: Border.all(color: AppTheme.borderColor(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 6,
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -1373,19 +1398,24 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(width: 8),
                   const Text(
                     'Overall Stats',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                 decoration: BoxDecoration(
                   color: primaryColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadii.sm),
                 ),
                 child: Text(
                   '${stats.totalRecords} Refuels',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryColor),
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    color: primaryColor,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
                 ),
               ),
             ],
@@ -1400,27 +1430,30 @@ class HomeScreen extends StatelessWidget {
                   value: stats.averageEfficiency != null
                       ? '${stats.averageEfficiency!.toStringAsFixed(2)} ${vehicle.unitDistance}/${vehicle.unitVolume}'
                       : '--',
-                  color: Colors.green,
+                  color: AppColors.success,
+                  isDark: isDark,
                 ),
               ),
               Expanded(
                 child: _overallStatTile(
                   label: 'Total Driven',
                   value: '${stats.totalDistance.toStringAsFixed(0)} ${vehicle.unitDistance}',
-                  color: Colors.blueAccent,
+                  color: AppColors.primary,
+                  isDark: isDark,
                 ),
               ),
               Expanded(
                 child: _overallStatTile(
                   label: 'Total Fuel',
                   value: '${stats.totalFuel.toStringAsFixed(0)} ${vehicle.unitVolume}',
-                  color: Colors.teal,
+                  color: AppColors.info,
+                  isDark: isDark,
                 ),
               ),
             ],
           ),
 
-          const Divider(height: 18),
+          Divider(height: 20, color: AppTheme.borderColor(context)),
 
           Row(
             children: [
@@ -1428,7 +1461,8 @@ class HomeScreen extends StatelessWidget {
                 child: _overallStatTile(
                   label: 'Total Spent',
                   value: '${vehicle.currency}${stats.totalCost.toStringAsFixed(2)}',
-                  color: Colors.amber.shade800,
+                  color: AppColors.warning,
+                  isDark: isDark,
                 ),
               ),
               Expanded(
@@ -1437,7 +1471,8 @@ class HomeScreen extends StatelessWidget {
                   value: stats.averageCostPerDistance != null
                       ? '${vehicle.currency}${stats.averageCostPerDistance!.toStringAsFixed(3)}'
                       : '--',
-                  color: Colors.deepPurpleAccent,
+                  color: AppColors.purple,
+                  isDark: isDark,
                 ),
               ),
               Expanded(
@@ -1446,7 +1481,8 @@ class HomeScreen extends StatelessWidget {
                   value: stats.averageDaysBetweenFills != null
                       ? '${stats.averageDaysBetweenFills!.toStringAsFixed(1)} d'
                       : '--',
-                  color: Colors.orange,
+                  color: AppColors.orange,
+                  isDark: isDark,
                 ),
               ),
             ],
@@ -1456,15 +1492,27 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _overallStatTile({required String label, required String value, required Color color}) {
+  Widget _overallStatTile({required String label, required String value, required Color color, bool isDark = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 3),
         Text(
           value,
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: color,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
           overflow: TextOverflow.ellipsis,
         ),
       ],
@@ -1509,7 +1557,7 @@ class HomeScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(AppRadii.lg),
       onTap: () {
         // Cycle: km/L -> L/100km -> MPG -> km/L (instance only, reverts on restart)
         String nextUnit;
@@ -1533,13 +1581,14 @@ class HomeScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E28) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.teal.withValues(alpha: 0.4), width: 1.4),
+          color: AppTheme.surfaceColor(context),
+          borderRadius: BorderRadius.circular(AppRadii.lg),
+          border: Border.all(color: const Color(0xFF0D9488).withValues(alpha: 0.35), width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
               blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -1550,25 +1599,32 @@ class HomeScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Flexible(
+                Flexible(
                   child: Text(
                     'Fuel Efficiency',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.teal.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
+                    color: AppColors.info.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.swap_horiz, size: 10, color: Colors.teal),
+                      const Icon(Icons.swap_horiz, size: 10, color: AppColors.info),
                       const SizedBox(width: 2),
-                      Text(activeUnit, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.teal)),
+                      Text(
+                        activeUnit,
+                        style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: AppColors.info),
+                      ),
                     ],
                   ),
                 ),
@@ -1576,7 +1632,13 @@ class HomeScreen extends StatelessWidget {
             ),
             Text(
               displayVal,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.teal, letterSpacing: -0.3),
+              style: const TextStyle(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w800,
+                color: AppColors.info,
+                letterSpacing: -0.3,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
               overflow: TextOverflow.ellipsis,
             ),
             Row(
@@ -1585,7 +1647,10 @@ class HomeScreen extends StatelessWidget {
                 Flexible(
                   child: Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 9, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -1611,13 +1676,14 @@ class HomeScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E28) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+        color: AppTheme.surfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        border: Border.all(color: AppTheme.borderColor(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
             blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -1631,7 +1697,11 @@ class HomeScreen extends StatelessWidget {
               Flexible(
                 child: Text(
                   title,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -1640,7 +1710,12 @@ class HomeScreen extends StatelessWidget {
           ),
           Text(
             value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: -0.3),
+            style: const TextStyle(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
             overflow: TextOverflow.ellipsis,
           ),
           Row(
@@ -1649,7 +1724,10 @@ class HomeScreen extends StatelessWidget {
               Flexible(
                 child: Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -1666,6 +1744,7 @@ class HomeScreen extends StatelessWidget {
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
                       color: iconColor,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ),
@@ -1767,8 +1846,9 @@ class HomeScreen extends StatelessWidget {
                             : const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
                         onTap: () {
                           // Single tap immediately switches car and takes user to its information
-                          appState.setActiveVehicle(v.id);
+                          final targetId = v.id;
                           Navigator.of(ctx).pop();
+                          appState.setActiveVehicle(targetId);
                         },
                       );
                     },

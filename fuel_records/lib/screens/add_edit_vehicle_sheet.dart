@@ -255,8 +255,8 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
       createdAt: widget.vehicleToEdit?.createdAt,
     );
 
-    widget.onSave(vehicle);
     Navigator.of(context).pop();
+    widget.onSave(vehicle);
   }
 
   @override

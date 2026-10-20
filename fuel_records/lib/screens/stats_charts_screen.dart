@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/vehicle.dart';
 import '../services/fuel_app_state.dart';
+import '../theme/app_theme.dart';
 import '../utils/app_date_format.dart';
 
 class StatsChartsScreen extends StatefulWidget {
@@ -23,7 +24,6 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
   Widget build(BuildContext context) {
     final vehicle = widget.appState.activeVehicle;
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     if (vehicle == null) {
       return Scaffold(
@@ -190,9 +190,9 @@ class _StatsChartsScreenState extends State<StatsChartsScreen> {
               height: 240,
               padding: const EdgeInsets.fromLTRB(12, 20, 16, 12),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+                color: AppTheme.surfaceColor(context),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                border: Border.all(color: AppTheme.borderColor(context)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),

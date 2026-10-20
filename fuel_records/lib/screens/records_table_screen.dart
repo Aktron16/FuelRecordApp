@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../models/vehicle.dart';
 import '../models/record_calculation.dart';
 import '../services/fuel_app_state.dart';
+import '../theme/app_theme.dart';
 import '../utils/app_date_format.dart';
 
 class RecordsTableScreen extends StatefulWidget {
@@ -191,9 +192,9 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                 height: 220,
                 padding: const EdgeInsets.fromLTRB(10, 16, 16, 10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E1E28) : Colors.grey.shade50,
+                  color: AppTheme.elevatedSurfaceColor(context),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                  border: Border.all(color: AppTheme.borderColor(context)),
                 ),
                 child: LineChart(
                   LineChartData(
@@ -267,7 +268,7 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                             return FlDotCirclePainter(
                               radius: 4,
                               color: color,
-                              strokeColor: isDark ? const Color(0xFF1E1E28) : Colors.white,
+                              strokeColor: AppTheme.surfaceColor(context),
                               strokeWidth: 2,
                             );
                           },
@@ -316,7 +317,11 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
     if (delta == null) {
       return Text(
         valueStr,
-        style: TextStyle(color: baseColor, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: baseColor,
+          fontWeight: FontWeight.bold,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
       );
     }
 
@@ -329,15 +334,27 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
 
     return RichText(
       text: TextSpan(
-        style: const TextStyle(fontSize: 13, fontFamily: 'Roboto'),
+        style: const TextStyle(
+          fontSize: 13,
+          fontFamily: 'Roboto',
+          fontFeatures: [FontFeature.tabularFigures()],
+        ),
         children: [
           TextSpan(
             text: '$valueStr ',
-            style: TextStyle(color: baseColor, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: baseColor,
+              fontWeight: FontWeight.bold,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
           ),
           TextSpan(
             text: '($deltaSign${delta.toStringAsFixed(2)})',
-            style: TextStyle(color: deltaColor, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: deltaColor,
+              fontWeight: FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
           ),
         ],
       ),
@@ -418,7 +435,7 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
           unit: vehicle.unitDistance,
           values: odometers,
           dates: dates,
-          color: Colors.blue,
+          color: AppColors.info,
         ),
       ),
       _buildGraphableColumn(
@@ -684,10 +701,10 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                 Container(
                   height: 56,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF262838) : Colors.blueGrey.shade100,
+                    color: AppTheme.elevatedSurfaceColor(context),
                     border: Border(
                       bottom: BorderSide(
-                        color: Colors.grey.withValues(alpha: 0.3),
+                        color: AppTheme.borderColor(context),
                         width: 1.5,
                       ),
                     ),
@@ -702,7 +719,7 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                         decoration: BoxDecoration(
                           border: Border(
                             right: BorderSide(
-                              color: Colors.grey.withValues(alpha: 0.25),
+                              color: AppTheme.borderColor(context),
                               width: 1.5,
                             ),
                           ),
@@ -742,7 +759,7 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                             horizontalMargin: 12,
                             columnSpacing: 16,
                             headingRowColor: WidgetStateProperty.all(
-                              isDark ? const Color(0xFF262838) : Colors.blueGrey.shade100,
+                              AppTheme.elevatedSurfaceColor(context),
                             ),
                             columns: headerColumns,
                             rows: const [],
@@ -762,10 +779,10 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                       Container(
                         width: 52,
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+                          color: AppTheme.surfaceColor(context),
                           border: Border(
                             right: BorderSide(
-                              color: Colors.grey.withValues(alpha: 0.25),
+                              color: AppTheme.borderColor(context),
                               width: 1.5,
                             ),
                           ),
@@ -860,7 +877,7 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
           ? Container(
               padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+                color: AppTheme.surfaceColor(context),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.12),
@@ -868,7 +885,7 @@ class _RecordsTableScreenState extends State<RecordsTableScreen> {
                     offset: const Offset(0, -3),
                   ),
                 ],
-                border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
+                border: Border(top: BorderSide(color: AppTheme.borderColor(context))),
               ),
               child: Row(
                 children: [

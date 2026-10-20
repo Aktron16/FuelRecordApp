@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/fuel_app_state.dart';
 import '../widgets/app_logo.dart';
+import '../theme/app_theme.dart';
 
 class DataAutomationConsentScreen extends StatefulWidget {
   final FuelAppState appState;
@@ -59,12 +60,12 @@ class _DataAutomationConsentScreenState extends State<DataAutomationConsentScree
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: value
-              ? iconColor.withValues(alpha: 0.5)
-              : Colors.grey.withValues(alpha: 0.18),
+              ? iconColor.withValues(alpha: 0.6)
+              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
           width: value ? 1.5 : 1.0,
         ),
       ),
@@ -93,7 +94,7 @@ class _DataAutomationConsentScreenState extends State<DataAutomationConsentScree
                   description,
                   style: TextStyle(
                     fontSize: 12.5,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                     height: 1.35,
                   ),
                 ),
@@ -117,7 +118,7 @@ class _DataAutomationConsentScreenState extends State<DataAutomationConsentScree
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF101018) : const Color(0xFFF4F6FB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -129,7 +130,7 @@ class _DataAutomationConsentScreenState extends State<DataAutomationConsentScree
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 12),
-                      const FuelManLogo(size: 64),
+                      FuelManLogo(size: 64, primaryColor: theme.colorScheme.primary),
                       const SizedBox(height: 16),
                       const Text(
                         'Data & Automation Setup',
@@ -173,14 +174,14 @@ class _DataAutomationConsentScreenState extends State<DataAutomationConsentScree
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.8,
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                           ),
                         ),
                       ),
                       const SizedBox(height: 10),
                       _buildToggleTile(
                         icon: Icons.bluetooth_connected,
-                        iconColor: const Color(0xFF2563EB),
+                        iconColor: AppColors.info, // Warm Desert Teal
                         title: 'Car Bluetooth & OBD Auto-Sync',
                         description: 'Connects to your OBD-II BLE adapter to read fuel level & odometer automatically.',
                         value: _btObd,
@@ -189,7 +190,7 @@ class _DataAutomationConsentScreenState extends State<DataAutomationConsentScree
                       ),
                       _buildToggleTile(
                         icon: Icons.local_gas_station_outlined,
-                        iconColor: const Color(0xFFEA580C),
+                        iconColor: AppColors.primary, // Tachometer Amber
                         title: 'Gas Station & Local Price Finder',
                         description: 'Locates nearby pump brands and resolves local per-liter fuel pricing at fill-up time.',
                         value: _locPrice,
@@ -198,7 +199,7 @@ class _DataAutomationConsentScreenState extends State<DataAutomationConsentScree
                       ),
                       _buildToggleTile(
                         icon: Icons.directions_car_filled_outlined,
-                        iconColor: const Color(0xFF7C3AED),
+                        iconColor: AppColors.purple,
                         title: 'Smart Driving Stop Detection',
                         description: 'Detects 3–10 minute driving stops to automatically timestamp missed fuel pit-stops.',
                         value: _motionStop,
@@ -207,7 +208,7 @@ class _DataAutomationConsentScreenState extends State<DataAutomationConsentScree
                       ),
                       _buildToggleTile(
                         icon: Icons.notifications_active_outlined,
-                        iconColor: const Color(0xFF059669),
+                        iconColor: AppColors.success, // Warm Emerald
                         title: 'Refuel Verification Alerts',
                         description: 'Sends a polite prompt to confirm the total amount paid with one quick tap.',
                         value: _alerts,
@@ -227,8 +228,8 @@ class _DataAutomationConsentScreenState extends State<DataAutomationConsentScree
                     height: 52,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E88E5),
-                        foregroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
@@ -245,7 +246,7 @@ class _DataAutomationConsentScreenState extends State<DataAutomationConsentScree
                     height: 46,
                     child: TextButton(
                       style: TextButton.styleFrom(
-                        foregroundColor: isDark ? Colors.grey[300] : Colors.grey[700],
+                        foregroundColor: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       onPressed: () => _completeWithPreferences(true),

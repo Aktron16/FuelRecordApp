@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/vehicle.dart';
 import '../models/service_record.dart';
 import '../services/fuel_app_state.dart';
+import '../theme/app_theme.dart';
 import '../utils/app_date_format.dart';
 
 class ServicesScreen extends StatefulWidget {
@@ -18,7 +19,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
   Widget build(BuildContext context) {
     final vehicle = widget.appState.activeVehicle;
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     if (vehicle == null) {
       return Scaffold(
@@ -139,9 +139,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E28) : Colors.grey.shade50,
+                color: AppTheme.elevatedSurfaceColor(context),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+                border: Border.all(color: AppTheme.borderColor(context)),
               ),
               child: Column(
                 children: [
@@ -352,8 +352,8 @@ class _AddEditServiceModalState extends State<_AddEditServiceModal> {
       notes: _notesController.text.trim(),
     );
 
-    widget.onSave(srv);
     Navigator.of(context).pop();
+    widget.onSave(srv);
   }
 
   @override

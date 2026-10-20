@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/vehicle.dart';
 import '../services/fuel_app_state.dart';
+import '../theme/app_theme.dart';
 import 'import_preview_screen.dart';
 
 /// Screen where user inputs unstructured text with full descriptions and examples.
@@ -95,10 +96,10 @@ class _TextImportScreenState extends State<TextImportScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E28) : const Color(0xFFF0FDF4),
+              color: isDark ? AppTheme.surfaceColor(context) : const Color(0xFFF5FAF6),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? Colors.grey.withValues(alpha: 0.2) : const Color(0xFF86EFAC),
+                color: isDark ? AppTheme.borderColor(context) : const Color(0xFF86EFAC),
               ),
             ),
             child: Row(

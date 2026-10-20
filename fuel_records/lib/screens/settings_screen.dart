@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/fuel_app_state.dart';
 import '../services/country_data.dart';
+import '../theme/app_theme.dart';
 import '../widgets/app_logo.dart';
 import 'auto_refuel_simulator_sheet.dart';
 import 'obd_pairing_screen.dart';
@@ -174,9 +175,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+              color: AppTheme.surfaceColor(context),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+              border: Border.all(color: AppTheme.borderColor(context)),
             ),
             child: Row(
               children: [
@@ -225,9 +226,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text('Appearance', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                            Text('Choose Light or Dark mode', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                          children: [
+                            const Text('Appearance', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text('Choose Light or Dark mode', style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569), fontSize: 11)),
                           ],
                         ),
                       ),
@@ -301,7 +302,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text('Country', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                            Text('Sets currency and popular gas stations', style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
+                            Text('Sets currency and popular gas stations', style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569), fontSize: 11)),
                           ],
                         ),
                       ),
@@ -342,7 +343,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         padding: EdgeInsets.zero,
                         labelPadding: const EdgeInsets.symmetric(horizontal: 8),
                         label: Text(st, style: const TextStyle(fontSize: 11)),
-                        backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
+                        backgroundColor: AppTheme.elevatedSurfaceColor(context),
                       );
                     }).toList(),
                   ),
@@ -375,9 +376,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text('Units & Currency', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                            Text('Applies to all vehicles and records', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                          children: [
+                            const Text('Units & Currency', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text('Applies to all vehicles and records', style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569), fontSize: 11)),
                           ],
                         ),
                       ),
@@ -524,18 +525,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E88E5).withValues(alpha: 0.12),
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.auto_awesome, color: Color(0xFF1E88E5)),
+                        child: const Icon(Icons.auto_awesome, color: Color(0xFFF59E0B)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text('Auto-Log & Permissions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                            Text('Hardware automation & refuel detection', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                          children: [
+                            const Text('Auto-Log & Permissions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text('Hardware automation & refuel detection', style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569), fontSize: 11)),
                           ],
                         ),
                       ),
@@ -576,10 +577,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     secondary: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                        color: const Color(0xFF06B6D4).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.bluetooth_connected, color: Color(0xFF2563EB), size: 20),
+                      child: const Icon(Icons.bluetooth_connected, color: Color(0xFF06B6D4), size: 20),
                     ),
                     title: const Text('Car Bluetooth & OBD Auto-Sync', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                     subtitle: const Text('Reads fuel tank level & odometer from your car adapter automatically.', style: TextStyle(fontSize: 12)),
@@ -762,7 +763,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Center(
             child: Text(
               'Fuel Metrics • Version ${FuelAppState.appVersion}',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
 

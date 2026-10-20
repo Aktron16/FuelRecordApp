@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/fuel_app_state.dart';
 import '../services/obd_ble_session_manager.dart';
 import '../models/vehicle.dart';
+import '../theme/app_theme.dart';
 
 class ObdPairingScreen extends StatefulWidget {
   final FuelAppState appState;
@@ -214,19 +215,19 @@ class _ObdPairingScreenState extends State<ObdPairingScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E1E28) : Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+                  color: AppTheme.surfaceColor(context),
+                  borderRadius: BorderRadius.circular(AppRadii.lg),
+                  border: Border.all(color: AppTheme.borderColor(context)),
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E88E5).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppRadii.md),
                       ),
-                      child: const Icon(Icons.directions_car, color: Color(0xFF1E88E5), size: 24),
+                      child: const Icon(Icons.directions_car, color: AppColors.primary, size: 24),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -244,7 +245,8 @@ class _ObdPairingScreenState extends State<ObdPairingScreen> {
                                 : 'No OBD sensor bound yet',
                             style: TextStyle(
                               fontSize: 12,
-                              color: activeVeh?.boundObdDeviceId != null ? const Color(0xFF10B981) : Colors.grey,
+                              color: activeVeh?.boundObdDeviceId != null ? AppColors.success : AppTheme.textMutedColor(context),
+                              fontFeatures: const [FontFeature.tabularFigures()],
                             ),
                           ),
                         ],
@@ -288,14 +290,15 @@ class _ObdPairingScreenState extends State<ObdPairingScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E28) : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    color: AppTheme.surfaceColor(context),
+                    borderRadius: BorderRadius.circular(AppRadii.lg),
+                    border: Border.all(color: AppTheme.borderColor(context)),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
                       'No OBD-II devices detected. Plug your ELM327 adapter into your car OBD-II port and turn ignition ON.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: Colors.grey),
+                      style: TextStyle(fontSize: 13, color: AppTheme.textMutedColor(context)),
                     ),
                   ),
                 ),
@@ -312,12 +315,12 @@ class _ObdPairingScreenState extends State<ObdPairingScreen> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E1E28) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      color: AppTheme.surfaceColor(context),
+                      borderRadius: BorderRadius.circular(AppRadii.lg),
                       border: Border.all(
                         color: isVerified
-                            ? const Color(0xFF10B981)
-                            : (isSelected ? const Color(0xFF1E88E5) : Colors.grey.withValues(alpha: 0.18)),
+                            ? AppColors.success
+                            : (isSelected ? AppColors.primary : AppTheme.borderColor(context)),
                         width: isSelected ? 1.8 : 1.0,
                       ),
                     ),
@@ -417,10 +420,10 @@ class _ObdPairingScreenState extends State<ObdPairingScreen> {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.18)),
+                  border: Border.all(color: AppTheme.borderColor(context)),
                 ),
                 child: Material(
-                  color: isDark ? const Color(0xFF161620) : Colors.white,
+                  color: AppTheme.surfaceColor(context),
                   borderRadius: BorderRadius.circular(16),
                   child: ExpansionTile(
                     initiallyExpanded: _showDiagnosticLog,
@@ -431,7 +434,7 @@ class _ObdPairingScreenState extends State<ObdPairingScreen> {
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
-                        color: isDark ? const Color(0xFF101018) : const Color(0xFFF8F9FD),
+                        color: AppTheme.elevatedSurfaceColor(context),
                         child: StreamBuilder<String>(
                           stream: _sessionManager.logStream,
                           builder: (ctx, _) {

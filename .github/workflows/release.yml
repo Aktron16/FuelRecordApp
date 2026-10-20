@@ -123,85 +123,9 @@ jobs:
           path: dist/android/*
           retention-days: 7
 
-  build-ios:
-    name: Build iOS (IPA & Runner Bundle)
-    runs-on: macos-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Determine Project Directory & Tag
-        id: prep
-        run: |
-          if [ -f "fuel_records/pubspec.yaml" ]; then
-            echo "app_dir=fuel_records" >> $GITHUB_OUTPUT
-          elif [ -f "pubspec.yaml" ]; then
-            echo "app_dir=." >> $GITHUB_OUTPUT
-          else
-            echo "Error: pubspec.yaml not found!"
-            exit 1
-          fi
-
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.tag_name }}"
-          else
-            TAG="${GITHUB_REF_NAME}"
-          fi
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "Building for Tag: $TAG"
-
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Install Dependencies
-        working-directory: ${{ steps.prep.outputs.app_dir }}
-        run: flutter pub get
-
-      - name: Build iOS Application (No Code-Sign)
-        working-directory: ${{ steps.prep.outputs.app_dir }}
-        run: flutter build ios --release --no-codesign
-
-      - name: Package iOS IPA & Runner Archive
-        run: |
-          APP_DIR="${{ steps.prep.outputs.app_dir }}"
-          TAG="${{ steps.prep.outputs.tag }}"
-          ROOT_DIR="$(pwd)"
-          mkdir -p "$ROOT_DIR/dist/ios"
-
-          APP_BUNDLE="$APP_DIR/build/ios/iphoneos/Runner.app"
-
-          if [ -d "$APP_BUNDLE" ]; then
-            rm -rf Payload
-            mkdir -p Payload
-            ditto "$APP_BUNDLE" Payload/Runner.app
-            zip -r -y -9 "$ROOT_DIR/dist/ios/FuelMetrics-${TAG}-ios-unsigned.ipa" Payload
-            rm -rf Payload
-
-            (cd "$APP_DIR/build/ios/iphoneos" && zip -r -y -9 "$ROOT_DIR/dist/ios/FuelMetrics-${TAG}-ios-Runner.app.zip" Runner.app)
-            echo "Successfully packaged iOS release binaries with symlinks preserved."
-          else
-            echo "Error: Runner.app not found at $APP_BUNDLE"
-            exit 1
-          fi
-
-      - name: Upload iOS Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-release-artifacts
-          path: dist/ios/*
-          retention-days: 7
-
   create-release:
     name: Publish GitHub Release
-    needs: [build-android, build-ios]
+    needs: [build-android]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -224,12 +148,6 @@ jobs:
           name: android-release-artifacts
           path: release-assets
 
-      - name: Download iOS Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ios-release-artifacts
-          path: release-assets
-
       - name: List Release Assets
         run: |
           echo "Release Assets ready for publication:"
@@ -247,20 +165,17 @@ jobs:
           body: |
             ## 🚗 Fuel Metrics Release ${{ steps.meta.outputs.tag }}
 
-            Welcome to **Fuel Metrics**! This release contains pre-compiled binaries for **Android** and **iOS**.
+            Welcome to **Fuel Metrics**! This release contains pre-compiled binaries for **Android**.
 
             ### 📦 Release Assets
             - **`FuelMetrics-${{ steps.meta.outputs.tag }}-android.apk`**: Standalone Android APK ready for direct sideloading and installation on any Android phone (API 21+).
             - **`FuelMetrics-${{ steps.meta.outputs.tag }}-android.aab`**: Signed/release Android App Bundle for Google Play Console submission.
-            - **`FuelMetrics-${{ steps.meta.outputs.tag }}-ios-unsigned.ipa`**: Unsigned iOS application archive ready for sideloading via AltStore, Sideloadly, TrollStore, or re-signing with personal Apple ID.
-            - **`FuelMetrics-${{ steps.meta.outputs.tag }}-ios-Runner.app.zip`**: Packaged iOS Runner.app bundle for simulator / direct testing.
 
             ### ✨ What's New & Highlights in v1.2.1
             - **Decoupled Fuel Pricing from Location**: Location data is used strictly to identify the petrol pump name. Official website rates are sourced directly from [fuelpriceuae.com](https://fuelpriceuae.com) and [globalpetrolprices.com](https://www.globalpetrolprices.com).
             - **Interactive Settings Fuel Prices Card**: Displays live prices per Liter or Gallon directly below the Country selector, featuring active vehicle fuel grade highlighting (`"YOUR CAR"` badge).
             - **Vehicle Fuel Grade Cost Calculation**: Automatically calculates fuel expense on the exact fuel grade assigned to that vehicle (`vehicle.fuelType`).
-            - **Enhanced iOS & Android Privacy**: Added complete `Info.plist` usage descriptions for Camera, Photo Library, Location, Bluetooth, and Motion.
-            - **Preserved Dynamic Symlinks**: Fixed iOS IPA archive packaging with framework symlink preservation for seamless installation via AltStore, Sideloadly, and TrollStore.
+            - **Enhanced Privacy Descriptions**: Clear, non-technical plain English explanations for location data usage.
             - **Full Release Changelog**: Detailed revision history is tracked in [`Updates.md`](https://github.com/Aktron16/FuelRecordApp/blob/main/Updates.md).
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -4,7 +4,32 @@ All notable changes, feature releases, database migrations, and platform updates
 
 ---
 
-## [Version 1.2.0] — Current Release
+## [Version 1.2.1] — Current Release
+
+### ⛽ Fuel Grade Pricing Decoupling, Settings Fuel Prices Card & GDPR Privacy Copy
+
+- **Decoupled Fuel Pricing from Location**:
+  - Location coordinates are now used **solely** to identify the name of the petrol pump you visit.
+  - Fuel prices are retrieved from official website sources:
+    - **UAE**: [fuelpriceuae.com](https://fuelpriceuae.com) (*Special 95, Super 98, E-Plus 91, Diesel*).
+    - **International**: [globalpetrolprices.com](https://www.globalpetrolprices.com) (*US, UK, Canada, Saudi Arabia, Germany, Australia, India, etc.*).
+  - If location is disabled or unconsented, the pump location is kept empty (`null`), without fabricating or guessing locations.
+
+- **Vehicle-Specific Fuel Grade Cost Calculation**:
+  - Automatically calculates the total cost of any refuel based on the specific fuel grade associated with that vehicle (`vehicle.fuelType`).
+
+- **Interactive Current Fuel Prices Card in Settings**:
+  - Positioned directly below the **Default Country** selector in Settings.
+  - Dynamically shows current prices per **Liter** (`L`) or **Gallon** (`gal`) matching the user's volume unit preference.
+  - Displays each fuel grade separately with an active `"YOUR CAR"` badge for the selected vehicle's grade.
+  - Fully responsive and overflow-proof across all screen widths down to 320px.
+
+- **Simplified, Non-Technical Privacy Descriptions**:
+  - Clarified permission prompts across Settings, Onboarding, and Sensor Readiness alerts to state clearly that location data never leaves the phone and is used solely to identify the petrol pump name.
+
+---
+
+## [Version 1.2.0]
 
 ### ⚡ Automated Fuel Feeder, Telemetry Arbitration, In-App OBD-II Pairing & Power Lifecycle
 

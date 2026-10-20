@@ -1,4 +1,4 @@
-# Fuel Metrics (Version 1.2.0)
+# Fuel Metrics (Version 1.2.1)
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2.svg?logo=dart)](https://dart.dev)

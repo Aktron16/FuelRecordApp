@@ -8,6 +8,7 @@ import 'package:fuel_records/services/obd_ble_service.dart';
 import 'package:fuel_records/services/photo_exif_draft_service.dart';
 import 'package:fuel_records/services/motion_pit_stop_service.dart';
 import 'package:fuel_records/services/delayed_ecu_math_engine.dart';
+import 'package:fuel_records/services/station_and_price_resolver.dart';
 import 'package:fuel_records/services/fuel_app_state.dart';
 
 void main() {
@@ -295,6 +296,125 @@ void main() {
       expect(appState.hasCompletedDataConsent, isFalse);
 
       tempDir.deleteSync(recursive: true);
+    });
+
+    test('Station proximity and 90% full tank threshold rules', () {
+      // 1. Not near a fuel pump -> station is null (empty)
+      final noStation = StationAndPriceResolver.resolveStationName(
+        countryName: 'United Arab Emirates',
+        historyRecords: [],
+        isNearFuelPump: false,
+      );
+      expect(noStation, isNull);
+
+      // 2. UAE pricing source matches fuelpriceuae.com
+      final uaePrice = StationAndPriceResolver.resolvePricePerLitre(
+        stationName: null,
+        vehicle: testVehicle.copyWith(fuelType: 'Special 95'),
+        countryName: 'United Arab Emirates',
+        historyRecords: [],
+      );
+      expect(uaePrice.priceSourceUrl, equals('https://fuelpriceuae.com'));
+      expect(uaePrice.pricePerLitre, equals(2.77));
+
+      // 3. Other country pricing source matches globalpetrolprices.com
+      final usPrice = StationAndPriceResolver.resolvePricePerLitre(
+        stationName: null,
+        vehicle: testVehicle.copyWith(fuelType: 'Regular (87)'),
+        countryName: 'United States',
+        historyRecords: [],
+      );
+      expect(usPrice.priceSourceUrl, equals('https://www.globalpetrolprices.com'));
+      expect(usPrice.pricePerLitre, equals(0.95));
+
+      // 4. US vehicle in gallons scales price per gallon properly
+      final usVehicleGallons = testVehicle.copyWith(unitVolume: 'gal', fuelType: 'Regular (87)');
+      final pricePerGallon = StationAndPriceResolver.resolvePriceForVehicle(usVehicleGallons, 'United States');
+      expect(pricePerGallon, closeTo(0.95 * 3.78541, 0.05));
+
+      // 5. 90% threshold for full tank:
+      // For a 50L tank: 12.5L (25%) is not full tank, 46L (92%) is full tank
+      final capacityLiters = testVehicle.tankCapacityInUnit;
+      expect((12.5 / capacityLiters) >= 0.90, isFalse);
+      expect((46.0 / capacityLiters) >= 0.90, isTrue);
+    });
+
+    test('Fuel Grade Pricing and Location Decoupling', () {
+      // 1. getFuelGradePrices returns all UAE fuel grades from fuelpriceuae.com
+      final uaeGrades = StationAndPriceResolver.getFuelGradePrices(countryName: 'United Arab Emirates');
+      expect(uaeGrades.length, equals(4));
+      expect(uaeGrades.map((g) => g.gradeName), containsAll(['Special 95', 'Super 98', 'E-Plus 91', 'Diesel']));
+      final super98 = uaeGrades.firstWhere((g) => g.gradeName == 'Super 98');
+      expect(super98.pricePerLitre, equals(2.88));
+      expect(super98.pricePerGallon, equals(10.90));
+
+      // 2. Pricing strictly resolves to vehicle's specific fuel grade
+      final carSuper98 = testVehicle.copyWith(fuelType: 'Super 98');
+      final resSuper98 = StationAndPriceResolver.resolvePricePerLitre(
+        vehicle: carSuper98,
+        countryName: 'United Arab Emirates',
+        historyRecords: [],
+      );
+      expect(resSuper98.pricePerLitre, equals(2.88));
+
+      final carDiesel = testVehicle.copyWith(fuelType: 'Diesel');
+      final resDiesel = StationAndPriceResolver.resolvePricePerLitre(
+        vehicle: carDiesel,
+        countryName: 'United Arab Emirates',
+        historyRecords: [],
+      );
+      expect(resDiesel.pricePerLitre, equals(2.85));
+
+      // 3. Location coords are completely decoupled from price calculation
+      final withCoords = StationAndPriceResolver.resolvePricePerLitre(
+        vehicle: carSuper98,
+        countryName: 'United Arab Emirates',
+        historyRecords: [],
+        latitude: 25.2048,
+        longitude: 55.2708,
+      );
+      final withoutCoords = StationAndPriceResolver.resolvePricePerLitre(
+        vehicle: carSuper98,
+        countryName: 'United Arab Emirates',
+        historyRecords: [],
+        latitude: null,
+        longitude: null,
+      );
+      expect(withCoords.pricePerLitre, equals(withoutCoords.pricePerLitre));
+      expect(withCoords.priceSourceUrl, equals(withoutCoords.priceSourceUrl));
+
+      // 4. Total cost calculates based on that specific car's fuel grade
+      final costSuper98 = StationAndPriceResolver.calculateTotalCost(
+        litersAdded: 40.0,
+        pricePerLitre: resSuper98.pricePerLitre,
+      );
+      expect(costSuper98, equals(double.parse((40.0 * 2.88).toStringAsFixed(2))));
+
+      final costDiesel = StationAndPriceResolver.calculateTotalCost(
+        litersAdded: 40.0,
+        pricePerLitre: resDiesel.pricePerLitre,
+      );
+      expect(costDiesel, equals(double.parse((40.0 * 2.85).toStringAsFixed(2))));
+
+      // 5. If location disabled or not near pump, station name is null
+      final disabledLocationStation = StationAndPriceResolver.resolveStationName(
+        latitude: null,
+        longitude: null,
+        countryName: 'United Arab Emirates',
+        historyRecords: [],
+      );
+      expect(disabledLocationStation, isNull);
+
+      // 6. PreFlightSensorStatus alert messages accurately describe location purpose
+      final orchestrator = AutoRefuelOrchestrator();
+      orchestrator.setBluetoothHardwareState(true);
+      orchestrator.setLocationHardwareState(false);
+      final locAlert = orchestrator.checkPreFlightReadiness(
+        hasBluetoothConsent: true,
+        hasLocationConsent: true,
+      );
+      expect(locAlert.alertMessage, contains('identify the petrol pump name'));
+      expect(locAlert.alertMessage.contains('price'), isFalse);
     });
   });
 }

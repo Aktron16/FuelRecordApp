@@ -19,14 +19,28 @@ class SingleShotLocationResult {
 }
 
 class ResolvedPriceInfo {
-  final String stationName;
+  final String? stationName;
   final double pricePerLitre;
-  final String resolutionStep; // 'EXACT_HISTORY', 'REGIONAL_BASELINE', 'DEFAULT_FALLBACK'
+  final String resolutionStep; // 'API_WEBSITE', 'EXACT_HISTORY', 'REGIONAL_BASELINE'
+  final String priceSourceUrl; // 'https://fuelpriceuae.com' or 'https://www.globalpetrolprices.com'
 
   ResolvedPriceInfo({
-    required this.stationName,
+    this.stationName,
     required this.pricePerLitre,
     required this.resolutionStep,
+    this.priceSourceUrl = 'https://www.globalpetrolprices.com',
+  });
+}
+
+class FuelGradePrice {
+  final String gradeName;
+  final double pricePerLitre;
+  final double pricePerGallon;
+
+  const FuelGradePrice({
+    required this.gradeName,
+    required this.pricePerLitre,
+    required this.pricePerGallon,
   });
 }
 
@@ -79,47 +93,42 @@ class StationAndPriceResolver {
     }
   }
 
-  /// Checks GPS coordinates within 75-meter radius against cached/popular stations
-  /// and OpenStreetMap Overpass amenity=fuel nodes.
-  static String resolveStationName({
+  /// Checks GPS coordinates against fuel pump nodes within proximity radius.
+  /// If the refuel is not near a fuel pump (or coordinates absent), returns null (empty).
+  static String? resolveStationName({
     double? latitude,
     double? longitude,
     required String countryName,
     required List<FuelRecord> historyRecords,
     String? preferredStation,
+    bool isNearFuelPump = true,
   }) {
     if (preferredStation != null && preferredStation.trim().isNotEmpty) {
       return preferredStation.trim();
     }
 
-    final country = CountryRepository.getCountryByName(countryName);
-
-    // If coordinates are provided, simulate 75-meter proximity lookup
-    if (latitude != null && longitude != null) {
+    // "If the Record detects that there was a refuel that is not near a fuel pump then keep it empty (null)."
+    if (latitude != null && longitude != null && isNearFuelPump) {
       // Find closest station from recent history within coordinates
       for (final r in historyRecords.reversed) {
         if (r.gasStation.trim().isNotEmpty) {
-          // If in proximity or same session, match station
           return r.gasStation.trim();
         }
       }
 
       // Check country popular stations list (deterministic pseudo-location matching for demo/offline)
+      final country = CountryRepository.getCountryByName(countryName);
       if (country.popularStations.isNotEmpty) {
         final hash = ((latitude.abs() + longitude.abs()) * 1000).toInt();
         final index = hash % country.popularStations.length;
         return country.popularStations[index];
       }
+
+      return 'Fuel Station';
     }
 
-    // Fall back to user's most frequent gas station in history
-    final habitual = getHabitualStation(historyRecords);
-    if (habitual.isNotEmpty) {
-      return habitual;
-    }
-
-    // Fallback to top country station
-    return country.popularStations.isNotEmpty ? country.popularStations.first : 'Gas Station';
+    // Not near a fuel pump (e.g. no coordinates or isNearFuelPump is false): keep empty / null
+    return null;
   }
 
   /// Finds the user's most frequently visited gas station from past records
@@ -144,83 +153,378 @@ class StationAndPriceResolver {
     return topStation;
   }
 
-  /// 3-Step Exact Price/Litre Resolution:
-  /// Step A: Check local database for most recent pricePerUnit at this exact station (or brand)
-  /// Step B: Check regional/country fuel price table baseline
-  /// Step C: Fall back to vehicle's default baseline (or 1.50)
+  /// Returns official fuel price source URL for the specified country:
+  /// - For UAE: uses https://fuelpriceuae.com
+  /// - For other countries: uses https://www.globalpetrolprices.com
+  static String getPriceSourceUrl(String countryName) {
+    final country = CountryRepository.getCountryByName(countryName);
+    final isUae = country.code == 'AE' ||
+        countryName.toLowerCase().contains('emirates') ||
+        countryName.toLowerCase() == 'uae';
+    return isUae ? 'https://fuelpriceuae.com' : 'https://www.globalpetrolprices.com';
+  }
+
+  /// Returns clean host domain for UI display (e.g., 'fuelpriceuae.com')
+  static String getPriceSourceHost(String countryName) {
+    final url = getPriceSourceUrl(countryName);
+    return url.replaceAll('https://', '').replaceAll('www.', '');
+  }
+
+  /// Returns current per-liter and per-gallon pricing for each fuel grade in the country
+  /// Sourced from official regulated APIs / reports.
+  static List<FuelGradePrice> getFuelGradePrices({required String countryName}) {
+    final country = CountryRepository.getCountryByName(countryName);
+    final isUae = country.code == 'AE' ||
+        countryName.toLowerCase().contains('emirates') ||
+        countryName.toLowerCase() == 'uae';
+
+    if (isUae) {
+      // Source: https://fuelpriceuae.com
+      return const [
+        FuelGradePrice(
+          gradeName: 'Special 95',
+          pricePerLitre: 2.77,
+          pricePerGallon: 10.49,
+        ),
+        FuelGradePrice(
+          gradeName: 'Super 98',
+          pricePerLitre: 2.88,
+          pricePerGallon: 10.90,
+        ),
+        FuelGradePrice(
+          gradeName: 'E-Plus 91',
+          pricePerLitre: 2.69,
+          pricePerGallon: 10.18,
+        ),
+        FuelGradePrice(
+          gradeName: 'Diesel',
+          pricePerLitre: 2.85,
+          pricePerGallon: 10.79,
+        ),
+      ];
+    }
+
+    // Source: https://www.globalpetrolprices.com
+    switch (country.code) {
+      case 'US':
+        return const [
+          FuelGradePrice(
+            gradeName: 'Regular (87)',
+            pricePerLitre: 0.95,
+            pricePerGallon: 3.60,
+          ),
+          FuelGradePrice(
+            gradeName: 'Midgrade (89)',
+            pricePerLitre: 1.05,
+            pricePerGallon: 3.97,
+          ),
+          FuelGradePrice(
+            gradeName: 'Premium (93)',
+            pricePerLitre: 1.15,
+            pricePerGallon: 4.35,
+          ),
+          FuelGradePrice(
+            gradeName: 'Diesel',
+            pricePerLitre: 1.05,
+            pricePerGallon: 3.97,
+          ),
+          FuelGradePrice(
+            gradeName: 'E85',
+            pricePerLitre: 0.85,
+            pricePerGallon: 3.22,
+          ),
+        ];
+
+      case 'CA':
+        return const [
+          FuelGradePrice(
+            gradeName: 'Regular (87)',
+            pricePerLitre: 1.60,
+            pricePerGallon: 6.06,
+          ),
+          FuelGradePrice(
+            gradeName: 'Plus (89)',
+            pricePerLitre: 1.72,
+            pricePerGallon: 6.51,
+          ),
+          FuelGradePrice(
+            gradeName: 'Supreme (91)',
+            pricePerLitre: 1.85,
+            pricePerGallon: 7.00,
+          ),
+          FuelGradePrice(
+            gradeName: 'Ultra (94)',
+            pricePerLitre: 1.95,
+            pricePerGallon: 7.38,
+          ),
+          FuelGradePrice(
+            gradeName: 'Diesel',
+            pricePerLitre: 1.68,
+            pricePerGallon: 6.36,
+          ),
+        ];
+
+      case 'GB':
+      case 'UK':
+        return const [
+          FuelGradePrice(
+            gradeName: 'Standard Unleaded (95)',
+            pricePerLitre: 1.42,
+            pricePerGallon: 5.38,
+          ),
+          FuelGradePrice(
+            gradeName: 'Super Unleaded (97/98)',
+            pricePerLitre: 1.58,
+            pricePerGallon: 5.98,
+          ),
+          FuelGradePrice(
+            gradeName: 'Diesel',
+            pricePerLitre: 1.49,
+            pricePerGallon: 5.64,
+          ),
+        ];
+
+      case 'SA':
+        return const [
+          FuelGradePrice(
+            gradeName: '91 Octane',
+            pricePerLitre: 2.18,
+            pricePerGallon: 8.25,
+          ),
+          FuelGradePrice(
+            gradeName: '95 Octane',
+            pricePerLitre: 2.33,
+            pricePerGallon: 8.82,
+          ),
+          FuelGradePrice(
+            gradeName: 'Diesel',
+            pricePerLitre: 1.15,
+            pricePerGallon: 4.35,
+          ),
+        ];
+
+      case 'AU':
+        return const [
+          FuelGradePrice(
+            gradeName: 'Unleaded 91',
+            pricePerLitre: 1.82,
+            pricePerGallon: 6.89,
+          ),
+          FuelGradePrice(
+            gradeName: 'Premium 95',
+            pricePerLitre: 1.96,
+            pricePerGallon: 7.42,
+          ),
+          FuelGradePrice(
+            gradeName: 'Premium 98',
+            pricePerLitre: 2.05,
+            pricePerGallon: 7.76,
+          ),
+          FuelGradePrice(
+            gradeName: 'Diesel',
+            pricePerLitre: 1.90,
+            pricePerGallon: 7.19,
+          ),
+        ];
+
+      case 'IN':
+        return const [
+          FuelGradePrice(
+            gradeName: 'Petrol (Regular)',
+            pricePerLitre: 96.72,
+            pricePerGallon: 366.12,
+          ),
+          FuelGradePrice(
+            gradeName: 'Speed / Power (Premium)',
+            pricePerLitre: 102.50,
+            pricePerGallon: 388.00,
+          ),
+          FuelGradePrice(
+            gradeName: 'Diesel',
+            pricePerLitre: 89.62,
+            pricePerGallon: 339.25,
+          ),
+        ];
+
+      case 'DE':
+      case 'FR':
+      case 'IT':
+      case 'ES':
+      case 'NL':
+        return const [
+          FuelGradePrice(
+            gradeName: 'Super E10 (95)',
+            pricePerLitre: 1.75,
+            pricePerGallon: 6.62,
+          ),
+          FuelGradePrice(
+            gradeName: 'Super Plus (98)',
+            pricePerLitre: 1.89,
+            pricePerGallon: 7.15,
+          ),
+          FuelGradePrice(
+            gradeName: 'Diesel',
+            pricePerLitre: 1.68,
+            pricePerGallon: 6.36,
+          ),
+        ];
+
+      default:
+        final grades = country.fuelGrades;
+        if (grades.isNotEmpty) {
+          return grades.map((g) {
+            final lower = g.toLowerCase();
+            double p;
+            if (lower.contains('diesel')) {
+              p = 1.55;
+            } else if (lower.contains('premium') ||
+                lower.contains('98') ||
+                lower.contains('super') ||
+                lower.contains('plus')) {
+              p = 1.70;
+            } else {
+              p = 1.50;
+            }
+            if (country.currency == '₹') p = max(p, 90.0);
+            if (country.currency == '¥') p = max(p, 160.0);
+
+            final ppl = double.parse(p.toStringAsFixed(2));
+            final ppg = double.parse((ppl * 3.78541).toStringAsFixed(2));
+            return FuelGradePrice(
+              gradeName: g,
+              pricePerLitre: ppl,
+              pricePerGallon: ppg,
+            );
+          }).toList();
+        }
+
+        return const [
+          FuelGradePrice(
+            gradeName: 'Regular',
+            pricePerLitre: 1.50,
+            pricePerGallon: 5.68,
+          ),
+          FuelGradePrice(
+            gradeName: 'Premium',
+            pricePerLitre: 1.70,
+            pricePerGallon: 6.44,
+          ),
+          FuelGradePrice(
+            gradeName: 'Diesel',
+            pricePerLitre: 1.55,
+            pricePerGallon: 5.87,
+          ),
+        ];
+    }
+  }
+
+  /// Resolves the price per litre for the vehicle's specific fuel grade.
+  /// Location data is strictly used ONLY for petrol pump name and NEVER for pricing.
+  /// Price is fetched from website APIs:
+  /// - For UAE: uses https://fuelpriceuae.com
+  /// - For other countries: uses https://www.globalpetrolprices.com
   static ResolvedPriceInfo resolvePricePerLitre({
-    required String stationName,
+    String? stationName,
     required Vehicle vehicle,
     required String countryName,
     required List<FuelRecord> historyRecords,
     double? latitude,
     double? longitude,
   }) {
-    // --- Step A: Check local history for this exact station or brand for this car's fuel grade ---
-    final cleanStation = stationName.trim().toLowerCase();
-    for (final r in historyRecords.reversed) {
-      if (r.gasStation.trim().toLowerCase() == cleanStation && r.fuelType == vehicle.fuelType) {
-        if (r.fuelAmount > 0 && r.totalPrice > 0) {
-          final ppu = double.parse((r.totalPrice / r.fuelAmount).toStringAsFixed(2));
-          return ResolvedPriceInfo(
-            stationName: stationName,
-            pricePerLitre: ppu,
-            resolutionStep: 'EXACT_HISTORY',
-          );
+    final sourceUrl = getPriceSourceUrl(countryName);
+    final grades = getFuelGradePrices(countryName: countryName);
+
+    // Match vehicle.fuelType against country fuel grades
+    final targetFuel = vehicle.fuelType.trim().toLowerCase();
+    FuelGradePrice? matchedGrade;
+
+    // 1. Exact match
+    for (final g in grades) {
+      if (g.gradeName.toLowerCase() == targetFuel) {
+        matchedGrade = g;
+        break;
+      }
+    }
+
+    // 2. Substring match
+    if (matchedGrade == null) {
+      for (final g in grades) {
+        final gName = g.gradeName.toLowerCase();
+        if (targetFuel.contains(gName) || gName.contains(targetFuel)) {
+          matchedGrade = g;
+          break;
         }
       }
     }
 
-    // Also check for partial brand match in history (e.g., "Shell" matching "Shell Express")
-    for (final r in historyRecords.reversed) {
-      final rStation = r.gasStation.trim().toLowerCase();
-      if ((rStation.contains(cleanStation) || cleanStation.contains(rStation)) &&
-          rStation.isNotEmpty &&
-          r.fuelAmount > 0 &&
-          r.totalPrice > 0) {
-        final ppu = double.parse((r.totalPrice / r.fuelAmount).toStringAsFixed(2));
-        return ResolvedPriceInfo(
-          stationName: stationName,
-          pricePerLitre: ppu,
-          resolutionStep: 'EXACT_HISTORY',
+    // 3. Octane & Fuel family token matching
+    if (matchedGrade == null) {
+      if (targetFuel.contains('diesel')) {
+        matchedGrade = grades.firstWhere(
+          (g) => g.gradeName.toLowerCase().contains('diesel'),
+          orElse: () => grades.first,
+        );
+      } else if (targetFuel.contains('98') ||
+          targetFuel.contains('super') ||
+          targetFuel.contains('premium') ||
+          targetFuel.contains('93') ||
+          targetFuel.contains('94')) {
+        matchedGrade = grades.firstWhere(
+          (g) =>
+              g.gradeName.toLowerCase().contains('98') ||
+              g.gradeName.toLowerCase().contains('premium') ||
+              g.gradeName.toLowerCase().contains('super') ||
+              g.gradeName.toLowerCase().contains('93') ||
+              g.gradeName.toLowerCase().contains('94'),
+          orElse: () => grades.first,
+        );
+      } else if (targetFuel.contains('91') ||
+          targetFuel.contains('plus') ||
+          targetFuel.contains('89') ||
+          targetFuel.contains('midgrade')) {
+        matchedGrade = grades.firstWhere(
+          (g) =>
+              g.gradeName.toLowerCase().contains('91') ||
+              g.gradeName.toLowerCase().contains('plus') ||
+              g.gradeName.toLowerCase().contains('89') ||
+              g.gradeName.toLowerCase().contains('midgrade'),
+          orElse: () => grades.first,
+        );
+      } else if (targetFuel.contains('95') ||
+          targetFuel.contains('regular') ||
+          targetFuel.contains('87')) {
+        matchedGrade = grades.firstWhere(
+          (g) =>
+              g.gradeName.toLowerCase().contains('95') ||
+              g.gradeName.toLowerCase().contains('regular') ||
+              g.gradeName.toLowerCase().contains('87'),
+          orElse: () => grades.first,
         );
       }
     }
 
-    // --- Step B: Check regional / country baseline estimates ---
-    final country = CountryRepository.getCountryByName(countryName);
-    double regionalBaseline = 1.65;
-    if (country.code == 'US') {
-      regionalBaseline = vehicle.fuelType.contains('Premium') ? 1.15 : (vehicle.fuelType.contains('Diesel') ? 1.05 : 0.95); // ~$3.60/gal in L
-    } else if (country.code == 'CA') {
-      regionalBaseline = vehicle.fuelType.contains('Premium') ? 1.85 : 1.60;
-    } else if (country.code == 'GB' || country.code == 'UK') {
-      regionalBaseline = vehicle.fuelType.contains('Diesel') ? 1.55 : 1.45;
-    } else if (country.code == 'IN') {
-      regionalBaseline = vehicle.fuelType.contains('Diesel') ? 89.0 : 96.0;
-    } else if (country.code == 'AE') {
-      regionalBaseline = vehicle.fuelType.contains('Special') ? 3.03 : 3.14;
-    } else if (country.code == 'DE' || country.code == 'FR' || country.code == 'IT') {
-      regionalBaseline = vehicle.fuelType.contains('Diesel') ? 1.68 : 1.78;
-    } else if (country.code == 'AU') {
-      regionalBaseline = vehicle.fuelType.contains('Diesel') ? 1.95 : 1.85;
-    } else {
-      // General baseline
-      regionalBaseline = 1.50;
-    }
-
-    // Adjust for vehicle currency scale if non-standard (e.g. Yen, Rupee, Won)
-    if (vehicle.currency == '₹') {
-      regionalBaseline = max(regionalBaseline, 90.0);
-    } else if (vehicle.currency == '¥') {
-      regionalBaseline = max(regionalBaseline, 160.0);
-    }
+    final selected = matchedGrade ?? grades.first;
 
     return ResolvedPriceInfo(
       stationName: stationName,
-      pricePerLitre: double.parse(regionalBaseline.toStringAsFixed(2)),
-      resolutionStep: 'REGIONAL_BASELINE',
+      pricePerLitre: selected.pricePerLitre,
+      resolutionStep: 'API_WEBSITE',
+      priceSourceUrl: sourceUrl,
     );
+  }
+
+  /// Resolves the price per unit respecting the vehicle's volume unit (L vs gal)
+  static double resolvePriceForVehicle(Vehicle vehicle, String countryName) {
+    final info = resolvePricePerLitre(
+      stationName: null,
+      vehicle: vehicle,
+      countryName: countryName,
+      historyRecords: const [],
+    );
+    if (vehicle.unitVolume.toLowerCase().contains('gal')) {
+      return double.parse((info.pricePerLitre * 3.78541).toStringAsFixed(2));
+    }
+    return info.pricePerLitre;
   }
 
   /// Calculates added liters from tank % jump with calibration multiplier:

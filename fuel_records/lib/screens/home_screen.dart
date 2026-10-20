@@ -390,7 +390,7 @@ class HomeScreen extends StatelessWidget {
                                       if (vehicle.tankCapacityMilliliters > 0) ...[
                                         const SizedBox(width: 10),
                                         Text(
-                                          '• ${(vehicle.tankCapacityMilliliters / 1000.0).toStringAsFixed(0)} L Tank',
+                                          '• ${vehicle.tankCapacityInUnit.toStringAsFixed(0)} ${vehicle.unitVolume} Tank',
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: AppTheme.textSecondaryColor(context),
@@ -1124,7 +1124,7 @@ class HomeScreen extends StatelessWidget {
                     Icon(Icons.auto_awesome, size: 12, color: tierColor),
                     const SizedBox(width: 4),
                     Text(
-                      'TIER ${pending.detectionTier} AUTO-DETECTED',
+                      'AUTO-DETECTED REFUEL',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -1161,12 +1161,14 @@ class HomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      pending.detectedStationName.isNotEmpty ? pending.detectedStationName : 'Gas Station',
+                      (pending.detectedStationName != null && pending.detectedStationName!.trim().isNotEmpty)
+                          ? pending.detectedStationName!
+                          : 'Fuel Refill',
                       style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${pending.estimatedLiters.toStringAsFixed(2)} L @ ${vehicle.currency}${pending.resolvedPricePerLitre.toStringAsFixed(2)}/L • ${pending.estimatedOdometer.toStringAsFixed(0)} ${vehicle.unitDistance}',
+                      '${pending.estimatedLiters.toStringAsFixed(2)} ${vehicle.unitVolume} @ ${vehicle.currency}${pending.resolvedPricePerLitre.toStringAsFixed(2)}/${vehicle.unitVolume} • ${pending.estimatedOdometer.toStringAsFixed(0)} ${vehicle.unitDistance}',
                       style: TextStyle(fontSize: 12, color: AppTheme.textSecondaryColor(context)),
                     ),
                   ],

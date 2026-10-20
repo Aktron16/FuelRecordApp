@@ -141,6 +141,7 @@ class PhotoExifDraftService {
       detectionTier: 3,
       status: finalLiters > 0 ? 'AWAITING_USER_VERIFY' : 'DRAFT_TIMESTAMP', // Awaiting subsequent OBD reconnection if 0
       rawObdLiters: finalLiters > 0 ? finalLiters : null,
+      isFullTank: finalLiters >= (vehicle.tankCapacityLiters * 0.90),
     );
   }
 

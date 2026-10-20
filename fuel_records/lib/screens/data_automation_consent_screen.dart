@@ -191,8 +191,8 @@ class _DataAutomationConsentScreenState extends State<DataAutomationConsentScree
                       _buildToggleTile(
                         icon: Icons.local_gas_station_outlined,
                         iconColor: AppColors.primary, // Tachometer Amber
-                        title: 'Gas Station & Local Price Finder',
-                        description: 'Locates nearby pump brands and resolves local per-liter fuel pricing at fill-up time.',
+                        title: 'Gas Station Name Finder',
+                        description: 'Used only to identify the name of the petrol pump you visit. Your location is never used for pricing or tracking, and never leaves your phone.',
                         value: _locPrice,
                         onChanged: (val) => setState(() => _locPrice = val),
                         isDark: isDark,

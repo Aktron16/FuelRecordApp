@@ -4,6 +4,7 @@ import '../services/fuel_app_state.dart';
 import '../services/country_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_logo.dart';
+import '../services/station_and_price_resolver.dart';
 import 'auto_refuel_simulator_sheet.dart';
 import 'obd_pairing_screen.dart';
 
@@ -77,9 +78,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             'We use Bluetooth only to read your car\'s fuel tank level and mileage from your car adapter so you don\'t have to type them in. If you turn this off, the app won\'t be able to read your car\'s fuel level automatically.';
         break;
       case 'location':
-        title = 'Turn off Location Finder?';
+        title = 'Turn off Gas Station Name Finder?';
         warningMessage =
-            'We check your location only at the moment you refuel to find the name of the gas station you are at and look up the fuel price per liter in that area. If you turn this off, the app will guess the price using your past fill-ups instead.';
+            'We check your location only at the moment you refuel to identify the name of the petrol pump you are at. Your location is never used for pricing or tracking, and never leaves your device. If you turn this off, petrol pump names will stay empty.';
         break;
       case 'motion':
         title = 'Turn off Stop Detection?';
@@ -354,6 +355,138 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 16),
 
+          // 2b. Current Fuel Prices Card (Decoupled from Location; sourced from official website APIs)
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD97706).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.local_gas_station_rounded, color: Color(0xFFD97706), size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Current Fuel Prices',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Prices per ${_volumeUnit == 'gal' ? 'Gallon' : 'Liter'} (${countryInfo.currency}) • ${StationAndPriceResolver.getPriceSourceHost(_selectedCountry)}',
+                              style: TextStyle(
+                                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                                fontSize: 11,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final gradePrices = StationAndPriceResolver.getFuelGradePrices(countryName: _selectedCountry);
+                      final isGallons = _volumeUnit == 'gal';
+                      final activeVehicleGrade = widget.appState.activeVehicle?.fuelType.toLowerCase().trim() ?? '';
+                      final isNarrow = constraints.maxWidth < 340;
+
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: gradePrices.map((grade) {
+                          final isCarGrade = activeVehicleGrade.isNotEmpty &&
+                              (grade.gradeName.toLowerCase() == activeVehicleGrade ||
+                                  activeVehicleGrade.contains(grade.gradeName.toLowerCase()) ||
+                                  grade.gradeName.toLowerCase().contains(activeVehicleGrade));
+                          final priceDisplay = isGallons
+                              ? '${countryInfo.currency}${grade.pricePerGallon.toStringAsFixed(2)} / gal'
+                              : '${countryInfo.currency}${grade.pricePerLitre.toStringAsFixed(2)} / L';
+
+                          return Container(
+                            width: isNarrow ? constraints.maxWidth : (constraints.maxWidth - 8) / 2,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isCarGrade
+                                  ? const Color(0xFFD97706).withValues(alpha: 0.10)
+                                  : AppTheme.elevatedSurfaceColor(context),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isCarGrade
+                                    ? const Color(0xFFD97706).withValues(alpha: 0.45)
+                                    : AppTheme.borderSubtleColor(context),
+                                width: isCarGrade ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        grade.gradeName,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: isCarGrade ? FontWeight.bold : FontWeight.w600,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (isCarGrade)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFD97706),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          'YOUR CAR',
+                                          style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  priceDisplay,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: isCarGrade
+                                        ? const Color(0xFFD97706)
+                                        : (isDark ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           // 3. Centralized Units & Currency
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -600,8 +733,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       child: const Icon(Icons.location_on_outlined, color: Color(0xFFEA580C), size: 20),
                     ),
-                    title: const Text('Gas Station & Local Price Finder', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    subtitle: const Text('Finds station name and local per-liter fuel price at refuel time.', style: TextStyle(fontSize: 12)),
+                    title: const Text('Gas Station Name Finder', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Used only to identify the name of the petrol pump you visit. Your location is never used for pricing or tracking, and never leaves your device.', style: TextStyle(fontSize: 12)),
                     value: _locationStationPriceFinder,
                     onChanged: (val) => _handleAutomationToggle('location', val),
                   ),

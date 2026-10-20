@@ -29,11 +29,11 @@ class PreFlightSensorStatus {
 
   String get alertMessage {
     if (!isBluetoothOn && !isLocationOn) {
-      return 'Turn on Bluetooth & Location so FuelRecordApp can automatically detect your gas station, local price, and fuel volume at the pump.';
+      return 'Turn on Bluetooth & Location so FuelRecordApp can automatically detect your petrol pump name and fuel volume at the pump.';
     } else if (!isBluetoothOn) {
       return 'Turn on Bluetooth so FuelRecordApp can read your car\'s fuel level and odometer automatically.';
     } else {
-      return 'Turn on Location so FuelRecordApp can identify your gas station and local fuel prices at the pump.';
+      return 'Turn on Location so FuelRecordApp can identify the petrol pump name at the pump.';
     }
   }
 }
@@ -146,6 +146,7 @@ class AutoRefuelOrchestrator {
       detectionTier: 1,
       status: 'AWAITING_USER_VERIFY',
       rawObdLiters: double.parse(rawLiters.toStringAsFixed(2)),
+      isFullTank: currentFuelPercent >= 90.0,
     );
   }
 
@@ -211,6 +212,7 @@ class AutoRefuelOrchestrator {
       detectionTier: 2,
       status: 'AWAITING_USER_VERIFY',
       rawObdLiters: double.parse(rawLiters.toStringAsFixed(2)),
+      isFullTank: snapshot.fuelPercent >= 90.0,
     );
   }
 
@@ -268,6 +270,7 @@ class AutoRefuelOrchestrator {
       detectionTier: tierUsed,
       status: 'AWAITING_USER_VERIFY',
       rawObdLiters: result.rawObdLiters,
+      isFullTank: currentFuelPercent >= 90.0,
     );
   }
 }

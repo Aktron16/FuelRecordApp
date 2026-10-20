@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/vehicle_artwork.dart';
 import '../utils/app_date_format.dart';
 import '../services/fuel_app_state.dart';
+import '../services/station_and_price_resolver.dart';
 import 'import_preview_screen.dart';
 
 class AddEditRecordScreen extends StatefulWidget {
@@ -113,6 +114,9 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
     final odo = double.parse(_odometerController.text.trim());
     final fuel = double.parse(_fuelAmountController.text.trim());
     final price = double.parse(_totalPriceController.text.trim());
+    final isFull = _isFullTank ||
+        (widget.vehicle.tankCapacityInUnit > 0 &&
+            fuel >= (widget.vehicle.tankCapacityInUnit * 0.90));
 
     final record = FuelRecord(
       id: id,
@@ -121,7 +125,7 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
       odometer: odo,
       fuelAmount: fuel,
       totalPrice: price,
-      isFullTank: _isFullTank,
+      isFullTank: isFull,
       fuelType: widget.recordToEdit?.fuelType ?? widget.vehicle.fuelType,
       gasStation: _gasStationController.text.trim(),
       notes: _notesController.text.trim(),
@@ -129,6 +133,58 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
 
     Navigator.of(context).pop();
     widget.onSave(record);
+  }
+
+  void _simulate25PercentRefuelSignal() {
+    final v = widget.vehicle;
+    final country = widget.appState?.selectedCountry ?? 'United Arab Emirates';
+
+    // 1. Calculate 25% fillup based on vehicle's tank capacity
+    final capacityInUnit = v.tankCapacityInUnit;
+    final fuelAmount = double.parse((capacityInUnit * 0.25).toStringAsFixed(2));
+
+    // 2. Odometer calculation (+120km/mi from previous or last known)
+    final lastOdo = widget.previousRecord?.odometer ?? v.lastKnownOdometer ?? (v.initialOdometer ?? 15000.0);
+    final newOdo = double.parse((lastOdo + 120.0).toStringAsFixed(1));
+
+    // 3. Station name: Keep empty (null) since not near a fuel pump
+    const stationName = '';
+
+    // 4. Local price: UAE (fuelpriceuae.com) or other countries (globalpetrolprices.com)
+    final pricePerUnit = StationAndPriceResolver.resolvePriceForVehicle(v, country);
+    final totalPrice = double.parse((fuelAmount * pricePerUnit).toStringAsFixed(2));
+
+    // 5. Full tank check: only > 90% counts as full tank (25% is false)
+    final isFull = fuelAmount >= (capacityInUnit * 0.90);
+
+    // 6. Record data at this instance
+    final record = FuelRecord(
+      id: 'rec_${DateTime.now().millisecondsSinceEpoch}',
+      vehicleId: v.id,
+      dateTime: DateTime.now(),
+      odometer: newOdo,
+      fuelAmount: fuelAmount,
+      totalPrice: totalPrice,
+      volumeMilliliters: ((fuelAmount / (v.unitVolume.toLowerCase().contains('gal') ? 0.264172 : 1.0)) * 1000).round(),
+      totalCostCents: (totalPrice * 100).round(),
+      isFullTank: isFull,
+      fuelType: v.fuelType,
+      gasStation: stationName,
+      notes: 'Simulated 25% Refuel Signal',
+    );
+
+    Navigator.of(context).pop();
+    widget.onSave(record);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Simulated 25% refuel recorded: $fuelAmount ${v.unitVolume} (${v.currency}$totalPrice)',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: AppColors.info,
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   void _confirmDelete() {
@@ -388,6 +444,22 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                       }
                     },
                   ),
+                  const SizedBox(height: 10),
+                  // Testing simulation button for instant 25% refuel signal
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.info,
+                      side: const BorderSide(color: AppColors.info, width: 1.4),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.md)),
+                    ),
+                    icon: const Icon(Icons.sensors, size: 18),
+                    label: Text(
+                      'Simulate 25% Refuel Signal (${(widget.vehicle.tankCapacityInUnit * 0.25).toStringAsFixed(1)} ${widget.vehicle.unitVolume})',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                    ),
+                    onPressed: _simulate25PercentRefuelSignal,
+                  ),
                 ],
 
                 const SizedBox(height: 18),
@@ -573,7 +645,15 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                           }
                           return null;
                         },
-                        onChanged: (_) => setState(() {}),
+                        onChanged: (val) {
+                          final parsed = double.tryParse(val.trim());
+                          if (parsed != null && widget.vehicle.tankCapacityInUnit > 0) {
+                            if (parsed >= (widget.vehicle.tankCapacityInUnit * 0.90)) {
+                              _isFullTank = true;
+                            }
+                          }
+                          setState(() {});
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -609,7 +689,15 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
                           }
                           return null;
                         },
-                        onChanged: (_) => setState(() {}),
+                        onChanged: (val) {
+                          final parsed = double.tryParse(val.trim());
+                          if (parsed != null && widget.vehicle.tankCapacityInUnit > 0) {
+                            if (parsed >= (widget.vehicle.tankCapacityInUnit * 0.90)) {
+                              _isFullTank = true;
+                            }
+                          }
+                          setState(() {});
+                        },
                       ),
                     ),
                   ],

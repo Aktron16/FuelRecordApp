@@ -129,6 +129,14 @@ class Vehicle {
   /// Backwards-compatible float getter for tank capacity in liters
   double get tankCapacityLiters => tankCapacityMilliliters / 1000.0;
 
+  /// Tank capacity in the vehicle's configured volume unit (L or gal)
+  double get tankCapacityInUnit {
+    if (unitVolume.toLowerCase().contains('gal')) {
+      return (tankCapacityMilliliters / 1000.0) * 0.264172;
+    }
+    return tankCapacityMilliliters / 1000.0;
+  }
+
   /// Backwards-compatible alias for paired OBD device ID
   String? get obdDeviceId => boundObdDeviceId;
 

@@ -8,7 +8,7 @@ class ReconstructedRefuelResult {
   final double reconstructedLitersAdded;
   final double rawObdLiters;
   final double estimatedPumpOdometer;
-  final String attributedStation;
+  final String? attributedStation;
   final double resolvedPricePerLitre;
   final double estimatedTotalCost;
 
@@ -17,7 +17,7 @@ class ReconstructedRefuelResult {
     required this.reconstructedLitersAdded,
     required this.rawObdLiters,
     required this.estimatedPumpOdometer,
-    required this.attributedStation,
+    this.attributedStation,
     required this.resolvedPricePerLitre,
     required this.estimatedTotalCost,
   });

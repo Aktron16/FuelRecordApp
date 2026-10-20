@@ -1192,6 +1192,10 @@ class FuelAppState extends ChangeNotifier {
         ? IngressSource.nativeHeadUnit.value
         : (pending.detectionTier == 2 ? IngressSource.obd2Ble.value : IngressSource.manual.value);
 
+    final isFull = pending.isFullTank ??
+        (((finalLiters / (vehicle.tankCapacityLiters > 0 ? vehicle.tankCapacityLiters : 50.0)) >= 0.90) ||
+        (vehicle.lastKnownFuelPercent ?? 0.0) >= 90.0);
+
     final newRecord = FuelRecord(
       id: 'fuel-${DateTime.now().millisecondsSinceEpoch}',
       vehicleId: vehicle.id,
@@ -1201,15 +1205,15 @@ class FuelAppState extends ChangeNotifier {
       totalCostCents: (finalTotalCost * 100).round(),
       ingressSource: ingress,
       fuelType: vehicle.fuelType,
-      isFullTank: true,
-      gasStation: pending.detectedStationName,
-      notes: '[Auto-Logged: Tier ${pending.detectionTier}]',
+      isFullTank: isFull,
+      gasStation: pending.detectedStationName ?? '',
+      notes: '[Auto-Detected Refuel]',
     );
 
     // Update vehicle state
     final updatedVehicle = vehicle.copyWith(
       lastKnownOdometer: pending.estimatedOdometer,
-      lastKnownFuelPercent: 100.0,
+      lastKnownFuelPercent: isFull ? 100.0 : (vehicle.lastKnownFuelPercent ?? 50.0),
       lastObdSyncTime: DateTime.now(),
       calibrationFactor: updatedCalibrationFactor,
     );
@@ -1221,7 +1225,7 @@ class FuelAppState extends ChangeNotifier {
 
     _rebuildIndexes();
     await saveToStorage();
-    await _logAuditAction('Confirmed Tier ${pending.detectionTier} auto-refuel: ${finalLiters}L, Total: $finalTotalCost');
+    await _logAuditAction('Confirmed auto-refuel: ${finalLiters}L, Total: $finalTotalCost');
     notifyListeners();
   }
 

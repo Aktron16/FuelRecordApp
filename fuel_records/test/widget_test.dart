@@ -309,7 +309,17 @@ void main() {
     await tester.pumpWidget(FuelRecordApp(appState: appState));
     await tester.pump();
 
-    // App launches and shows welcome / add vehicle
+    // App launches into GDPR Data & Automation Setup screen on first run
+    expect(find.text('Data & Automation Setup'), findsOneWidget);
+
+    // Tap Continue with Manual Mode
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Continue with Manual Mode'));
+      await Future.delayed(const Duration(milliseconds: 300));
+    });
+    await tester.pumpAndSettle();
+
+    // App advances to HomeScreen
     expect(find.text('Fuel Metrics'), findsWidgets);
     tempDir.deleteSync(recursive: true);
   });

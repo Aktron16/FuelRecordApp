@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/vehicle.dart';
 import '../models/record_calculation.dart';
+import '../models/pending_auto_refuel.dart';
+import '../services/auto_refuel_orchestrator.dart';
 import '../services/fuel_app_state.dart';
 import '../widgets/vehicle_artwork.dart';
 import '../utils/app_date_format.dart';
@@ -13,6 +15,7 @@ import 'stats_charts_screen.dart';
 import 'services_screen.dart';
 import 'vehicles_screen.dart';
 import 'settings_screen.dart';
+import 'obd_pairing_screen.dart';
 import '../widgets/app_logo.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -459,6 +462,26 @@ class HomeScreen extends StatelessWidget {
               _buildServiceNotificationBanner(context, vehicle, serviceStatus),
             ],
 
+            // Head-Unit OEM Telemetry Advisory Banner (Case A or Case B)
+            if (vehicle.telemetryCapabilityMask != 0) ...[
+              const SizedBox(height: 12),
+              _buildHeadUnitAdvisoryBanner(context, vehicle),
+            ],
+
+            // Pre-Flight Sensor Monitor Banner
+            if (appState.preFlightStatus.shouldAlertUser) ...[
+              const SizedBox(height: 12),
+              _buildPreFlightSensorBanner(context, appState.preFlightStatus),
+            ],
+
+            // Pending Auto-Refuel Verification Cards
+            if (appState.activeVehiclePendingRefuels.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              ...appState.activeVehiclePendingRefuels.map(
+                (pending) => _buildPendingAutoRefuelCard(context, pending, vehicle),
+              ),
+            ],
+
             const SizedBox(height: 16),
 
             // The Two Prominent Primary Action Buttons
@@ -833,6 +856,416 @@ class HomeScreen extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Head-Unit OEM Telemetry Advisory Banner (Modern Native vs Legacy Restricted)
+  Widget _buildHeadUnitAdvisoryBanner(BuildContext context, Vehicle vehicle) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isNative = TelemetryCapabilityMask.isNativeSupported(vehicle.telemetryCapabilityMask);
+    final isLegacy = TelemetryCapabilityMask.isLegacyRestricted(vehicle.telemetryCapabilityMask);
+
+    if (!isNative && !isLegacy) return const SizedBox.shrink();
+
+    final Color accentColor = isNative ? const Color(0xFF10B981) : const Color(0xFFEA580C);
+    final IconData icon = isNative ? Icons.check_circle_outline : Icons.info_outline;
+    final String title = isNative ? 'Direct Telemetry Active' : 'Restricted Head-Unit Detected';
+    final String message = isNative
+        ? 'Your vehicle supports direct telemetry via Android Auto / CarPlay. You do not need an external OBD-II Bluetooth dongle.'
+        : "Your vehicle's head-unit does not expose fuel and odometer sensors (common on older or restricted OEM models). We recommend connecting a Bluetooth OBD-II sensor for automatic fuel logging.";
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.35),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: accentColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: accentColor),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        isNative ? 'NATIVE HEAD-UNIT' : 'LEGACY OEM',
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: accentColor),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.grey[300] : Colors.grey[800],
+                    height: 1.35,
+                  ),
+                ),
+                if (isLegacy) ...[
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFEA580C),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: const Icon(Icons.bluetooth_searching, size: 14),
+                    label: const Text('Connect OBD-II Sensor', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                    onPressed: () => ObdPairingScreen.show(context, appState),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Pre-Flight Sensor Monitor Banner
+  Widget _buildPreFlightSensorBanner(BuildContext context, PreFlightSensorStatus status) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.15 : 0.1),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.sensors_off_outlined, color: Color(0xFFD97706), size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Sensor Readiness Alert',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFFD97706)),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  status.alertMessage,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.amber.shade200 : const Color(0xFF92400E),
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        appState.updatePreFlightHardwareState(bluetooth: true, location: true);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Bluetooth & Location marked active')),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD97706),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Turn On Sensors',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => SettingsScreen(appState: appState)),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        child: Text(
+                          'Settings',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.amber.shade300 : const Color(0xFF92400E),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Pending Auto-Refuel Verification Card with 1-Tap Confirmation and Custom Amount
+  Widget _buildPendingAutoRefuelCard(BuildContext context, PendingAutoRefuel pending, Vehicle vehicle) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Color tierColor;
+    switch (pending.detectionTier) {
+      case 1:
+        tierColor = const Color(0xFF2563EB); // Blue
+        break;
+      case 2:
+        tierColor = const Color(0xFF0284C7); // Cyan
+        break;
+      case 3:
+        tierColor = const Color(0xFF7C3AED); // Purple
+        break;
+      case 4:
+        tierColor = const Color(0xFFEA580C); // Orange
+        break;
+      case 5:
+      default:
+        tierColor = const Color(0xFF059669); // Green
+        break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E28) : Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: tierColor.withValues(alpha: 0.5), width: 1.8),
+        boxShadow: [
+          BoxShadow(
+            color: tierColor.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: tierColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.auto_awesome, size: 12, color: tierColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      'TIER ${pending.detectionTier} AUTO-DETECTED',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: tierColor,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                tooltip: 'Dismiss',
+                onPressed: () => appState.dismissPendingAutoRefuel(pending.id),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: tierColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.local_gas_station, color: tierColor, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pending.detectedStationName.isNotEmpty ? pending.detectedStationName : 'Gas Station',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${pending.estimatedLiters.toStringAsFixed(2)} L @ ${vehicle.currency}${pending.resolvedPricePerLitre.toStringAsFixed(2)}/L • ${pending.estimatedOdometer.toStringAsFixed(0)} ${vehicle.unitDistance}',
+                      style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF161620) : const Color(0xFFF8F9FD),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Did you pay ${vehicle.currency}${pending.estimatedTotalCost.toStringAsFixed(2)}?',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                ),
+                Text(
+                  AppDateUtils.format(pending.timestamp),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                  ),
+                  icon: const Icon(Icons.check_circle_outline, size: 18),
+                  label: const Text(
+                    'Yes, Confirm',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  onPressed: () async {
+                    await appState.confirmPendingAutoRefuel(pending.id);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Fuel record confirmed & tank calibration updated!')),
+                      );
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 14),
+                ),
+                child: const Text('Edit Amount', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                onPressed: () => _showEditAmountDialog(context, pending, vehicle),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditAmountDialog(BuildContext context, PendingAutoRefuel pending, Vehicle vehicle) {
+    final controller = TextEditingController(text: pending.estimatedTotalCost.toStringAsFixed(2));
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Exact Amount Paid', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Enter the exact amount paid. This will automatically calibrate your tank percentage multiplier for even higher accuracy next time.',
+              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, height: 1.3),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              decoration: InputDecoration(
+                prefixText: '${vehicle.currency} ',
+                labelText: 'Total Cost',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final parsed = double.tryParse(controller.text.trim());
+              if (parsed != null && parsed > 0) {
+                Navigator.of(ctx).pop();
+                await appState.confirmPendingAutoRefuel(pending.id, customAmountPaid: parsed);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Fuel record verified with exact amount! Calibration updated.')),
+                  );
+                }
+              }
+            },
+            child: const Text('Confirm & Calibrate'),
+          ),
+        ],
       ),
     );
   }

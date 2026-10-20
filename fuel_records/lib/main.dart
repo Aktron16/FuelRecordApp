@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'services/fuel_app_state.dart';
 import 'screens/home_screen.dart';
+import 'screens/data_automation_consent_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -80,7 +81,9 @@ class FuelRecordApp extends StatelessWidget {
               surfaceTintColor: Colors.transparent,
             ),
           ),
-          home: HomeScreen(appState: appState),
+          home: appState.hasCompletedDataConsent
+              ? HomeScreen(appState: appState)
+              : DataAutomationConsentScreen(appState: appState),
         );
       },
     );

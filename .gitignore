@@ -52,3 +52,7 @@ graphify-out/
 .graphifyignore
 .agents/
 
+# Local Visual Style Guide (Internal design system documentation)
+VISUAL_STYLE_GUIDE.md
+
+

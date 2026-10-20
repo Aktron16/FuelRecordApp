@@ -66,6 +66,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
   late TextEditingController _ownerController;
   late TextEditingController _initialOdoController;
   late TextEditingController _licensePlateController;
+  late TextEditingController _tankCapacityController;
 
   late VehicleType _selectedType;
   late Color _selectedColor;
@@ -106,6 +107,9 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
       text: v?.initialOdometer != null ? v!.initialOdometer!.toStringAsFixed(0) : '',
     );
     _licensePlateController = TextEditingController(text: v?.licensePlate ?? '');
+    _tankCapacityController = TextEditingController(
+      text: v != null ? v.tankCapacityLiters.toStringAsFixed(1) : '55.0',
+    );
 
     _selectedType = v?.type ?? VehicleType.suv;
     _selectedColor = v != null ? Color(v.colorValue) : _availableColors.first;
@@ -141,6 +145,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
     _ownerController.dispose();
     _initialOdoController.dispose();
     _licensePlateController.dispose();
+    _tankCapacityController.dispose();
     super.dispose();
   }
 
@@ -240,6 +245,13 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
       bannerImageUri: _bannerImageUri,
       initialOdometer: initialOdo,
       dateBought: _dateBought,
+      tankCapacityLiters: double.tryParse(_tankCapacityController.text.trim()) ??
+          (widget.vehicleToEdit?.tankCapacityLiters ?? 55.0),
+      obdDeviceId: widget.vehicleToEdit?.obdDeviceId,
+      lastKnownOdometer: widget.vehicleToEdit?.lastKnownOdometer ?? initialOdo,
+      lastKnownFuelPercent: widget.vehicleToEdit?.lastKnownFuelPercent,
+      lastObdSyncTime: widget.vehicleToEdit?.lastObdSyncTime,
+      calibrationFactor: widget.vehicleToEdit?.calibrationFactor ?? 1.0,
       createdAt: widget.vehicleToEdit?.createdAt,
     );
 
@@ -739,6 +751,22 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
                     hintText: 'e.g. 25000',
                     suffixText: _unitDistance,
                     prefixIcon: const Icon(Icons.speed),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    filled: true,
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // Fuel Tank Capacity
+                TextFormField(
+                  controller: _tankCapacityController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'Fuel Tank Capacity (Liters)',
+                    hintText: 'e.g. 55.0',
+                    suffixText: 'L',
+                    prefixIcon: const Icon(Icons.local_gas_station_outlined),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     filled: true,
                   ),

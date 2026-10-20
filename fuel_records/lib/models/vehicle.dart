@@ -53,6 +53,23 @@ extension VehicleTypeExtension on VehicleType {
   }
 }
 
+class TelemetryCapabilityMask {
+  static const int unknown = 0x00;
+  static const int headUnitNativeFuel = 0x01;
+  static const int headUnitNativeOdometer = 0x02;
+  static const int headUnitRestrictedLegacy = 0x04;
+  static const int obd2BleBound = 0x08;
+
+  static bool isNativeSupported(int mask) =>
+      (mask & headUnitNativeFuel != 0) && (mask & headUnitNativeOdometer != 0);
+
+  static bool isLegacyRestricted(int mask) =>
+      (mask & headUnitRestrictedLegacy != 0);
+
+  static bool isObdBound(int mask) =>
+      (mask & obd2BleBound != 0);
+}
+
 class Vehicle {
   final String id;
   final String name;
@@ -69,6 +86,13 @@ class Vehicle {
   final String? bannerImageUri;
   final double? initialOdometer;
   final DateTime? dateBought; // Date vehicle was purchased
+  final int tankCapacityMilliliters; // Exact physical fuel tank capacity in milliliters (e.g. 55000 mL)
+  final int telemetryCapabilityMask; // Bitmask for hardware support (0x01=Fuel, 0x02=Odo, 0x04=Legacy, 0x08=OBD)
+  final String? boundObdDeviceId; // Paired OBD-II BLE adapter MAC / UUID
+  final double? lastKnownOdometer;
+  final double? lastKnownFuelPercent; // 0.0 to 100.0
+  final DateTime? lastObdSyncTime;
+  final double calibrationFactor; // Self-learning tank percentage multiplier (default 1.0)
   final DateTime createdAt;
 
   Vehicle({
@@ -87,8 +111,26 @@ class Vehicle {
     this.bannerImageUri,
     this.initialOdometer,
     this.dateBought,
+    int? tankCapacityMilliliters,
+    double? tankCapacityLiters,
+    String? boundObdDeviceId,
+    String? obdDeviceId,
+    this.telemetryCapabilityMask = 0,
+    this.lastKnownOdometer,
+    this.lastKnownFuelPercent,
+    this.lastObdSyncTime,
+    this.calibrationFactor = 1.0,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+  })  : tankCapacityMilliliters = tankCapacityMilliliters ??
+            ((tankCapacityLiters ?? 55.0) * 1000).round(),
+        boundObdDeviceId = boundObdDeviceId ?? obdDeviceId,
+        createdAt = createdAt ?? DateTime.now();
+
+  /// Backwards-compatible float getter for tank capacity in liters
+  double get tankCapacityLiters => tankCapacityMilliliters / 1000.0;
+
+  /// Backwards-compatible alias for paired OBD device ID
+  String? get obdDeviceId => boundObdDeviceId;
 
   /// Ownership duration description
   String get ownershipDuration {
@@ -126,6 +168,15 @@ class Vehicle {
       'bannerImageUri': bannerImageUri,
       'initialOdometer': initialOdometer,
       'dateBought': dateBought?.toIso8601String(),
+      'tankCapacityMilliliters': tankCapacityMilliliters,
+      'tankCapacityLiters': tankCapacityLiters,
+      'telemetryCapabilityMask': telemetryCapabilityMask,
+      'boundObdDeviceId': boundObdDeviceId,
+      'obdDeviceId': boundObdDeviceId,
+      'lastKnownOdometer': lastKnownOdometer,
+      'lastKnownFuelPercent': lastKnownFuelPercent,
+      'lastObdSyncTime': lastObdSyncTime?.toIso8601String(),
+      'calibrationFactor': calibrationFactor,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -138,6 +189,12 @@ class Vehicle {
         orElse: () => VehicleType.sedan,
       );
     }
+
+    final ml = json['tankCapacityMilliliters'] as int?;
+    final liters = (json['tankCapacityLiters'] as num?)?.toDouble();
+    final effectiveMl = ml ?? ((liters ?? 55.0) * 1000).round();
+    final boundId = json['boundObdDeviceId'] as String? ?? json['obdDeviceId'] as String?;
+    final capMask = json['telemetryCapabilityMask'] as int? ?? 0;
 
     return Vehicle(
       id: json['id'] as String,
@@ -157,6 +214,15 @@ class Vehicle {
       dateBought: json['dateBought'] != null
           ? DateTime.tryParse(json['dateBought'] as String)
           : null,
+      tankCapacityMilliliters: effectiveMl,
+      telemetryCapabilityMask: capMask,
+      boundObdDeviceId: boundId,
+      lastKnownOdometer: (json['lastKnownOdometer'] as num?)?.toDouble(),
+      lastKnownFuelPercent: (json['lastKnownFuelPercent'] as num?)?.toDouble(),
+      lastObdSyncTime: json['lastObdSyncTime'] != null
+          ? DateTime.tryParse(json['lastObdSyncTime'] as String)
+          : null,
+      calibrationFactor: (json['calibrationFactor'] as num?)?.toDouble() ?? 1.0,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now()
           : DateTime.now(),
@@ -178,6 +244,15 @@ class Vehicle {
     String? bannerImageUri,
     double? initialOdometer,
     DateTime? dateBought,
+    int? tankCapacityMilliliters,
+    double? tankCapacityLiters,
+    int? telemetryCapabilityMask,
+    String? boundObdDeviceId,
+    String? obdDeviceId,
+    double? lastKnownOdometer,
+    double? lastKnownFuelPercent,
+    DateTime? lastObdSyncTime,
+    double? calibrationFactor,
     bool clearProfileImage = false,
     bool clearBannerImage = false,
   }) {
@@ -197,6 +272,14 @@ class Vehicle {
       bannerImageUri: clearBannerImage ? null : (bannerImageUri ?? this.bannerImageUri),
       initialOdometer: initialOdometer ?? this.initialOdometer,
       dateBought: dateBought ?? this.dateBought,
+      tankCapacityMilliliters: tankCapacityMilliliters ??
+          (tankCapacityLiters != null ? (tankCapacityLiters * 1000).round() : this.tankCapacityMilliliters),
+      telemetryCapabilityMask: telemetryCapabilityMask ?? this.telemetryCapabilityMask,
+      boundObdDeviceId: boundObdDeviceId ?? obdDeviceId ?? this.boundObdDeviceId,
+      lastKnownOdometer: lastKnownOdometer ?? this.lastKnownOdometer,
+      lastKnownFuelPercent: lastKnownFuelPercent ?? this.lastKnownFuelPercent,
+      lastObdSyncTime: lastObdSyncTime ?? this.lastObdSyncTime,
+      calibrationFactor: calibrationFactor ?? this.calibrationFactor,
       createdAt: createdAt,
     );
   }

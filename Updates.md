@@ -4,7 +4,50 @@ All notable changes, feature releases, database migrations, and platform updates
 
 ---
 
-## [Version 1.1.3] — Current Release
+## [Version 1.2.0] — Current Release
+
+### ⚡ Automated Fuel Feeder, Telemetry Arbitration, In-App OBD-II Pairing & Power Lifecycle
+
+- **Automated Fuel Data Feeder & 5-Tier Fallback Engine**:
+  - **Tier 1 (Apple CarPlay & Android Auto Tandem Detection)**: Evaluates vehicle ignition jump ($\ge +10\%$) combined with projection connectivity to log fill-ups automatically.
+  - **Tier 2 (Real-Time OBD-II BLE Sensor Engine)**: Collects dynamic fuel level percentage using an anti-slosh 5-reading trimmed mean filter that discards outliers caused by fluid acceleration sloshing.
+  - **Tier 3 (Manual Quick-Draft & Photo EXIF Merger)**: Allows rapid zero-friction pump capture (e.g., photo of the pump display) with deferred OBD telemetry injection.
+  - **Tier 4 (Motion Pit-Stop Fingerprinting)**: Identifies 3–10 minute driving stops in the vicinity of fuel station amenities to generate pending fill-up draft verifications.
+  - **Tier 5 (Delayed ECU Math & Trip Back-Calculation)**: Uses fuel burn rate math to distinguish authentic fill-ups from fluid slosh and back-calculate trip odometers.
+
+- **GDPR Privacy Architecture & Consent Onboarding**:
+  - **100% Local On-Device Data Storage**: Zero tracking, zero analytics beacons, zero cell-tower triangulation, and zero background SMS/bank scraping.
+  - **First-Run Onboarding Modal**: `DataAutomationConsentScreen` presents a clean privacy disclosure and lets users opt-in to permissions or continue with Manual Mode.
+  - **Granular Settings Toggles**: Dedicated controls in Settings for Bluetooth, Location, Activity Recognition, and Refuel Alerts with plain-English confirmation modals when toggling off.
+  - **Strict Telemetry Data Minimization**: Ephemeral telemetry buffers (transient GPS coordinates, raw OBD frames, and VIN strings) are cleared from memory immediately upon refuel verification and never written to SQLite or disk storage.
+
+- **Hardware-Gated Power Lifecycle (`PowerLifecycleState`)**:
+  - Implemented 4-state lifecycle machine (`DORMANT_SUSPENDED`, `ACTIVE_CRUISE_TELEMETRY`, `REFUEL_WATCH_WINDOW`, `TEARDOWN_AND_SCRUB`).
+  - **Zero Background BLE Scanning**: BLE peripheral scanning is restricted exclusively to foreground user pairing in `ObdPairingScreen`.
+  - **OS-Managed Passive Auto-Connect**: GATT connections delegate passive auto-connect to the host Bluetooth hardware controller (`autoConnect: true`).
+  - **Adaptive Exponential Cruise Backoff**: PID polling scales dynamically during driving from $15\text{s} \rightarrow 30\text{s} \rightarrow 60\text{s}$ per cycle for `PID 0x0C` (RPM), `PID 0x2F` (Fuel), and `PID 0xA6` (Odometer), keeping radio and Dart isolate idle $>96\%$ of the drive.
+  - **Hard-Bounded 180s Refuel Window**: Stops at the pump trigger $1\text{Hz}$ fuel polling with a mandatory 180s countdown timer. Reverts immediately to cruise backoff upon traffic light green recovery (`RPM > 0`).
+  - **Single-Shot GPS Gating**: Bounded by a strict 5-second timeout, completely eliminating continuous location drain.
+  - **Deterministic Teardown & RAM Scrubbing**: Cancels all timers and zeros ephemeral state upon completion.
+
+- **64-Bit Integer Relational Schema**:
+  - Upgraded `FuelRecord` and `Vehicle` entities to scaled integers: `volumeMilliliters` (`int`), `odometerMeters` (`int`), `totalCostCents` (`int`), `timestampEpochSec` (`int`), and `tankCapacityMilliliters` (`int`) to eradicate floating-point rounding drift.
+  - Full backward compatibility preserved via double/DateTime getters.
+
+- **Real CarPlay & Android Auto Hardware Capability Probing**:
+  - Native platform channels on Android (`MainActivity.kt`) and iOS (`AppDelegate.swift`) probing OEM head-unit telemetry support within a 3000ms window.
+  - Dynamic advisory banners: "Direct Telemetry Active" for modern vehicles vs. "Restricted Head-Unit Detected" for legacy OEMs with a direct pairing action.
+
+- **In-App OBD-II BLE Pairing Subsystem**:
+  - Dedicated `ObdPairingScreen` with real-time BLE scanning, standard OBD UUID filtering (`0xFFF0`, `0xFFE0`, `0x18F0`), dBm RSSI signal bars, status chips, and one-tap binding to vehicles.
+  - Live expandable terminal displaying real-time ELM327 AT handshake diagnostics (`ATZ`, `ATE0`, `ATL0`, `ATS0`, `ATSP0`).
+
+- **Automated Test Coverage**:
+  - 61 deterministic unit, widget, and `fakeAsync` tests covering hardware attachment, failover handover in $<2000\text{ms}$, exponential backoff, 180s timer expiration, single-shot GPS timeout, and GDPR schema compliance.
+
+---
+
+## [Version 1.1.3]
 
 ### 🛠️ UI/UX Refinements, Excel Resilience & Graph Enhancements
 

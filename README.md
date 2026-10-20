@@ -1,4 +1,4 @@
-# Fuel Metrics (Version 1.1.3)
+# Fuel Metrics (Version 1.2.0)
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2.svg?logo=dart)](https://dart.dev)
@@ -12,6 +12,30 @@
 ---
 
 ## 🌟 Key Features
+
+### ⚡ Automated Fuel Feeder & 5-Tier Fallback Engine
+- **Tier 1 (Apple CarPlay & Android Auto Tandem)**: Detects ignition fuel jump ($\ge +10\%$) combined with head-unit attachment for zero-touch logging.
+- **Tier 2 (Real-Time OBD-II BLE Sensors)**: Reads live fuel level and odometer directly from Bluetooth ELM327 adapters with dynamic 5-reading anti-slosh filtering.
+- **Tier 3 (Manual Quick-Draft & Photo EXIF)**: Rapid capture of pump displays with deferred OBD telemetry injection.
+- **Tier 4 (Motion Pit-Stop Fingerprinting)**: Automatically flags 3–10 minute stops near fuel amenities.
+- **Tier 5 (Delayed ECU Math & Trip Back-Calculation)**: Uses fuel burn math to distinguish real refuels from fluid slosh and back-calculate trip odometers.
+
+### 🔋 Hardware-Gated Power Lifecycle (`PowerLifecycleState`)
+- **4-State State Machine**: `DORMANT_SUSPENDED`, `ACTIVE_CRUISE_TELEMETRY`, `REFUEL_WATCH_WINDOW`, and `TEARDOWN_AND_SCRUB`.
+- **Zero Background BLE Scanning**: BLE peripheral scanning is strictly restricted to foreground pairing.
+- **OS-Managed Passive Auto-Connect**: GATT auto-connect wakes sessions only when dongles power on.
+- **Adaptive Exponential Cruise Backoff**: PID polling scales ($15\text{s} \rightarrow 30\text{s} \rightarrow 60\text{s}$) during drives, keeping radio and CPU idle $>96\%$ of the trip.
+- **180s Hard Refuel Watch Window**: $1\text{Hz}$ fuel polling upon engine stop with immediate traffic light green recovery (`RPM > 0`).
+- **Single-Shot GPS Gating**: Bounded by a strict 5-second timeout, completely eliminating continuous location drain.
+- **Deterministic Teardown & RAM Scrubbing**: Purges all ephemeral telemetry from memory upon completion.
+
+### 🔒 GDPR-by-Design Privacy Architecture
+- **100% On-Device Storage**: Zero external servers, zero scraping, and zero tracking.
+- **First-Run Onboarding Flow**: Clear disclosure with granular opt-in or seamless Manual Mode continuation.
+- **Granular Settings Toggles**: Plain-English confirmation modals when turning off automated features.
+- **Exact 64-Bit Integer Schema**: Scaled integers (`volumeMilliliters`, `odometerMeters`, `totalCostCents`, `timestampEpochSec`) eliminate floating-point drift while maintaining backward compatibility.
+
+---
 
 ### 🚗 Multi-Vehicle Garage Management
 - **Detailed Vehicle Profiling:** Record vehicle name, brand, owner, vehicle type, fuel grade/type (`Regular (87)`, `Premium (93)`, `Diesel`, etc.), purchase date (`Date Bought`), and initial odometer reading.

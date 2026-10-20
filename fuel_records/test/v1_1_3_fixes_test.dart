@@ -209,7 +209,7 @@ void main() {
     });
 
     test('FuelAppState.appVersion is single source of truth for app version', () {
-      expect(FuelAppState.appVersion, equals('1.1.3'));
+      expect(FuelAppState.appVersion, equals('1.2.0'));
     });
 
     test('Graph y-axis margin calculation strictly prevents line from touching bottom axis', () {

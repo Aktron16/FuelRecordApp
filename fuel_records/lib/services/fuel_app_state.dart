@@ -10,6 +10,7 @@ import '../models/record_calculation.dart';
 import '../models/vehicle_stats.dart';
 import '../utils/app_date_format.dart';
 import 'country_data.dart';
+import 'obd_telemetry_service.dart';
 
 class FuelAppState extends ChangeNotifier {
   /// Current application version - single source of truth for UI and data backups
@@ -60,6 +61,8 @@ class FuelAppState extends ChangeNotifier {
   bool _isLoading = true;
   String _appDataFolderPath = '';
   final Directory? customStorageDir;
+  late final ObdTelemetryService obdService =
+      ObdTelemetryService(customStorageDir: customStorageDir)..addListener(notifyListeners);
 
   FuelAppState({this.customStorageDir, bool autoLoad = true}) {
     if (autoLoad) {
@@ -409,6 +412,8 @@ class FuelAppState extends ChangeNotifier {
         }
       }
 
+
+      await obdService.loadFromStorage();
 
       _activeVehicleId = prefs.getString(_keyActiveVehicleId);
       if (_vehicles.isNotEmpty && (_activeVehicleId == null || !_vehicles.any((v) => v.id == _activeVehicleId))) {
@@ -1068,6 +1073,8 @@ class FuelAppState extends ChangeNotifier {
       _services.clear();
       _activeVehicleId = null;
       _rebuildIndexes();
+      obdService.disconnectSensor();
+      await obdService.clearDatabase();
 
       _locationStationPriceFinder = false;
 
@@ -1084,8 +1091,16 @@ class FuelAppState extends ChangeNotifier {
     _services.clear();
     _activeVehicleId = null;
     _rebuildIndexes();
+    obdService.disconnectSensor();
+    await obdService.clearDatabase();
     await saveToStorage();
     await _logAuditAction('Cleared all app data');
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    obdService.dispose();
+    super.dispose();
   }
 }

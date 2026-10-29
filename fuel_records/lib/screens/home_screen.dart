@@ -14,6 +14,7 @@ import 'stats_charts_screen.dart';
 import 'services_screen.dart';
 import 'vehicles_screen.dart';
 import 'settings_screen.dart';
+import 'obd_telemetry_screen.dart';
 import '../widgets/app_logo.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -43,6 +44,16 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          // OBD-II Live Telemetry (Table & Graph)
+          IconButton(
+            icon: const Icon(Icons.sensors, color: AppColors.info),
+            tooltip: 'OBD-II Live Telemetry',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (ctx) => ObdTelemetryScreen(appState: appState)),
+              );
+            },
+          ),
           // Table / Data Grid View
           if (vehicle != null)
             IconButton(
@@ -163,6 +174,26 @@ class HomeScreen extends StatelessWidget {
               ),
               icon: const Icon(Icons.bolt, color: Colors.amber),
               label: const Text('Load Demo Vehicle & Records'),
+            ),
+
+            const SizedBox(height: 12),
+
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (ctx) => ObdTelemetryScreen(appState: appState)),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                side: const BorderSide(color: AppColors.info, width: 1.4),
+              ),
+              icon: const Icon(Icons.sensors, color: AppColors.info),
+              label: const Text(
+                'OBD-II Live Telemetry',
+                style: TextStyle(color: AppColors.info, fontWeight: FontWeight.w800),
+              ),
             ),
           ],
         ),
@@ -572,6 +603,43 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // OBD-II Live Telemetry (Table & Graph) Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  side: BorderSide(
+                    color: appState.obdService.isConnected
+                        ? AppColors.info
+                        : AppTheme.borderColor(context),
+                    width: 1.4,
+                  ),
+                ),
+                icon: const Icon(Icons.sensors, size: 18, color: AppColors.info),
+                label: Text(
+                  appState.obdService.isConnected
+                      ? 'OBD-II Live Telemetry (LIVE 1Hz)'
+                      : 'OBD-II Live Telemetry',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.info,
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (ctx) => ObdTelemetryScreen(appState: appState),
+                    ),
+                  );
+                },
+              ),
             ),
 
             const SizedBox(height: 20),

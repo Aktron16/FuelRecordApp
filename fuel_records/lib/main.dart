@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'services/fuel_app_state.dart';
 import 'screens/home_screen.dart';
-import 'screens/data_automation_consent_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -47,9 +46,7 @@ class _FuelRecordAppState extends State<FuelRecordApp> {
                     child: CircularProgressIndicator(),
                   ),
                 )
-              : (widget.appState.hasCompletedDataConsent
-                  ? HomeScreen(appState: widget.appState)
-                  : DataAutomationConsentScreen(appState: widget.appState)),
+              : HomeScreen(appState: widget.appState),
         );
       },
     );

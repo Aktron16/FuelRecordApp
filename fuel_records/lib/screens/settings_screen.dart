@@ -5,8 +5,6 @@ import '../services/country_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_logo.dart';
 import '../services/station_and_price_resolver.dart';
-import 'auto_refuel_simulator_sheet.dart';
-import 'obd_pairing_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final FuelAppState appState;
@@ -25,10 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late String _currency;
   late ThemeMode _themeMode;
 
-  late bool _carBluetoothObdSync;
   late bool _locationStationPriceFinder;
-  late bool _motionStopDetection;
-  late bool _refuelVerificationAlerts;
 
   final List<String> _popularCurrencies = const [
     '\$', '€', '£', '₹', '¥', 'C\$', 'A\$', 'AED', 'R\$', 'Mex\$', 'R', 'kr', 'CHF', 'SAR', 'S\$'
@@ -44,61 +39,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _currency = widget.appState.defaultCurrency;
     _themeMode = widget.appState.themeMode;
 
-    _carBluetoothObdSync = widget.appState.carBluetoothObdSync;
     _locationStationPriceFinder = widget.appState.locationStationPriceFinder;
-    _motionStopDetection = widget.appState.motionStopDetection;
-    _refuelVerificationAlerts = widget.appState.refuelVerificationAlerts;
   }
 
-  Future<void> _handleAutomationToggle(String type, bool newValue) async {
+  Future<void> _handleLocationToggle(bool newValue) async {
     if (newValue == true) {
       setState(() {
-        if (type == 'bluetooth') _carBluetoothObdSync = true;
-        if (type == 'location') _locationStationPriceFinder = true;
-        if (type == 'motion') _motionStopDetection = true;
-        if (type == 'alerts') _refuelVerificationAlerts = true;
+        _locationStationPriceFinder = true;
       });
-      await widget.appState.setAutomationPermission(
-        carBluetoothObdSync: _carBluetoothObdSync,
-        locationStationPriceFinder: _locationStationPriceFinder,
-        motionStopDetection: _motionStopDetection,
-        refuelVerificationAlerts: _refuelVerificationAlerts,
-      );
+      await widget.appState.setLocationStationPriceFinder(true);
       return;
-    }
-
-    // Confirmation modal with exact GDPR microcopy
-    String title = '';
-    String warningMessage = '';
-
-    switch (type) {
-      case 'bluetooth':
-        title = 'Turn off Bluetooth Auto-Sync?';
-        warningMessage =
-            'We use Bluetooth only to read your car\'s fuel tank level and mileage from your car adapter so you don\'t have to type them in. If you turn this off, the app won\'t be able to read your car\'s fuel level automatically.';
-        break;
-      case 'location':
-        title = 'Turn off Gas Station Name Finder?';
-        warningMessage =
-            'We check your location only at the moment you refuel to identify the name of the petrol pump you are at. Your location is never used for pricing or tracking, and never leaves your device. If you turn this off, petrol pump names will stay empty.';
-        break;
-      case 'motion':
-        title = 'Turn off Stop Detection?';
-        warningMessage =
-            'We use your phone\'s step and motion sensor to notice when you make a short 5-minute stop while driving, which helps fill in the right time and date if your Bluetooth was turned off at the gas pump. If you turn this off, missed fill-ups won\'t know the exact time you stopped.';
-        break;
-      case 'alerts':
-        title = 'Turn off Refuel Alerts?';
-        warningMessage =
-            'We send you a quick alert after you refuel to let you confirm the total amount you paid with one tap, and to remind you if Bluetooth or Location is turned off. If you turn this off, you will need to open the app manually to review detected fill-ups.';
-        break;
     }
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-        content: Text(warningMessage, style: const TextStyle(fontSize: 13.5, height: 1.4)),
+        title: const Text('Turn off Gas Station Name Finder?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        content: const Text(
+          'We check your location only at the moment you refuel to identify the name of the petrol pump you are at. Your location is never used for pricing or tracking, and never leaves your device. If you turn this off, petrol pump names will stay empty.',
+          style: TextStyle(fontSize: 13.5, height: 1.4),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -115,17 +75,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (confirmed == true) {
       setState(() {
-        if (type == 'bluetooth') _carBluetoothObdSync = false;
-        if (type == 'location') _locationStationPriceFinder = false;
-        if (type == 'motion') _motionStopDetection = false;
-        if (type == 'alerts') _refuelVerificationAlerts = false;
+        _locationStationPriceFinder = false;
       });
-      await widget.appState.setAutomationPermission(
-        carBluetoothObdSync: _carBluetoothObdSync,
-        locationStationPriceFinder: _locationStationPriceFinder,
-        motionStopDetection: _motionStopDetection,
-        refuelVerificationAlerts: _refuelVerificationAlerts,
-      );
+      await widget.appState.setLocationStationPriceFinder(false);
     }
   }
 
@@ -645,7 +597,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 16),
 
-          // 4. Auto-Log & Permissions (GDPR Compliant)
+          // 4. Location & Privacy
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Padding(
@@ -661,15 +613,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.auto_awesome, color: Color(0xFFF59E0B)),
+                        child: const Icon(Icons.location_on_outlined, color: Color(0xFFF59E0B)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Auto-Log & Permissions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                            Text('Hardware automation & refuel detection', style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569), fontSize: 11)),
+                            const Text('Location & Privacy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text('Petrol pump identification & privacy', style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569), fontSize: 11)),
                           ],
                         ),
                       ),
@@ -691,7 +643,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            '100% Private: All telemetry stays on your phone. Zero cloud servers.',
+                            '100% Private: Location is only used to identify petrol pump names. Zero tracking or cloud sharing.',
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
@@ -704,25 +656,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  // Toggle 1: Car Bluetooth & OBD Auto-Sync
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    secondary: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF06B6D4).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.bluetooth_connected, color: Color(0xFF06B6D4), size: 20),
-                    ),
-                    title: const Text('Car Bluetooth & OBD Auto-Sync', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    subtitle: const Text('Reads fuel tank level & odometer from your car adapter automatically.', style: TextStyle(fontSize: 12)),
-                    value: _carBluetoothObdSync,
-                    onChanged: (val) => _handleAutomationToggle('bluetooth', val),
-                  ),
-                  const Divider(height: 1),
-
-                  // Toggle 2: Gas Station & Local Price Finder
+                  // Toggle: Gas Station Name Finder
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     secondary: Container(
@@ -736,71 +670,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: const Text('Gas Station Name Finder', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                     subtitle: const Text('Used only to identify the name of the petrol pump you visit. Your location is never used for pricing or tracking, and never leaves your device.', style: TextStyle(fontSize: 12)),
                     value: _locationStationPriceFinder,
-                    onChanged: (val) => _handleAutomationToggle('location', val),
-                  ),
-                  const Divider(height: 1),
-
-                  // Toggle 3: Smart Driving Stop Detection
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    secondary: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF7C3AED).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.directions_car_outlined, color: Color(0xFF7C3AED), size: 20),
-                    ),
-                    title: const Text('Smart Driving Stop Detection', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    subtitle: const Text('Notices 3–10 minute driving stops to timestamp missed pit stops.', style: TextStyle(fontSize: 12)),
-                    value: _motionStopDetection,
-                    onChanged: (val) => _handleAutomationToggle('motion', val),
-                  ),
-                  const Divider(height: 1),
-
-                  // Toggle 4: Refuel Verification Alerts
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    secondary: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF059669).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.notifications_active_outlined, color: Color(0xFF059669), size: 20),
-                    ),
-                    title: const Text('Refuel Verification Alerts', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    subtitle: const Text('Quick alert to confirm total paid with one tap after refueling.', style: TextStyle(fontSize: 12)),
-                    value: _refuelVerificationAlerts,
-                    onChanged: (val) => _handleAutomationToggle('alerts', val),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // OBD-II Pairing Screen Launcher
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: () => ObdPairingScreen.show(context, widget.appState),
-                      icon: const Icon(Icons.bluetooth_searching, size: 18),
-                      label: const Text('Pair OBD-II Bluetooth Sensor'),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Simulator Launcher
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: () => AutoRefuelSimulatorSheet.show(context, widget.appState),
-                      icon: const Icon(Icons.tune, size: 18),
-                      label: const Text('Open 5-Tier Auto-Refuel Simulator'),
-                    ),
+                    onChanged: (val) => _handleLocationToggle(val),
                   ),
                 ],
               ),

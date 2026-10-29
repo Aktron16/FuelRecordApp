@@ -247,11 +247,7 @@ class _AddEditVehicleSheetState extends State<AddEditVehicleSheet> {
       dateBought: _dateBought,
       tankCapacityLiters: double.tryParse(_tankCapacityController.text.trim()) ??
           (widget.vehicleToEdit?.tankCapacityLiters ?? 55.0),
-      obdDeviceId: widget.vehicleToEdit?.obdDeviceId,
       lastKnownOdometer: widget.vehicleToEdit?.lastKnownOdometer ?? initialOdo,
-      lastKnownFuelPercent: widget.vehicleToEdit?.lastKnownFuelPercent,
-      lastObdSyncTime: widget.vehicleToEdit?.lastObdSyncTime,
-      calibrationFactor: widget.vehicleToEdit?.calibrationFactor ?? 1.0,
       createdAt: widget.vehicleToEdit?.createdAt,
     );
 

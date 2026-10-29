@@ -527,20 +527,6 @@ class StationAndPriceResolver {
     return info.pricePerLitre;
   }
 
-  /// Calculates added liters from tank % jump with calibration multiplier:
-  /// litersAdded = (((currentFuelPct - lastFuelPct) / 100.0) * tankCapacity * calibrationFactor).toFixed(2)
-  static double calculateLitersAdded({
-    required double currentFuelPct,
-    required double lastFuelPct,
-    required double tankCapacityLiters,
-    required double calibrationFactor,
-  }) {
-    final pctJump = currentFuelPct - lastFuelPct;
-    if (pctJump <= 0) return 0.0;
-    final rawLiters = (pctJump / 100.0) * tankCapacityLiters * calibrationFactor;
-    return double.parse(rawLiters.toStringAsFixed(2));
-  }
-
   /// Computes estimated total cost with 2-decimal precision:
   /// estimatedTotalCost = Number((litersAdded * pricePerLitre).toFixed(2))
   static double calculateTotalCost({

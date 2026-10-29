@@ -8,13 +8,8 @@ import '../models/fuel_record.dart';
 import '../models/service_record.dart';
 import '../models/record_calculation.dart';
 import '../models/vehicle_stats.dart';
-import '../models/pending_auto_refuel.dart';
-import '../models/pit_stop_log.dart';
 import '../utils/app_date_format.dart';
 import 'country_data.dart';
-import 'auto_refuel_orchestrator.dart';
-import 'photo_exif_draft_service.dart';
-import 'motion_pit_stop_service.dart';
 
 class FuelAppState extends ChangeNotifier {
   /// Current application version - single source of truth for UI and data backups
@@ -31,12 +26,8 @@ class FuelAppState extends ChangeNotifier {
   static const String _keyDefaultVolUnit = 'fuel_app_default_vol_unit';
   static const String _keyDefaultEffUnit = 'fuel_app_default_eff_unit';
 
-  // Permission & GDPR consent keys
-  static const String _keyCarBluetoothObdSync = 'fuel_app_perm_bt_obd';
+  // Permission key
   static const String _keyLocationStationPriceFinder = 'fuel_app_perm_location_price';
-  static const String _keyMotionStopDetection = 'fuel_app_perm_motion_stop';
-  static const String _keyRefuelVerificationAlerts = 'fuel_app_perm_refuel_alerts';
-  static const String _keyHasCompletedDataConsent = 'fuel_app_has_completed_data_consent';
 
   // Secret cipher key for basic encryption of offline records file
   static const String _cipherKey = 'FuelMetricsSecureVault2026_KeyX!';
@@ -44,19 +35,11 @@ class FuelAppState extends ChangeNotifier {
   List<Vehicle> _vehicles = [];
   List<FuelRecord> _records = [];
   List<ServiceRecord> _services = [];
-  List<PendingAutoRefuel> _pendingAutoRefuels = [];
-  List<PitStopLog> _pitStopLogs = [];
   String? _activeVehicleId;
   ThemeMode _themeMode = ThemeMode.system;
 
-  // Auto-Log & Permission states
-  bool _carBluetoothObdSync = false;
+  // Location permission state
   bool _locationStationPriceFinder = false;
-  bool _motionStopDetection = false;
-  bool _refuelVerificationAlerts = false;
-  bool _hasCompletedDataConsent = false;
-
-  final AutoRefuelOrchestrator orchestrator = AutoRefuelOrchestrator();
 
   // In-memory indexing and memoized stats cache for fast O(1) lookups
   final Map<String, List<FuelRecord>> _recordsByVehicleId = {};
@@ -111,13 +94,6 @@ class FuelAppState extends ChangeNotifier {
   List<FuelRecord> get allRecords => List.unmodifiable(_records);
   List<FuelRecord> get records => allRecords;
   List<ServiceRecord> get allServices => List.unmodifiable(_services);
-  List<PendingAutoRefuel> get pendingAutoRefuels => List.unmodifiable(_pendingAutoRefuels);
-  List<PendingAutoRefuel> get activeVehiclePendingRefuels {
-    final vId = activeVehicleId;
-    if (vId == null) return [];
-    return _pendingAutoRefuels.where((p) => p.vehicleId == vId && p.status != 'CONFIRMED').toList();
-  }
-  List<PitStopLog> get pitStopLogs => List.unmodifiable(_pitStopLogs);
   ThemeMode get themeMode => _themeMode;
   String get selectedCountry => _selectedCountry;
   String get defaultCurrency => _defaultCurrency;
@@ -126,23 +102,8 @@ class FuelAppState extends ChangeNotifier {
   String get defaultEfficiencyUnit => _defaultEfficiencyUnit;
   String get appDataFolderPath => _appDataFolderPath;
 
-  // GDPR Consent & Automation Permissions
-  bool get carBluetoothObdSync => _carBluetoothObdSync;
+  // Location Permission for Station Name Lookup
   bool get locationStationPriceFinder => _locationStationPriceFinder;
-  bool get motionStopDetection => _motionStopDetection;
-  bool get refuelVerificationAlerts => _refuelVerificationAlerts;
-  bool get hasCompletedDataConsent => _hasCompletedDataConsent;
-
-  PreFlightSensorStatus get preFlightStatus => orchestrator.checkPreFlightReadiness(
-    hasBluetoothConsent: _carBluetoothObdSync,
-    hasLocationConsent: _locationStationPriceFinder,
-  );
-
-  void updatePreFlightHardwareState({bool? bluetooth, bool? location}) {
-    if (bluetooth != null) orchestrator.setBluetoothHardwareState(bluetooth);
-    if (location != null) orchestrator.setLocationHardwareState(location);
-    notifyListeners();
-  }
 
   // Active units considering temporary in-memory toggles
   String get activeEfficiencyUnit => _tempEfficiencyUnit ?? _defaultEfficiencyUnit;
@@ -351,12 +312,8 @@ class FuelAppState extends ChangeNotifier {
       _defaultVolumeUnit = prefs.getString(_keyDefaultVolUnit) ?? 'gal';
       _defaultEfficiencyUnit = prefs.getString(_keyDefaultEffUnit) ?? 'MPG';
 
-      // Load GDPR Consent & Permissions
-      _carBluetoothObdSync = prefs.getBool(_keyCarBluetoothObdSync) ?? false;
+      // Load Location Permission
       _locationStationPriceFinder = prefs.getBool(_keyLocationStationPriceFinder) ?? false;
-      _motionStopDetection = prefs.getBool(_keyMotionStopDetection) ?? false;
-      _refuelVerificationAlerts = prefs.getBool(_keyRefuelVerificationAlerts) ?? false;
-      _hasCompletedDataConsent = prefs.getBool(_keyHasCompletedDataConsent) ?? false;
 
       final themeStr = prefs.getString(_keyThemeMode);
       if (themeStr != null) {
@@ -452,29 +409,6 @@ class FuelAppState extends ChangeNotifier {
         }
       }
 
-      // 4. Load Pending Auto Refuels
-      final pendingFile = File('${dir.path}/pending_refuels.json');
-      if (pendingFile.existsSync()) {
-        try {
-          final content = pendingFile.readAsStringSync();
-          if (content.isNotEmpty) {
-            final List decoded = jsonDecode(content) as List;
-            _pendingAutoRefuels = decoded.map((item) => PendingAutoRefuel.fromJson(item as Map<String, dynamic>)).toList();
-          }
-        } catch (_) {}
-      }
-
-      // 5. Load Pit Stop Logs
-      final pitStopsFile = File('${dir.path}/pit_stops.json');
-      if (pitStopsFile.existsSync()) {
-        try {
-          final content = pitStopsFile.readAsStringSync();
-          if (content.isNotEmpty) {
-            final List decoded = jsonDecode(content) as List;
-            _pitStopLogs = decoded.map((item) => PitStopLog.fromJson(item as Map<String, dynamic>)).toList();
-          }
-        } catch (_) {}
-      }
 
       _activeVehicleId = prefs.getString(_keyActiveVehicleId);
       if (_vehicles.isNotEmpty && (_activeVehicleId == null || !_vehicles.any((v) => v.id == _activeVehicleId))) {
@@ -548,17 +482,7 @@ class FuelAppState extends ChangeNotifier {
       await _atomicWriteFile(servicesFile, servicesJson);
       await prefs.setString(_keyServices, servicesJson);
 
-      // 4. Save Pending Auto Refuels
-      final pendingJson = jsonEncode(_pendingAutoRefuels.map((p) => p.toJson()).toList());
-      final pendingFile = File('${dir.path}/pending_refuels.json');
-      await _atomicWriteFile(pendingFile, pendingJson);
-
-      // 5. Save Pit Stop Logs
-      final pitStopsJson = jsonEncode(_pitStopLogs.map((p) => p.toJson()).toList());
-      final pitStopsFile = File('${dir.path}/pit_stops.json');
-      await _atomicWriteFile(pitStopsFile, pitStopsJson);
-
-      // 6. Save App Settings
+      // 4. Save App Settings
       final settingsData = {
         'selectedCountry': _selectedCountry,
         'defaultCurrency': _defaultCurrency,
@@ -581,12 +505,8 @@ class FuelAppState extends ChangeNotifier {
       await prefs.setString(_keyDefaultEffUnit, _defaultEfficiencyUnit);
       await prefs.setString(_keyThemeMode, _themeMode.name);
 
-      // Save GDPR & Automation Permissions
-      await prefs.setBool(_keyCarBluetoothObdSync, _carBluetoothObdSync);
+      // Save Location Permission
       await prefs.setBool(_keyLocationStationPriceFinder, _locationStationPriceFinder);
-      await prefs.setBool(_keyMotionStopDetection, _motionStopDetection);
-      await prefs.setBool(_keyRefuelVerificationAlerts, _refuelVerificationAlerts);
-      await prefs.setBool(_keyHasCompletedDataConsent, _hasCompletedDataConsent);
     } catch (e) {
       debugPrint('Error saving storage: $e');
     }
@@ -1106,261 +1026,23 @@ class FuelAppState extends ChangeNotifier {
   }
 
   // ==========================================
-  // GDPR Consent & Automation Settings Methods
+  // Location Permission Settings Method
   // ==========================================
+
+  Future<void> setLocationStationPriceFinder(bool value) async {
+    _locationStationPriceFinder = value;
+    await saveToStorage();
+    notifyListeners();
+  }
 
   Future<void> setAutomationPermission({
-    bool? carBluetoothObdSync,
     bool? locationStationPriceFinder,
-    bool? motionStopDetection,
-    bool? refuelVerificationAlerts,
   }) async {
-    if (carBluetoothObdSync != null) _carBluetoothObdSync = carBluetoothObdSync;
-    if (locationStationPriceFinder != null) _locationStationPriceFinder = locationStationPriceFinder;
-    if (motionStopDetection != null) _motionStopDetection = motionStopDetection;
-    if (refuelVerificationAlerts != null) _refuelVerificationAlerts = refuelVerificationAlerts;
-    await saveToStorage();
-    notifyListeners();
-  }
-
-  Future<void> setHasCompletedDataConsent(bool value) async {
-    _hasCompletedDataConsent = value;
-    await saveToStorage();
-    notifyListeners();
-  }
-
-  // ==========================================
-  // Pit Stop & Auto Refuel Handling Methods
-  // ==========================================
-
-  Future<void> recordPitStop(PitStopLog stop) async {
-    _pitStopLogs.add(stop);
-    if (_pitStopLogs.length > 50) {
-      _pitStopLogs.removeAt(0); // keep recent 50
+    if (locationStationPriceFinder != null) {
+      _locationStationPriceFinder = locationStationPriceFinder;
     }
     await saveToStorage();
     notifyListeners();
-  }
-
-  Future<void> addPendingAutoRefuel(PendingAutoRefuel refuel) async {
-    _pendingAutoRefuels.removeWhere((p) => p.id == refuel.id);
-    _pendingAutoRefuels.add(refuel);
-    await saveToStorage();
-    notifyListeners();
-  }
-
-  Future<void> dismissPendingAutoRefuel(String pendingId) async {
-    _pendingAutoRefuels.removeWhere((p) => p.id == pendingId);
-    await saveToStorage();
-    notifyListeners();
-  }
-
-  Future<void> confirmPendingAutoRefuel(String pendingId, {double? customAmountPaid}) async {
-    final index = _pendingAutoRefuels.indexWhere((p) => p.id == pendingId);
-    if (index == -1) return;
-
-    final pending = _pendingAutoRefuels[index];
-    final vehicleIndex = _vehicles.indexWhere((v) => v.id == pending.vehicleId);
-    if (vehicleIndex == -1) return;
-
-    final vehicle = _vehicles[vehicleIndex];
-
-    double finalTotalCost = pending.estimatedTotalCost;
-    double finalLiters = pending.estimatedLiters;
-    double finalPricePerLitre = pending.resolvedPricePerLitre;
-
-    if (customAmountPaid != null && customAmountPaid > 0) {
-      finalTotalCost = double.parse(customAmountPaid.toStringAsFixed(2));
-      if (finalPricePerLitre > 0) {
-        finalLiters = double.parse((finalTotalCost / finalPricePerLitre).toStringAsFixed(2));
-      }
-    }
-
-    // Update calibration factor using self-learning algorithm
-    double updatedCalibrationFactor = vehicle.calibrationFactor;
-    if ((pending.rawObdLiters ?? 0) > 0 && finalPricePerLitre > 0) {
-      updatedCalibrationFactor = AutoRefuelOrchestrator.updateCalibrationFactor(
-        oldFactor: vehicle.calibrationFactor,
-        actualAmountPaid: finalTotalCost,
-        pricePerLitre: finalPricePerLitre,
-        rawObdLiters: pending.rawObdLiters!,
-      );
-    }
-
-    // Create the FuelRecord with exact 64-bit integer values
-    final ingress = pending.detectionTier == 1
-        ? IngressSource.nativeHeadUnit.value
-        : (pending.detectionTier == 2 ? IngressSource.obd2Ble.value : IngressSource.manual.value);
-
-    final isFull = pending.isFullTank ??
-        (((finalLiters / (vehicle.tankCapacityLiters > 0 ? vehicle.tankCapacityLiters : 50.0)) >= 0.90) ||
-        (vehicle.lastKnownFuelPercent ?? 0.0) >= 90.0);
-
-    final newRecord = FuelRecord(
-      id: 'fuel-${DateTime.now().millisecondsSinceEpoch}',
-      vehicleId: vehicle.id,
-      timestampEpochSec: pending.timestamp.millisecondsSinceEpoch ~/ 1000,
-      odometerMeters: (pending.estimatedOdometer * 1000).round(),
-      volumeMilliliters: (finalLiters * 1000).round(),
-      totalCostCents: (finalTotalCost * 100).round(),
-      ingressSource: ingress,
-      fuelType: vehicle.fuelType,
-      isFullTank: isFull,
-      gasStation: pending.detectedStationName ?? '',
-      notes: '[Auto-Detected Refuel]',
-    );
-
-    // Update vehicle state
-    final updatedVehicle = vehicle.copyWith(
-      lastKnownOdometer: pending.estimatedOdometer,
-      lastKnownFuelPercent: isFull ? 100.0 : (vehicle.lastKnownFuelPercent ?? 50.0),
-      lastObdSyncTime: DateTime.now(),
-      calibrationFactor: updatedCalibrationFactor,
-    );
-    _vehicles[vehicleIndex] = updatedVehicle;
-
-    // Add fuel record and remove pending
-    _records.add(newRecord);
-    _pendingAutoRefuels.removeAt(index);
-
-    _rebuildIndexes();
-    await saveToStorage();
-    await _logAuditAction('Confirmed auto-refuel: ${finalLiters}L, Total: $finalTotalCost');
-    notifyListeners();
-  }
-
-  Future<PendingAutoRefuel?> createQuickPumpDraft({
-    double? rawLiters,
-    double? rawPricePerLitre,
-    String? stationName,
-  }) async {
-    final v = activeVehicle;
-    if (v == null) return null;
-    final draft = PhotoExifDraftService.createQuickPumpDraft(
-      vehicle: v,
-      countryName: _selectedCountry,
-      rawLiters: rawLiters ?? 35.0,
-      rawPricePerLitre: rawPricePerLitre,
-      stationName: stationName,
-    );
-    _pendingAutoRefuels.removeWhere((p) => p.vehicleId == v.id && p.status == 'DRAFT_TIMESTAMP');
-    _pendingAutoRefuels.add(draft);
-    await saveToStorage();
-    notifyListeners();
-    return draft;
-  }
-
-  Future<PendingAutoRefuel?> processPhotoExifDraft(File photoFile) async {
-    final v = activeVehicle;
-    if (v == null) return null;
-    final draft = await PhotoExifDraftService.parsePhotoAndCreateDraft(
-      photoFile: photoFile,
-      vehicle: v,
-      countryName: _selectedCountry,
-      historyRecords: activeVehicleRecordsAscending,
-    );
-    if (draft != null) {
-      _pendingAutoRefuels.removeWhere((p) => p.vehicleId == v.id && p.status == 'DRAFT_TIMESTAMP');
-      _pendingAutoRefuels.add(draft);
-      await saveToStorage();
-      notifyListeners();
-    }
-    return draft;
-  }
-
-  Future<PendingAutoRefuel?> simulateTierRefuel(int tier, {
-    double? customLiters,
-    String? customStation,
-    double? customPrice,
-  }) async {
-    final v = activeVehicle;
-    if (v == null) return null;
-
-    final history = activeVehicleRecordsAscending;
-    PendingAutoRefuel? pending;
-
-    switch (tier) {
-      case 1:
-        pending = orchestrator.processTier1CarPlayAndroidAuto(
-          vehicle: v,
-          countryName: _selectedCountry,
-          historyRecords: history,
-          currentFuelPercent: 85.0,
-          currentOdometer: (v.lastKnownOdometer ?? 15000.0) + 120.0,
-          latitude: 37.7749,
-          longitude: -122.4194,
-        );
-        break;
-      case 2:
-        pending = await orchestrator.processTier2LiveObdAndGps(
-          vehicle: v,
-          countryName: _selectedCountry,
-          historyRecords: history,
-          currentOdometer: (v.lastKnownOdometer ?? 15000.0) + 250.0,
-          fuelJumpPercent: 45.0,
-          latitude: 37.7749,
-          longitude: -122.4194,
-          simulateFast: true,
-        );
-        break;
-      case 3:
-        pending = PhotoExifDraftService.createQuickPumpDraft(
-          vehicle: v,
-          countryName: _selectedCountry,
-          rawLiters: customLiters ?? 38.50,
-          rawPricePerLitre: customPrice,
-          stationName: customStation,
-        );
-        break;
-      case 4:
-        final simulatedStop = MotionPitStopService.createSimulatedPitStop(
-          stopDurationMinutes: 6,
-          latitude: 37.7749,
-          longitude: -122.4194,
-        );
-        _pitStopLogs.add(simulatedStop);
-        pending = orchestrator.processTier5DelayedEcuMath(
-          vehicle: v,
-          currentOdometer: (v.lastKnownOdometer ?? 15000.0) + 380.0,
-          currentFuelPercent: 90.0,
-          avgLitersPer100Km: 7.8,
-          countryName: _selectedCountry,
-          historyRecords: history,
-          pitStops: _pitStopLogs,
-        );
-        break;
-      case 5:
-      default:
-        pending = orchestrator.processTier5DelayedEcuMath(
-          vehicle: v,
-          currentOdometer: (v.lastKnownOdometer ?? 15000.0) + 410.0,
-          currentFuelPercent: 85.0,
-          avgLitersPer100Km: 7.8,
-          countryName: _selectedCountry,
-          historyRecords: history,
-          pitStops: null,
-        );
-        break;
-    }
-
-    if (pending != null) {
-      if (customLiters != null || customStation != null || customPrice != null) {
-        final finalLiters = customLiters ?? pending.estimatedLiters;
-        final finalPrice = customPrice ?? pending.resolvedPricePerLitre;
-        final finalCost = double.parse((finalLiters * finalPrice).toStringAsFixed(2));
-        pending = pending.copyWith(
-          estimatedLiters: finalLiters,
-          resolvedPricePerLitre: finalPrice,
-          estimatedTotalCost: finalCost,
-          detectedStationName: customStation ?? pending.detectedStationName,
-        );
-      }
-      _pendingAutoRefuels.removeWhere((p) => p.vehicleId == v.id);
-      _pendingAutoRefuels.add(pending);
-      await saveToStorage();
-      notifyListeners();
-    }
-    return pending;
   }
 
   /// GDPR Right to Erasure: Wipes all local files, SharedPreferences, and in-memory caches.
@@ -1384,16 +1066,10 @@ class FuelAppState extends ChangeNotifier {
       _vehicles.clear();
       _records.clear();
       _services.clear();
-      _pendingAutoRefuels.clear();
-      _pitStopLogs.clear();
       _activeVehicleId = null;
       _rebuildIndexes();
 
-      _carBluetoothObdSync = false;
       _locationStationPriceFinder = false;
-      _motionStopDetection = false;
-      _refuelVerificationAlerts = false;
-      _hasCompletedDataConsent = false;
 
       notifyListeners();
     } catch (e) {

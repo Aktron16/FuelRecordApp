@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 3 1 * *'
   workflow_dispatch:
+    inputs:
+      run_date:
+        description: 'Optional UTC date to use for the price snapshot (YYYY-MM-DD)'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -24,7 +29,14 @@ jobs:
         run: python -m pip install --upgrade requests beautifulsoup4 lxml
 
       - name: Update fuel price snapshot
-        run: python scripts/update_fuel_prices.py
+        env:
+          RUN_DATE: ${{ inputs.run_date }}
+        run: |
+          if [ -n "$RUN_DATE" ]; then
+            python scripts/update_fuel_prices.py --date "$RUN_DATE"
+          else
+            python scripts/update_fuel_prices.py
+          fi
 
       - name: Commit changed prices
         run: |

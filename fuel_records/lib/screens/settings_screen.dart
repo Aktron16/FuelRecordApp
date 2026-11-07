@@ -307,7 +307,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 16),
 
-          // 2b. Current Fuel Prices Card (Decoupled from Location; sourced from official website APIs)
+          // 2b. Current Fuel Prices Card (Decoupled from Location; synced monthly via GitHub API)
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Padding(
@@ -337,7 +337,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Prices per ${_volumeUnit == 'gal' ? 'Gallon' : 'Liter'} (${countryInfo.currency}) • ${StationAndPriceResolver.getPriceSourceHost(_selectedCountry)}',
+                              'Prices per ${_volumeUnit == 'gal' ? 'Gallon' : 'Liter'} (${countryInfo.currency}) • Monthly Rates (${StationAndPriceResolver.activePriceMonth})',
                               style: TextStyle(
                                 color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
                                 fontSize: 11,

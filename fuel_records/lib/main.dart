@@ -25,8 +25,27 @@ class FuelRecordApp extends StatefulWidget {
   State<FuelRecordApp> createState() => _FuelRecordAppState();
 }
 
-class _FuelRecordAppState extends State<FuelRecordApp> {
+class _FuelRecordAppState extends State<FuelRecordApp> with WidgetsBindingObserver {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      widget.appState.checkAndSyncMonthlyFuelPrices();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

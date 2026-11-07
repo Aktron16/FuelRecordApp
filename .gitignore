@@ -55,5 +55,8 @@ graphify-out/
 # Local Visual Style Guide (Internal design system documentation)
 VISUAL_STYLE_GUIDE.md
 automation_func.md
+codebin_map/
+.codebin/
+
 
 

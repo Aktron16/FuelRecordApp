@@ -1,0 +1,465 @@
+{
+  "schemaVersion": 1,
+  "month": "2026-11",
+  "updatedAt": "2026-11-01",
+  "countries": {
+    "US": {
+      "name": "United States",
+      "currencyCode": "USD",
+      "grades": {
+        "Regular (87)": 0.95,
+        "Midgrade (89)": 1.05,
+        "Premium (93)": 1.15,
+        "Diesel": 1.05,
+        "E85": 0.85
+      }
+    },
+    "CA": {
+      "name": "Canada",
+      "currencyCode": "CAD",
+      "grades": {
+        "Regular (87)": 1.6,
+        "Plus (89)": 1.72,
+        "Supreme (91)": 1.85,
+        "Ultra (94)": 1.95,
+        "Diesel": 1.68
+      }
+    },
+    "MX": {
+      "name": "Mexico",
+      "currencyCode": "MXN",
+      "grades": {
+        "Magna (87)": 1.75,
+        "Premium (91)": 1.85,
+        "Diesel": 1.68
+      }
+    },
+    "GB": {
+      "name": "United Kingdom",
+      "currencyCode": "GBP",
+      "grades": {
+        "Unleaded (E10 95)": 1.42,
+        "Super Unleaded (E5 97/99)": 1.58,
+        "Diesel": 1.49,
+        "Premium Diesel": 1.62
+      }
+    },
+    "DE": {
+      "name": "Germany",
+      "currencyCode": "EUR",
+      "grades": {
+        "Super E10 (95)": 1.75,
+        "Super E5 (95)": 1.75,
+        "Super Plus (98)": 1.85,
+        "Diesel": 1.68,
+        "Ultimate / V-Power": 1.75
+      }
+    },
+    "FR": {
+      "name": "France",
+      "currencyCode": "EUR",
+      "grades": {
+        "SP95-E10": 1.75,
+        "SP98 (E5)": 1.85,
+        "SP95 (E5)": 1.75,
+        "Gazole (Diesel)": 1.68,
+        "Superéthanol-E85": 1.2
+      }
+    },
+    "IT": {
+      "name": "Italy",
+      "currencyCode": "EUR",
+      "grades": {
+        "Benzina (95 RON)": 1.75,
+        "Benzina Speciale (100 RON)": 1.85,
+        "Gasolio (Diesel)": 1.68,
+        "GPL / Metano": 0.95
+      }
+    },
+    "ES": {
+      "name": "Spain",
+      "currencyCode": "EUR",
+      "grades": {
+        "Gasolina 95": 1.75,
+        "Gasolina 98": 1.85,
+        "Diésel / Gasóleo A": 1.68,
+        "Diésel Premium": 1.85
+      }
+    },
+    "NL": {
+      "name": "Netherlands",
+      "currencyCode": "EUR",
+      "grades": {
+        "Euro 95 (E10)": 1.75,
+        "Super Plus (98 E5)": 1.85,
+        "Diesel (B7)": 1.68,
+        "V-Power / Ultimate": 1.75
+      }
+    },
+    "BE": {
+      "name": "Belgium",
+      "currencyCode": "EUR",
+      "grades": {
+        "Euro 95 (E10)": 1.75,
+        "Super 98 (E5)": 1.85,
+        "Diesel (B7)": 1.68,
+        "LPG": 0.95
+      }
+    },
+    "CH": {
+      "name": "Switzerland",
+      "currencyCode": "CHF",
+      "grades": {
+        "Bleifrei 95": 1.75,
+        "Bleifrei 98": 1.85,
+        "Diesel": 1.68
+      }
+    },
+    "AT": {
+      "name": "Austria",
+      "currencyCode": "EUR",
+      "grades": {
+        "Super 95": 1.75,
+        "Super Plus 98": 1.85,
+        "Diesel": 1.68,
+        "MaxxMotion / V-Power": 1.75
+      }
+    },
+    "SE": {
+      "name": "Sweden",
+      "currencyCode": "SEK",
+      "grades": {
+        "Bensin 95 (E10)": 1.75,
+        "Bensin 98 (E5)": 1.85,
+        "Diesel": 1.68,
+        "HVO100": 1.85
+      }
+    },
+    "NO": {
+      "name": "Norway",
+      "currencyCode": "NOK",
+      "grades": {
+        "Blyfri 95 (E10)": 1.75,
+        "Blyfri 98 (E5)": 1.85,
+        "Diesel": 1.68,
+        "HVO100": 1.85
+      }
+    },
+    "DK": {
+      "name": "Denmark",
+      "currencyCode": "DKK",
+      "grades": {
+        "Blyfri 95 (E10)": 1.75,
+        "Blyfri 100 / 98": 1.85,
+        "Diesel": 1.68
+      }
+    },
+    "FI": {
+      "name": "Finland",
+      "currencyCode": "EUR",
+      "grades": {
+        "95 E10": 1.75,
+        "98 E5": 1.85,
+        "Diesel": 1.68,
+        "Neste MY Diesel (HVO)": 1.68
+      }
+    },
+    "PL": {
+      "name": "Poland",
+      "currencyCode": "PLN",
+      "grades": {
+        "Pb 95 (E10)": 1.75,
+        "Pb 98": 1.85,
+        "ON (Diesel)": 1.68,
+        "ON Premium": 1.85,
+        "LPG": 0.95
+      }
+    },
+    "PT": {
+      "name": "Portugal",
+      "currencyCode": "EUR",
+      "grades": {
+        "Gasolina Simples 95": 1.75,
+        "Gasolina Especial 98": 1.85,
+        "Gasóleo Simples": 1.68,
+        "Gasóleo Especial": 1.68
+      }
+    },
+    "IE": {
+      "name": "Ireland",
+      "currencyCode": "EUR",
+      "grades": {
+        "Unleaded (E10 95)": 1.75,
+        "Diesel": 1.68,
+        "Premium Diesel": 1.68
+      }
+    },
+    "GR": {
+      "name": "Greece",
+      "currencyCode": "EUR",
+      "grades": {
+        "Unleaded 95": 1.75,
+        "Unleaded 100": 1.85,
+        "Diesel": 1.68,
+        "Diesel Premium": 1.68,
+        "Autogas": 1.75
+      }
+    },
+    "CZ": {
+      "name": "Czech Republic",
+      "currencyCode": "CZK",
+      "grades": {
+        "Natural 95": 1.75,
+        "Natural 98 / 100": 1.85,
+        "Diesel": 1.68,
+        "Prémiová Nafta": 1.68,
+        "LPG": 0.95
+      }
+    },
+    "RO": {
+      "name": "Romania",
+      "currencyCode": "RON",
+      "grades": {
+        "Benzină Standard 95": 1.75,
+        "Benzină Premium 98/100": 1.85,
+        "Motorină Standard": 1.75,
+        "Motorină Premium": 1.85,
+        "GPL": 0.95
+      }
+    },
+    "TR": {
+      "name": "Turkey",
+      "currencyCode": "TRY",
+      "grades": {
+        "Kurşunsuz Benzin 95": 1.75,
+        "Motorin (Dizel)": 1.68,
+        "V/Max / Ultra Dizel": 1.68,
+        "Otogaz (LPG)": 0.95
+      }
+    },
+    "AU": {
+      "name": "Australia",
+      "currencyCode": "AUD",
+      "grades": {
+        "Unleaded (91)": 1.82,
+        "Premium (95)": 1.96,
+        "Premium (98)": 2.05,
+        "E10": 1.75,
+        "Diesel": 1.9,
+        "Premium Diesel": 2.05
+      }
+    },
+    "NZ": {
+      "name": "New Zealand",
+      "currencyCode": "NZD",
+      "grades": {
+        "Regular 91": 1.65,
+        "Premium 95": 1.85,
+        "Premium 98": 1.85,
+        "Diesel": 1.68
+      }
+    },
+    "IN": {
+      "name": "India",
+      "currencyCode": "INR",
+      "grades": {
+        "Petrol (Regular)": 96.72,
+        "Speed / Power (Premium Petrol)": 102.5,
+        "Diesel": 89.62,
+        "CNG": 76.59
+      }
+    },
+    "JP": {
+      "name": "Japan",
+      "currencyCode": "JPY",
+      "grades": {
+        "Regular (レギュラー)": 175.0,
+        "High Octane (ハイオク)": 186.0,
+        "Diesel (軽油)": 154.0
+      }
+    },
+    "KR": {
+      "name": "South Korea",
+      "currencyCode": "KRW",
+      "grades": {
+        "Regular Gasoline (휘발유)": 1680.0,
+        "Premium Gasoline (고급휘발유)": 1680.0,
+        "Diesel (경유)": 1530.0,
+        "LPG": 970.0
+      }
+    },
+    "CN": {
+      "name": "China",
+      "currencyCode": "CNY",
+      "grades": {
+        "92# Gasoline": 1.68,
+        "95# Gasoline": 1.75,
+        "98# Gasoline": 1.85,
+        "0# Diesel": 1.68
+      }
+    },
+    "BR": {
+      "name": "Brazil",
+      "currencyCode": "BRL",
+      "grades": {
+        "Gasolina Comum": 1.75,
+        "Gasolina Aditivada": 1.75,
+        "Etanol (Álcool)": 1.2,
+        "Diesel S10": 1.68,
+        "GNV": 0.95
+      }
+    },
+    "AR": {
+      "name": "Argentina",
+      "currencyCode": "ARS",
+      "grades": {
+        "Súper (95)": 1.75,
+        "Infinia / V-Power (98)": 1.85,
+        "Diesel 500": 1.68,
+        "Infinia Diesel": 1.68,
+        "GNC": 0.95
+      }
+    },
+    "CL": {
+      "name": "Chile",
+      "currencyCode": "CLP",
+      "grades": {
+        "Gasolina 93": 1.68,
+        "Gasolina 95": 1.75,
+        "Gasolina 97": 1.75,
+        "Diésel": 1.75
+      }
+    },
+    "CO": {
+      "name": "Colombia",
+      "currencyCode": "COP",
+      "grades": {
+        "Corriente (87)": 1.75,
+        "Extra (92)": 1.68,
+        "ACPM (Diésel)": 1.75,
+        "GNV": 0.95
+      }
+    },
+    "PE": {
+      "name": "Peru",
+      "currencyCode": "PEN",
+      "grades": {
+        "Gasohol Regular": 1.75,
+        "Gasohol Premium": 1.85,
+        "Diésel B5": 1.75,
+        "GLP / GNV": 0.95
+      }
+    },
+    "AE": {
+      "name": "United Arab Emirates",
+      "currencyCode": "AED",
+      "grades": {
+        "Special 95": 2.77,
+        "Super 98": 2.88,
+        "E-Plus 91": 2.69,
+        "Diesel": 2.85
+      }
+    },
+    "SA": {
+      "name": "Saudi Arabia",
+      "currencyCode": "SAR",
+      "grades": {
+        "Benzine 91": 2.18,
+        "Benzine 95": 2.33,
+        "Diesel": 1.15
+      }
+    },
+    "QA": {
+      "name": "Qatar",
+      "currencyCode": "QAR",
+      "grades": {
+        "Premium 91": 1.85,
+        "Super 95": 1.75,
+        "Diesel": 1.68
+      }
+    },
+    "KW": {
+      "name": "Kuwait",
+      "currencyCode": "KWD",
+      "grades": {
+        "Premium (91)": 1.85,
+        "Super (95)": 1.75,
+        "Ultra (98)": 1.85,
+        "Diesel": 1.68
+      }
+    },
+    "SG": {
+      "name": "Singapore",
+      "currencyCode": "SGD",
+      "grades": {
+        "92 Octane": 1.68,
+        "95 Octane": 1.75,
+        "98 Octane": 1.85,
+        "V-Power / Supreme": 1.85,
+        "Diesel": 1.68
+      }
+    },
+    "MY": {
+      "name": "Malaysia",
+      "currencyCode": "MYR",
+      "grades": {
+        "RON 95": 1.75,
+        "RON 97": 1.75,
+        "RON 100": 1.85,
+        "Diesel Euro 5": 1.68,
+        "B10/B20 Biodiesel": 1.68
+      }
+    },
+    "ID": {
+      "name": "Indonesia",
+      "currencyCode": "IDR",
+      "grades": {
+        "Pertalite (RON 90)": 1.75,
+        "Pertamax (RON 92)": 1.68,
+        "Pertamax Turbo (RON 98)": 1.85,
+        "Dexlite / Pertamina Dex": 1.75
+      }
+    },
+    "PH": {
+      "name": "Philippines",
+      "currencyCode": "PHP",
+      "grades": {
+        "Regular (91)": 1.65,
+        "Premium (95)": 1.85,
+        "Racing / Supreme (97-100)": 1.85,
+        "Diesel": 1.68,
+        "Premium Diesel": 1.68
+      }
+    },
+    "TH": {
+      "name": "Thailand",
+      "currencyCode": "THB",
+      "grades": {
+        "Gasohol 95": 1.75,
+        "Gasohol 91": 1.65,
+        "Gasohol E20": 1.75,
+        "Gasohol E85": 1.2,
+        "Diesel B7 / B20": 1.68
+      }
+    },
+    "VN": {
+      "name": "Vietnam",
+      "currencyCode": "VND",
+      "grades": {
+        "RON 95-III / IV": 1.75,
+        "E5 RON 92": 1.68,
+        "DO 0.05S (Diesel)": 1.68
+      }
+    },
+    "ZA": {
+      "name": "South Africa",
+      "currencyCode": "ZAR",
+      "grades": {
+        "Unleaded 93": 1.68,
+        "Unleaded 95": 1.75,
+        "Diesel 50ppm": 1.68,
+        "Diesel 10ppm": 1.68
+      }
+    }
+  }
+}

@@ -11,6 +11,7 @@ import '../models/vehicle_stats.dart';
 import '../utils/app_date_format.dart';
 import 'country_data.dart';
 import 'obd_telemetry_service.dart';
+import 'station_and_price_resolver.dart';
 
 class FuelAppState extends ChangeNotifier {
   /// Current application version - single source of truth for UI and data backups
@@ -26,6 +27,7 @@ class FuelAppState extends ChangeNotifier {
   static const String _keyDefaultDistUnit = 'fuel_app_default_dist_unit';
   static const String _keyDefaultVolUnit = 'fuel_app_default_vol_unit';
   static const String _keyDefaultEffUnit = 'fuel_app_default_eff_unit';
+  static const String _keyLastPriceSyncMonth = 'fuel_app_last_price_sync_month';
 
   // Permission key
   static const String _keyLocationStationPriceFinder = 'fuel_app_perm_location_price';
@@ -420,6 +422,18 @@ class FuelAppState extends ChangeNotifier {
         _activeVehicleId = _vehicles.first.id;
       }
       _rebuildIndexes();
+
+      // 4. Load cached monthly fuel prices from disk if present
+      final priceCacheFile = File('${dir.path}/fuel_price.json');
+      if (priceCacheFile.existsSync()) {
+        try {
+          final cachedPrices = priceCacheFile.readAsStringSync();
+          StationAndPriceResolver.loadCachedPriceJson(cachedPrices);
+        } catch (_) {}
+      }
+
+      // Check and sync monthly fuel prices asynchronously if month has changed
+      checkAndSyncMonthlyFuelPrices();
     } catch (e) {
       debugPrint('Error loading storage: $e');
     } finally {
@@ -1048,6 +1062,52 @@ class FuelAppState extends ChangeNotifier {
     }
     await saveToStorage();
     notifyListeners();
+  }
+
+  // ==========================================
+  // Monthly GitHub Fuel Price Sync
+  // ==========================================
+
+  /// Checks if the calendar month has changed (regardless of the date).
+  /// If the month has changed (or on first sync), attempts to fetch updated monthly
+  /// fuel prices from the GitHub repository API endpoint.
+  Future<bool> checkAndSyncMonthlyFuelPrices({
+    DateTime? nowOverride,
+    Future<String?> Function(Uri)? customHttpFetcher,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentMonth = StationAndPriceResolver.formatYearMonth(nowOverride ?? DateTime.now());
+      final lastSyncedMonth = prefs.getString(_keyLastPriceSyncMonth);
+
+      // If already synced for this calendar month, skip to avoid unnecessary requests
+      if (lastSyncedMonth == currentMonth) {
+        return false;
+      }
+
+      // Attempt fetch from GitHub API
+      final rawJson = await StationAndPriceResolver.fetchPricesFromGitHub(
+        customHttpFetcher: customHttpFetcher != null
+            ? (uri) => customHttpFetcher(uri).then((res) => res ?? '')
+            : null,
+      );
+
+      if (rawJson != null && rawJson.trim().isNotEmpty) {
+        final success = StationAndPriceResolver.loadCachedPriceJson(rawJson);
+        if (success) {
+          final dir = await _getAppDirectory();
+          final cacheFile = File('${dir.path}/fuel_price.json');
+          await _atomicWriteFile(cacheFile, rawJson);
+          await prefs.setString(_keyLastPriceSyncMonth, currentMonth);
+          await _logAuditAction('Synced monthly fuel prices from GitHub for $currentMonth');
+          notifyListeners();
+          return true;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error syncing monthly fuel prices: $e');
+    }
+    return false;
   }
 
   /// GDPR Right to Erasure: Wipes all local files, SharedPreferences, and in-memory caches.

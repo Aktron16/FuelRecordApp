@@ -175,6 +175,15 @@ fuel_records/
      flutter run -d ios
      ```
 
+### Monthly Fuel Price Updates
+
+The root `fuel_price.json` snapshot is refreshed by
+`.github/workflows/update_fuel_prices.yml` at `03:00 UTC` on the first day of
+each month. The workflow can also be started manually. Its Python updater uses
+UAE committee rates, the US EIA national averages (converted from gallon to
+litre), and GlobalPetrolPrices for other countries; unavailable or invalid
+grade values retain the previous month's value.
+
 ---
 
 ## 📦 Building Production Binaries
@@ -206,4 +215,3 @@ All records and personal vehicle metrics remain strictly on your physical device
 
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
